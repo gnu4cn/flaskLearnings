@@ -18,4 +18,4 @@ Flask有着很多带有敏感默认值的配置量，以及在对其入门时的
 
 随着编写代码的增长，就可以自由做出一些适合于你的项目的决定了。此时Flask仍将提供一个Python能提供出的最好的极简粘合层（Flask will continue to provide a very simple glue layer to the best that Python has to offer）。可在SQLAlchemy或是其它的数据库工具中应用高级模式，进而引入非关系性数据持久化技术（non-rational data persistence），并利用到一些为Python web接口WSGI所构建的框架无关工具的优势（take advantage of framework-agnostic tools built for WSGI，the Python web interface）。
 
-为定制其各种行为，Flask包含了许多[hooks](./Python Web框架Flask信号机制(signals)介绍.pdf)
+为定制其各种行为，Flask包含了许多[hooks](./Python Web框架Flask信号机制(signals)介绍.pdf)。如对此感兴趣，请阅读Becoming Big章节。如对Flask设计原则（design princles）感兴趣，请参见Design Decisions in Flask章节。
