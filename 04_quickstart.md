@@ -100,3 +100,28 @@ flask --debug -a hello run
 下面是一个运行中的调试器屏幕截图：
 
 ![调试器屏幕截图](./images/debugger.png)
+
+想看看别的调试器？请参阅[Working with Debuggers](http://flask.readthedocs.org/en/latest/errorhandling/#working-with-debuggers)
+
+##路由，Routing
+
+现代web应用都有着优美的URLs。这有助于人们记住这些URLs，对于从慢速的网络连接的移动设备使用到的那些应用，这尤其好用。如用户可以直接前往到所需页面，而无须点击首页，那么就更会喜欢上这个页面并再次来到这个页面。
+
+如同上面看到的那样，`route()`修饰器用于将一个函数绑定到一个URL。这里有一些基础示例：
+
+```python
+@app.route('/')
+def index():
+    return 'Index Page\n'
+
+@app.route('/hello')
+def hello():
+    return 'Hello World!\n'
+```
+
+不过关于路由还有很多的东西！你可以令到URL的一些部分成为动态的，同时给某个函数加入多条规则。
+
+###各种URLs规则
+
+
+
