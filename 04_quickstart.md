@@ -328,4 +328,249 @@ Flask将在`templates`文件夹中查找用到的模版。所以如应用是一�
         /hello.html
 ```
 
+从模块就可以看出Jiaja2模版的全部威力。请移步到官方的[Jinja2 模版文档](http://jinja.pocoo.org/docs/templates)获取更多信息。
+
+这里是一个示例模版：
+
+```html
+<!doctype html>
+<title>Hello from Flask</title>
+{% if name %}
+    <h1>Hello {{name}}!</h1>
+{% else %}
+    <h1>Hello, World!</h1>
+{% endif %}
+```
+
+在模版内部，还可以访问到[`request`](http://flask.readthedocs.org/en/latest/api/#flask.request)、[`session`](http://flask.readthedocs.org/en/latest/api/#flask.session)和[`g`](http://flask.readthedocs.org/en/latest/api/#flask.g)这三个对象，以及函数[`get_flashed_message()`](http://flask.readthedocs.org/en/latest/api/#flask.get_flashed_messages)。
+
+>不知道对象`g`是何物？它是可以为各种需求而在其中保存信息的一个对象，请查阅该对象的文档及[Using SQLite3 with Flask](http://flask.readthedocs.org/en/latest/patterns/sqlite3/#sqlite3)以获取更多信息。
+
+在使用了继承后，模版功能就特别有用了。如想要知道继承的工作原理，请移步[Template Inheritance](http://flask.readthedocs.org/en/latest/patterns/templateinheritance/#template-inheritance)模式文档。简单地说，模版继承可令到在各个页面上保留下一些确定元素成为可能（比如头部、导航栏及底部等元素）。
+
+自动转换是开启的，所以如果*名称（name）*中包含了HTML，就会被自动转换掉。在对某个变量可信的、同时知道该变量将是安全的HTML（比如该变量来自于某个将维基标签转换成HTML的模块），就可以通过使用`Markup`类，在模版中使用`|safe`过滤器，将其标记为安全。请参阅Jinja2的文档以得到更多示例。
+
+下面是一个介绍`Markup`类工作原理的示例：
+
+```python
+>>> from flask import Markup
+>>> Markup('<strong>Hello %s!</strong>' % '<blink>hacker</blink>')
+Markup(u'<strong>Hello <blink>hacker</blink>!</strong>')
+>>> Markup.escape('<blink>hacker</blink>')
+Markup(u'&lt;blink&gt;hacker&lt;/blink&gt;')
+>>> Markup('<em>Marked up</em>&raquo;HTML').striptags()
+u'Marked up\xbbHTML'
+```
+
+*版本0.5中的变化*：不再对所有模版都开启自动转换。下面的文件扩展名会引发自动转换: `.html`、`.htm`、`.xml`及`.xhtml`。从字符串装入的莫不将不进行自动转换。
+
+##对请求数据的访问
+
+对于web应用来说，对从客户端发送到服务器的数据进行响应，是最重要的。在Flask中，该信息是由全局的`request`对象提供的。如你有着Python方面的经验，就会想该对象是怎样成为全局性的，以及Flask怎样设法做到线程安全（threadsafe）。答案就是context locals:
+
+###context locals
+
+>内幕信息：
+
+>如你想要掌握context locals工作原理及怎样对context locals应用测试，就请阅读这个小节，否则可以直接忽视。
+
+Flask中的某些对象确实是全局对象，但又不是通常意义上的全局对象。这些对象实际上是到一些对于特定上下文来说属于本地对象的代理（these objects are actually proxies to objects that are local to specific context）。说起来拗口，但实际上是很容易理解的。
+
+请将上下文想象为处理线程（Imagine the context being the handling thread）。进来了一个请求，服务器就决定孵出一个新的线程（或其它什么，所采用的对象具备利用并发系统而不是线程来进行请求处理的能力）。在Flask开始其内部请求处理时，其找出当前活动的线程并将当前应用与WSGI环境与那个上下文（线程）绑定起来。Flask以一种明智的方式完成此操作，因此一个应用可以不中断地调用另一应用。
+
+那么这意味着什么呢？简单地说，你可以完全忽略此过程，除非要完成一些像是单元测试（unit testing）一类的工作。你会注意到由于缺少request对象而导致依赖于某个request对象的代码突然中断了。解决方法就是创建一个request对象，并将其绑定到上下文（线程）.单元测试的最容易方案，就是使用[`test_request_context()`](http://flask.readthedocs.org/en/latest/api/#flask.Flask.test_request_context)上下文管理器。结合使用`with`语句，就可以绑定上一个测试请求，如此就能与其进行互动操作。这里是一个示例：
+
+```python
+from flask import request, Flask
+app = Flask(__name__)
+
+with app.test_request_context('/hello', method='POST'):
+    assert request.path == 'hello'
+    assert request.method == 'POST'
+```
+
+另一种可能的做法，就是将整个的WSGI环境，传递给[`request_context()`](http://flask.readthedocs.org/en/latest/api/#flask.Flask.request_context)方法：
+
+```python
+from flask import request
+
+with app.request_context(environ):
+    assert request.method == 'POST'
+```
+
+###关于请求对象
+
+在API章节，有着该请求对象的文档，同时这里不会详细介绍该对象（参见[request](http://flask.readthedocs.org/en/latest/api/#flask.request)）。这里是对其一些最常见操作的宽泛概览。首先必须将其从*flask*模块导入该对象：
+
+```python
+from flask import request
+```
+
+通过使用其`method`属性，可获取其当前的方法。要取得表单数据（在`POST`或`PUT`请求中传输的数据），可使用其`form`属性。这里是上面提到的其两个属性的示例：
+
+```python
+from flask import Flask, request
+app = Flask(__name__)
+
+@app.route('/login', methods=['POST', 'GET'])
+def login():
+    error = None
+    if request.method == 'POST':
+        if valid_login(request.form['username'], request.form['password']):
+            return log_the_user_in(request.form['username'])
+        else:
+            error = 'Invalid username/password'
+    return render_template('login.html', error=error)
+```
+
+如*form*属性中的键不存在，会发生什么呢？此时就会产生一个[`KeyError`](https://docs.python.org/dev/library/exceptions.html#KeyError)。可将其作为一个标准的KeyError捕获到，但如不想那样做，就会显示出一个HTTP 400 Bad Request 错误页面。所以很多情况下都不必去处理这个问题。
+
+而要获取到URL中提交的参数（`?key=value`），就可使用`args`属性：
+
+```python
+searchwork = request.args.get('key', '')
+```
+
+这里建议使用*get*来获取URL参数，或通过捕获`KeyError`。因为用户可能会改变URL从而显示给他们一个400 bad request page，那样就不是用户友好的了。
+
+对于完整的HTTP方法和request对象的属性清单，请移步[request](http://flask.readthedocs.org/en/latest/api/#flask.request)文档。
+
+###关于文件上传
+
+通过Flask，可轻易地处理上传的文件。只要确保没有忘记在HTML表单中设置上`enctype="multipart/form-data"`属性就行，否则浏览器将一点也不会发送文件。
+
+上传的文件是存储在内存或文件系统的某个临时地址的。通过查看request对象的`files`属性，就能访问到这些文件。每个上传的文件都保存在那个字典中。其与标准的Python `file`对象表现一致，不过其还有一个`save()`方法，该方法允许将那个文件存储在服务器的文件系统中。这里是展示其工作原理的一个简单示例：
+
+```python
+from flask import request
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        f = request.files['the_file']
+        f.save('/var/www/uploads/upload_file.txt')
+    ...
+```
+
+而如想知道该文件于将其上传之前，在客户端上是如何命名的，就可访问request对象的`filename`属性。但请记住该值可以被伪造，所以绝对不要信任那个值。如要使用客户端的文件名来在服务器上存储该文件，就将其经由Werkzeug库提供的`secure_filename()`函数，进行传递：
+
+```python
+from flask import request
+from werkzeug.utils import secure_filename
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        f = request.files['the_file']
+        f.save('/var/www/uploads/' + secure_filename(f.filename))
+    ...
+```
+
+查看[Uploading Files]模式，得到一些更好的示例。
+
+###关于cookies
+
+可使用`cookies`属性，来获取[cookies](http://flask.readthedocs.org/en/latest/api/#flask.Request.cookies)。而要设置一些cookies，则可以使用那些response对象的[`set_cookie`](http://flask.readthedocs.org/en/latest/api/#flask.Response.set_cookie)方法。request对象的cookies属性，是一个具有所有客户端传送的cookies的字典。如打算用到会话，不不要直接使用这些cookies，而是使用Flask中，已在cookies之上加入了一些安全措施的[Session](http://flask.readthedocs.org/en/latest/quickstart/#sessions)功能。
+
+读取cookies:
+
+```python
+from flask import request
+
+@app.route('/')
+def index():
+    username = request.cookies.get('username')
+    #这里使用了cookies.get(key)而不是cookies[key], 是
+    #为了在cookie缺失时不会得到一个KeyError错误
+```
+
+存储cookie:
+
+```python
+from flask import make_response
+
+@app.route('/')
+def index():
+    resp = make_response(render_template(...))
+    resp.set_cookie('username', 'the username')
+    return resp
+```
+
+请注意这些cookies是设置在response对象上的。自通常地仅返回自那些视图函数返回的字串以来，Flask都会将它们转换成response对象。如要显式地完成这一转换，就可使用`make_resonse()`函数，然后对其进行修改。
+
+某些时候，可能会在某个response对象尚不存在时就设置一个cookie，这也是可以的，只需通过使用[Deferred Request Callback](http://flask.readthedocs.org/en/latest/patterns/deferredcallbacks/#deferred-callbacks)模式即可。
+
+这方面也可参考[About Responses](http://flask.readthedocs.org/en/latest/quickstart/#about-responses)部分。
+
+###关于重定向和出错
+
+使用[`redirect()`](http://flask.readthedocs.org/en/latest/api/#flask.redirect)函数，将用户重定向到另一断点（endpoint）；而要在早期使用一个错误代码放弃某个请求，就使用[`abort()`](http://flask.readthedocs.org/en/latest/api/#flask.abort)函数：
+
+```python
+from flask import abort, redirect, url_for
+
+@app.route('/')
+def index():
+    return redirect(url_for('login'))
+
+@app.route('/login')
+def login():
+    abort(401)
+    this_is_never_execute()
+```
+
+当然这时一个没有意义的示例，因为用户将自首页被重定向到一个无法访问的（401的意思是拒绝访问）页面，但其显示了这两个方法的原理。
+
+默认下，每个错误代码都将显示为一个黑白的错误页面。而如打算定制错误页面，可以使用[`errorhandler()`](http://flask.readthedocs.org/en/latest/api/#flask.Flask.errorhandler)修饰器：
+
+```python
+from flask import render_template
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('page_not_found.html'), 404
+```
+
+请注意在`render_template()`调用后面的`404`代码。这告诉Flask那个页面的状态代码应是404，就是说未找到。默认下200被认为翻译成：所有事情都顺利进行。
+
+更多信息，请参阅[Error handlers](http://flask.readthedocs.org/en/latest/errorhandling/#error-handlers)。
+
+###关于响应
+
+来自某个视图函数的返回值，被自动转换成一个response对象。而如过返回值是一个字符串，则就将该字符串作为响应主体，一个`200 OK`的状态码及一个*text/html*的mimetype，而转换成响应对象。在将返回值转换成响应对象时，Flask用到的逻辑如下：
+
+1. 如有返回的是一个正确类型的响应对象，则将直接从视图返回，而不经转换。
+
+2. 如返回的是一个字符串，就用该字符串数据及一些默认参数，转换出一个响应对象。
+
+3. 如返回的是一个元组（tuple），这该元组中的元素就可提供一些额外信息。这样的元组必须是`(response, status, headers)`或`(response, headers)`这样的形式，至少有一个的项目是在元组中的。该*status*值将覆盖掉状态码，同时*headers*可以是一个一些附加头部值的清单或字典。
+
+4. 如上面列举的都没有，Flask就会假定返回值是一个有效的WSGI应用，并将其转换成一个响应对象。
+
+如要在视图内部保有生成的响应对象，就可使用`make_response()`方法。
+
+想象你有着这样一个视图：
+
+```python
+@app.errorhandler(404)
+def not_found(error):
+    return render_template('error.html'), 404
+```
+
+那么要取得其响应对象以加以修改，就只需将该return表达式用`make_response()`包围起来，然后在返回就可以了：
+
+```python
+@app.errorhandler(404)
+def not_found(error):
+    resp = make_response(render_template('error.html'), 404)
+    resp.headers['X-Somethins'] = 'A value'
+    return resp
+```
+
+###关于会话
+
+除了request对象，还有一个名为`session`的对象，允许你将特定于某个用户的信息，进行跨越请求的存储。该对象是在cookies之上实现的，其对cookies进行了加密签名。这就意味着用户能够看到cookie，却不能对其进行修改，除非他们知道签名的密钥。
+
+要使用sessions, 首先要设置一个密钥。这里是sessions的工作原理：
+
 
