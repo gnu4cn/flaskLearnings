@@ -28,7 +28,15 @@ def hello_world():
 将这些代码保存为`hello.py`并在Python解释器下运行。
 
 ```bash
-$python hello.py
+$flask -a hello run
+* Running on http://127.0.0.1:5000/
+```
+
+或者替代的：
+
+```bash
+$python -m flask -a hello run
+* Running on http://127.0.0.1:5000/
 ```
 
 这将启动一个非常简单的内建服务器，该服务器对于测试来说是足够好的，但大概不会在生产中使用。对于生产部署选项，请参阅[Deployment Options](http://flask.readthedocs.org/en/latest/deploying/#deployment)。
@@ -39,7 +47,11 @@ $python hello.py
 
 在运行该服务器时，会注意到该服务器仅能从自己的计算机访问到，而不能从网络中的其它计算机进行访问。这时默认的，因为在调试模式下，应用的用户可执行你的计算机上任意的Python代码。
 
-如关闭了调试器，或是信任网络上的用户，就可以通过简单地加入`--host=0.0.0.0`到命令行，来开启该服务器的公开访问。
+如关闭了调试器，或是信任网络上的用户，就可以通过简单地加入`--host=0.0.0.0`到命令行，来开启该服务器的公开访问：
+
+```bash
+$flask -a hello run --host=0.0.0.0
+```
 
 ##如果服务器未能启动，该怎么做
 
@@ -63,5 +75,28 @@ $python hello.py
 
 （只想了解错误日志和栈跟踪？请移步[Application Errors](http://flask.readthedocs.org/en/latest/errorhandling/#application-errors)）
 
-`flask`脚本对于启动一个本地开发服务器来说是不错的，但在每次对代码进行了修改后，都必须重启该服务器。那就不是很好了，而Flask却可以做得更好。
+`flask`脚本对于启动一个本地开发服务器来说是不错的，但在每次对代码进行了修改后，都必须重启该服务器。那就不是很好了，而Flask却可以做得更好。在开启了调试支持后，服务器在代码发生改变时，可以侦测到而自动重启一下，同时在出现错误时，还将提供一个有用的调试器。
 
+开启调试模式的方式有很多，最为显见的就是`flask`命令的`--debug`参数：
+
+```bash
+flask --debug -a hello run
+```
+
+此命令完成下面这些事：
+
+    1. 激活调试器
+
+    2. 激活自动重载器
+
+    3. 开启该Flask应用的调试模式
+
+在[Development Server](http://flask.readthedocs.org/en/latest/server/#server)文档中有讲到更多的参数。
+
+##注意事项
+
+>尽管在派生环境中（in forking environment）交互是调试器是无法工作的（这令到在生产服务器上不可能用上调试器），但仍然允许执行任意代码。这就导致调试器成为一个重大安全隐患，因此**在生产机器上绝对不要使用调试模式**。
+
+下面是一个运行中的调试器屏幕截图：
+
+![调试器屏幕截图](./images/debugger.png)
