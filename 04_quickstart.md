@@ -173,4 +173,28 @@ UUID由以下几部分的组合：
     
 >>通用唯一标识符还可以用来指向大多数的可能的物体。微软和其他一些软件公司都倾向使用全球唯一标识符（GUID），这也是通用唯一标识符的一种类型，可用来指向组建对象模块对象和其他的软件组件。第一个通用唯一标识符是在网络计算机系统（NCS）中创建，并且随后成为开放软件基金会（OSF）的分布式计算环境（DCE）的组件。
 
+##唯一URLs/重定向行为
 
+Flask的URL规则，是基于Werkzeug的路由模块的。该模块背后的规则，就是确保在由Apache及其它早期的HTTP服务器所订下的规则基础上，有着漂亮及唯一的URLs。
+
+看看这两个规则：
+
+```python
+@app.route('/projects/')
+def projects():
+    return 'The project page'
+
+@app.route('/about')
+def about():
+    return 'The about page'
+```
+
+尽管它们看起来相当类似，但在URL*定义（definition）*中对最后的斜杠的使用是不同的。在第一种情况里，*projects*的规范URL有着一个结束斜杠。从这个意义上讲，其与文件系统上的某个文件夹是类似的。通过不带结束斜杠方式访问该URL，就会导致Flask重定向到有着结束斜杠的规范URL。
+
+在第二种情况下，该URL就没有了那个结束斜杠，这与在类UNIX系统上的一个文件的路径名称很像了。这时如果通过带有结束斜杠方式访问该URL，就会产生一个404“页面未找到（Not Found）”错误。
+
+此行为允许在省略其结束斜杠时，相对URLs（relative URLs）仍能继续工作，从而与Apache及其它服务器的运作保持一致。又同时保持了URLs的唯一性，而这有助于搜索引擎避免两次索引同一页面。
+
+##URL的构建
+
+既然Flask具备匹配URLs的能力，其还能生成URLs吗？当然可以。要给某个特定函数构建一个URL，可以使用[`url_for()`](http://flask.readthedocs.org/en/latest/api/#flask.url_for)函数。
