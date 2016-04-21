@@ -198,4 +198,104 @@ def about():
 
 ##URL的构建
 
-既然Flask具备匹配URLs的能力，其还能生成URLs吗？当然可以。要给某个特定函数构建一个URL，可以使用[`url_for()`](http://flask.readthedocs.org/en/latest/api/#flask.url_for)函数。
+既然Flask具备匹配URLs的能力，其还能生成URLs吗？当然可以。要给某个特定函数构建一个URL，可以使用[`url_for()`](http://flask.readthedocs.org/en/latest/api/#flask.url_for)函数。该函数接受函数名称作为第一个参数，及一些关键字参数，这些参数与URL规则的变量部分一一对应。未知变量部分则是追加到URL上作为查询参数。这里有一些示例：
+
+```python
+>>> from flask import Flask, url_for
+>>> app = Flask(__name__)
+>>> @app.route('/')
+... def index(): pass
+... 
+>>> @app.route('/login')
+... def login(): pass
+... 
+>>> @app.route('/user/<username>')
+... def profile(username): pass
+... 
+>>> with app.test_request_context():
+...     print url_for('index')
+...     print url_for('login')
+...     print url_for('login', next='/')
+...     print url_for('profile', username='John Doe')
+... 
+/
+/login
+/login?next=%2F
+/user/John%20Doe
+```
+
+（这里还用到了[`test_request_context()`](http://flask.readthedocs.org/en/latest/api/#flask.Flask.test_request_context)方法，将在下面讲到。该方法告诉Flask表现得像是在处理一个请求，尽管我们是在一个Python shell中在与其交互。可以看看下面的解释。[Context Locals](http://flask.readthedocs.org/en/latest/quickstart/#context-locals)）。
+
+为什么要使用这个URL逆向函数`url_for()`来构建处URLs，而不是将这些URLs硬编码到模版中呢？有三个这么做的理由：
+
+    1. 逆向生成比起硬编码URLs，通常都更具描述性。更重要的是，逆向生成允许你一次完成所有URLs的修改，无须记住在所有地方去修改URLs。
+
+    2. 有该方法实现的URL构建，将为你对特殊字符及Unicode的数据进行透明处理，所以就无须手动处理这些字符了。
+
+    3. 如应用是放在URL根的外面的（比如，是在`/myapplication`而不是`/`中），此时`url_for()`方法仍将对其正确处理。
+
+
+##HTTP的那些方法
+
+HTTP（正是web应用所操的协议）在存取URLs时，理解几种不同方法。默认情况下，一个路由只对`GET`请求进行响应，不过这可以通过将*`methods`*参数提供给`route()`修饰器，进行改变。这里有一些示例：
+
+```python
+from flask import request
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        do_the_login()
+    else:
+        show_the_login_form()
+```
+
+如果出现了`GET`，则`HEAD`就会自动添加进来。就无须对其进行处理。同时也将确保这些`HEAD`请求按照[HTTP RFC](http://www.ietf.org/rfc/rfc2068.txt)（描述HTTP协议的文档）的要求进行处理，因此可以完成忽略HTTP规格的那一部分。同样，对于Flask 0.6版本，`OPTIONS`也是自动应用的。
+
+你对HTTP方法没有一点了解吗？无需担心，这里对HTTP方法及为何它们是重要的，有一个快速介绍：
+
+HTTP方法（又常成为“动词（the verb）”）告诉服务器，客户端想要用请求的页面*做*什么（the HTTP method tells the server what the client wants to *do* with the requested page）。下面这些方法都是很常见的：
+
+- `GET`
+    
+    浏览器告诉服务器，仅*获取（get）*存储在该页面的信息并发送该页面。这可能是最常见的方法了。
+
+- `HEAD`
+
+    浏览器告诉服务器获取信息，但仅对*头部（headers）*感兴趣，而不是页面内容。应用被认为是要像处理一个`GET`请求那样处理`HEAD`请求，却不要投送实际内容。在Flask中完全不必手工处理这类请求，而是由所采用的Werkzeug库来处理。
+
+- `POST`
+
+    浏览器告诉服务器，它想要将一些新信息*post*到那个URL，同时服务器务必要确保这些数据得到保存且只保存一次。此方法通常就是HTML表单将数据传输到服务器所用的方法。
+
+- `PUT`
+
+    此方法与`POST`类似，但服务器可能会通过数次的覆写旧数值，而多次触发储存过程。现在你可能认为这没什么用处，但这样做可是有很多好的理由。想象一下在传输过程中连接丢失的情况吧：在此情形下，位于浏览器和服务器之间的系统可能会在不对事情造成破坏的情况下，第二次安全地收到该请求。而采用`POST`则是不会出现这样的情况，因为`POST`务必仅有一次触发。
+
+- `DELETE`
+
+    移除URL所给位置的信息。
+
+- `OPTIONS`
+
+    该方法提供了一种令到客户端找出该URL所支持的哪些方法的快速方式。从Flask 0.6版本开始，此方法已自动应用了。
+
+现在有趣的是在HTML4和XHTML1中的部分了，表单提交到服务器的方法只有两种，分别是`GET`和`POST`。但在JavaScript和将来的HTML标准中，就可以使用其它方法了。最近HTTP已成为相当流行的了，同时浏览器也不再是唯一使用到HTTP的客户端。比如许多版本控制系统（revision control system）也用到HTTP。
+
+##关于静态文件
+
+动态web应用同样是需要静态文件的。那通常都是CSS和JavaScript文件了。理想情况下web服务器配置用于提供这些文件，不过在开发Flask过程中也可以做到。只需在python包中，或在模块隔壁创建一个叫做`static`的文件夹，后者则需在应用的`/static`处可用即可。
+
+要生成这些静态文件的URLs，需使用这个特殊的端点名称`static`（the special `static` endpoint name）：
+
+```python
+url_for('static', filename='style.css')
+```
+
+该文件必须以`static/style.css`保存在文件系统上。
+
+##关于模版的渲染
+
+自Python中生成HTML并不好玩，实际上因为要保持应用安全而必须完成HTML转换，而是相当麻烦的。为此Flask为你自动配置好了Jinja2模版引擎。
+
+
