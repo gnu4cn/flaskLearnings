@@ -298,4 +298,34 @@ url_for('static', filename='style.css')
 
 自Python中生成HTML并不好玩，实际上因为要保持应用安全而必须完成HTML转换，而是相当麻烦的。为此Flask为你自动配置好了Jinja2模版引擎。
 
+可以使用[`render_template()`](http://flask.readthedocs.org/en/latest/api/#flask.render_template)，来渲染一个模版。只需提供模版的名称，及打算以关键字参数形式传递给模版引擎的一些变量，就行。下面是一个如何渲染模版的简单示例：
+
+```python
+from flask import render_template
+
+@app.route('/hello/')
+@app.route('/hello/<name>')
+def hello(name=None):
+    return render_template('hello.html', name=name)
+```
+
+Flask将在`templates`文件夹中查找用到的模版。所以如应用是一个模块，那么该文件夹就在那个模块的隔壁，而如该应用是一个包，则那个文件夹就在这个包中：
+
+**第一种情况**：应用是一个模块：
+
+```bash
+/application.py
+/templates
+    /hello.html
+```
+
+**第二种情况**：应用作为一个包：
+
+```bash
+/application
+    /__init__.py
+    /templates
+        /hello.html
+```
+
 
