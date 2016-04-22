@@ -573,4 +573,95 @@ def not_found(error):
 
 要使用sessions, 首先要设置一个密钥。这里是sessions的工作原理：
 
+```python
+import os
+from flask import Flask, session, redirect, url_for, escape, request
+
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    if 'username' in session:
+        return 'Logged in as %s' % escape(session['username'])
+    return 'You are not logged in'
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        session['username'] = request.form['username']
+        return redirect(url_for('index'))
+    return '''
+        <form action="" method="post">
+            <p><input type=text name=username />
+            <p><input type=submit value=Login />
+        </form>
+        '''
+
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    return redirect(url_for('index'))
+
+app.secret_key = os.urandom(24)
+```
+
+这里提到的[`escape()`](http://flask.readthedocs.org/en/latest/api/#flask.escape)方法在没有用到模版引擎时，完成对字符串的转换（如同本例中这样）。
+
+>如何生成良好的密钥：
+
+>随机数的问题在于很难断定其是真正随机的。同时一个密钥应要尽可能的随机。操作系统具有一些生成良好随机数的方法，随机程度则是基于获取这样一个密钥所使用的密码学随机数生成器的。
+
+```python
+>>>import os
+>>>os.urandom(24)
+'\xfd{H\xe5<\x95\xf9\xe3\x96.5\xd1\x01O<!\xd5\xa2\xa0\x9fR"\xa1\xa8'
+```
+
+>这里只需将生成的字串拷贝/粘贴到代码中就可以了。
+
+关于基于cookie的sessions功能的注意点：Flask将接手放入到**session对象**中的数值，并将这些数值序列化为一个cookie。如发现了一些在跨请求中已不存在的数值，那么是开启了cookies的缘故，此时还不能收到某种明确的错误消息，就要检查页面响应中cookie的大小，并将其与web浏览器所支持的cookie大小进行比较。
+
+###消息刷新，Message Flashing
+
+良好的应用及用户界面，都是有关反馈方面的。如用户没有受到足够反馈，那么他们多半会以对该应用的厌恶告终。Flask提供了给与用户反馈的一种极为简单的方式--刷新系统（the flashing system）。刷新系统基础性地令到在一次请求结束时记录一条消息，并在下一次（也仅在下一次）请求中访问到该消息成为可能。此功能又通常与一个布局模版结合，来展示该消息。
+
+使用[`flash()`](http://flask.readthedocs.org/en/latest/api/#flask.flash)方法，来刷新一条消息。要获取到消息，可以使用`get_flashed_messages()`，该方法在模版中也是可用的。请查看[Message Flashing](http://flask.readthedocs.org/en/latest/patterns/flashing/#message-flashing-pattern)部分，获取完整示例。
+
+
+##日志功能
+
+*版本0.3中引入的新功能。*
+
+有时可能会与到所处理的数据应该是正确的，但实际则不然的情形。比如可能得到了一些发出一个HTTP请求到服务器的客户端代码，但确实明显格式错误的代码。这可能是由于用户对数据做了篡改，或者客户端代码失误造成的。在那种情况下，多数时候回应其一个`400 Bad Request`就可以了，但有时却没有作用，代码会继续运行。
+
+同时还会打算将发生的一些可疑事件记录下来。这就是日志记录器用到的地方。在Flask 0.3中，已为日志记录预先配置了一个日志记录器（a logger）。
+
+这里是一些日志调用的示例：
+
+```python
+app.logger.debug('A value for debugging')
+app.logger.warning('A warning occured (%d apples)' % 42)
+app.logger.error('An error occured')
+```
+
+这里所附上的[`logger`](http://flask.readthedocs.org/en/latest/api/#flask.Flask.logger)，是一个标准的日志记录[`Logger`](https://docs.python.org/dev/library/logging.html#logging.Logger)，所以请移步官方的[logging documentation](https://docs.python.org/library/logging.html)以获取更多信息。
+
+同时请越多更多的有关[Application Errors](http://flask.readthedocs.org/en/latest/errorhandling/#application-errors)文档。
+
+##对WSGI中间件的调用，Hooking in WSGI Middlewares
+
+可将内部的WSGI应用加以封装，实现将一个WSGI中间件加入到应用。比如在打算使用Werkzeug包的一个有关解决lighttpd的漏洞的中间件时，可以这样做：
+
+```python
+from werkzeug.contrib.fixers import LighttpdCGIRootFix
+app.wsgi_app = LighttpdCGIRootFix(app.wsgi_app)
+```
+
+##Flask众多扩展的使用
+
+这些扩展是一些有助于完成常见任务的包。比如Flask-SQLAlchemy就提供了SQLAlchemy的支持，从而使得在Flask使用起来简单又容易。
+
+##部署到某种Web服务器
+
+已准备好将新的Flask应用进行部署了？请移步[Deployment Options](http://flask.readthedocs.org/en/latest/deploying/#deployment)。
 
