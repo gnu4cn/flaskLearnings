@@ -496,7 +496,7 @@ def index():
     return resp
 ```
 
-请注意这些cookies是设置在response对象上的。自通常地仅返回自那些视图函数返回的字串以来，Flask都会将它们转换成response对象。如要显式地完成这一转换，就可使用`make_resonse()`函数，然后对其进行修改。
+请注意这些cookies是设置在response对象上的。因为通常地仅返回自那些视图函数返回的字串以来，Flask都会将它们转换成response对象。如要显式地完成这一转换，就可使用`make_resonse()`函数，然后对其进行修改。
 
 某些时候，可能会在某个response对象尚不存在时就设置一个cookie，这也是可以的，只需通过使用[Deferred Request Callback](http://flask.readthedocs.org/en/latest/patterns/deferredcallbacks/#deferred-callbacks)模式即可。
 
