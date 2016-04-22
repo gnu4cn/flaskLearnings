@@ -470,7 +470,7 @@ def upload_file():
 
 ###关于cookies
 
-可使用`cookies`属性，来获取[cookies](http://flask.readthedocs.org/en/latest/api/#flask.Request.cookies)。而要设置一些cookies，则可以使用**response对象**的[`set_cookie`](http://flask.readthedocs.org/en/latest/api/#flask.Response.set_cookie)方法。request对象的cookies属性，是一个有着所有客户端传送的cookies的字典。如打算使用sessions功能，就不要直接使用这些cookies，而是使用Flask中，已在cookies之上加入了一些安全措施的[Session](http://flask.readthedocs.org/en/latest/quickstart/#sessions)功能。
+可使用`cookies`属性，来获取[cookies](http://flask.readthedocs.org/en/latest/api/#flask.Request.cookies)。而要设置一些cookies，则可以使用**response对象**的[`set_cookie`](http://flask.readthedocs.org/en/latest/api/#flask.Response.set_cookie)方法。request对象的cookies属性，是一个有着所有客户端传送的cookies的字典。如打算使用sessions功能，就不要直接使用这些cookies，而是使用Flask中，已在cookies之上加入了一些安全措施的[Sessions](http://flask.readthedocs.org/en/latest/quickstart/#sessions)功能。
 
 读取cookies:
 
