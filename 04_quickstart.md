@@ -428,7 +428,7 @@ def login():
 而要获取到URL中提交的参数（`?key=value`），就可使用`args`属性：
 
 ```python
-searchwork = request.args.get('key', '')
+searchword = request.args.get('key', '')
 ```
 
 这里建议使用*get*来获取URL参数，或通过捕获`KeyError`。因为用户可能会改变URL从而显示给他们一个400 bad request page，那样就不是用户友好的了。
@@ -439,7 +439,7 @@ searchwork = request.args.get('key', '')
 
 通过Flask，可轻易地处理上传的文件。只要确保没有忘记在HTML表单中设置上`enctype="multipart/form-data"`属性就行，否则浏览器将一点也不会发送文件。
 
-上传的文件是存储在内存或文件系统的某个临时地址的。通过查看request对象的`files`属性，就能访问到这些文件。每个上传的文件都保存在那个字典中。其与标准的Python `file`对象表现一致，不过其还有一个`save()`方法，该方法允许将那个文件存储在服务器的文件系统中。这里是展示其工作原理的一个简单示例：
+上传的文件是存储在内存中或文件系统的某个临时地址的。通过查看request对象的`files`属性，就能访问到这些文件。每个上传的文件都保存在那个字典中。其与标准的Python `file`对象表现一致，不过其还有一个`save()`方法，该方法允许将那个文件存储在服务器的文件系统中。这里是展示其工作原理的一个简单示例：
 
 ```python
 from flask import request
@@ -466,7 +466,7 @@ def upload_file():
     ...
 ```
 
-查看[Uploading Files]模式，得到一些更好的示例。
+查看[Uploading Files](http://flask.readthedocs.org/en/latest/patterns/fileuploads/#uploading-files)模式，得到一些更好的示例。
 
 ###关于cookies
 
