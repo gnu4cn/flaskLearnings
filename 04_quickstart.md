@@ -348,7 +348,7 @@ Flask将在`templates`文件夹中查找用到的模版。所以如应用是一�
 
 在使用了继承后，模版功能就特别有用了。如想要知道继承的工作原理，请移步[Template Inheritance](http://flask.readthedocs.org/en/latest/patterns/templateinheritance/#template-inheritance)模式文档。简单地说，模版继承可令到在各个页面上保留下一些确定元素成为可能（比如头部、导航栏及底部等元素）。
 
-自动转换是开启的，所以如果*名称（name）*中包含了HTML，就会被自动转换掉。在对某个变量可信的、同时知道该变量将是安全的HTML（比如该变量来自于某个将维基标签转换成HTML的模块），就可以通过使用`Markup`类，在模版中使用`|safe`过滤器，将其标记为安全。请参阅Jinja2的文档以得到更多示例。
+自动转换是开启的，所以如果*名称（name）*中包含了HTML，就会被自动转换掉。在对某个变量可信、同时知道该变量将是安全的HTML（比如该变量来自于某个将维基标签转换成HTML的模块）时，就可以通过使用`Markup`类，或在模版中使用`|safe`过滤器，将其标记为安全。请参阅Jinja2的文档以得到更多示例。
 
 下面是一个介绍`Markup`类工作原理的示例：
 
@@ -362,7 +362,7 @@ Markup(u'&lt;blink&gt;hacker&lt;/blink&gt;')
 u'Marked up\xbbHTML'
 ```
 
-*版本0.5中的变化*：不再对所有模版都开启自动转换。下面的文件扩展名会引发自动转换: `.html`、`.htm`、`.xml`及`.xhtml`。从字符串装入的莫不将不进行自动转换。
+*版本0.5中的变化*：不再对所有模版都开启自动转换。下面的文件扩展名会引发自动转换: `.html`、`.htm`、`.xml`及`.xhtml`。从字符串装入的模版将不进行自动转换。
 
 ##对请求数据的访问
 
@@ -378,7 +378,7 @@ Flask中的某些对象确实是全局对象，但又不是通常意义上的全
 
 请将上下文想象为处理线程（Imagine the context being the handling thread）。进来了一个请求，服务器就决定孵出一个新的线程（或其它什么，所采用的对象具备利用并发系统而不是线程来进行请求处理的能力）。在Flask开始其内部请求处理时，其找出当前活动的线程并将当前应用与WSGI环境与那个上下文（线程）绑定起来。Flask以一种明智的方式完成此操作，因此一个应用可以不中断地调用另一应用。
 
-那么这意味着什么呢？简单地说，你可以完全忽略此过程，除非要完成一些像是单元测试（unit testing）一类的工作。你会注意到由于缺少request对象而导致依赖于某个request对象的代码突然中断了。解决方法就是创建一个request对象，并将其绑定到上下文（线程）.单元测试的最容易方案，就是使用[`test_request_context()`](http://flask.readthedocs.org/en/latest/api/#flask.Flask.test_request_context)上下文管理器。结合使用`with`语句，就可以绑定上一个测试请求，如此就能与其进行互动操作。这里是一个示例：
+那么这意味着什么呢？简单地说，你可以完全忽略此过程，除非要完成一些像是单元测试（unit testing）一类的工作。你会注意到由于缺少request对象而导致依赖于某个request对象的代码突然中断了。解决方法就是创建一个request对象，并将其绑定到上下文（线程）。单元测试的最容易方案，就是使用[`test_request_context()`](http://flask.readthedocs.org/en/latest/api/#flask.Flask.test_request_context)上下文管理器。结合使用`with`语句，就可以绑定上一个测试请求，如此就能与其进行互动操作。这里是一个示例：
 
 ```python
 from flask import request, Flask
