@@ -30,3 +30,22 @@
 
 该`flaskr`文件夹并不是一个Python包，而仅是一个要放入一些文件的地方。随后将放入数据库图式及主模块（database schema as well as main module）到此文件夹。该应用是按下面地方式完成的。位于`static`文件夹中的文件，通过HTTP投递到应用的用户。CSS及JavaScript文件是放在这里的。而在`templates`文件夹中，Flask将查找Jinja2模版。本教程后面所创建的模版，都将放在这里。
 
+
+##步骤1：数据库图式
+
+首先，这里要创建出数据库图式。本应用只需一个简单的表，同时只打算支持SQLite，所以数据库图式的创建是相当容易的。只需将下面的内容放入到刚才所建立的*flaskr*文件夹下的一个名为*schema.sql*中：
+
+```sql
+drop table if exists entries;
+create table entries (
+    id integer primary key autoincrement,
+    title text not null,
+    'text' text not null
+);
+```
+
+该图式又一个名为`entries`的单一表构成。该表中每行记录都有一个`id`、`title`和`text`。`id`是一个自动增加的整数，同时作为一个主键（a primary key），其它两个字段都是非空的字符串（strings that must not be null）。
+
+##步骤2：应用的设置代码，Application Setup Code
+
+
