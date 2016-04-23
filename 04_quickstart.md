@@ -17,13 +17,13 @@ def hello_world():
 
 那么这些代码做了什么呢？
 
-    1. 首先我们导入了类[**`Flask`**](http://flask.readthedocs.org/en/latest/api/#flask.Flask)。此类的一个实例，就将成为我们的WSGI应用。
+1. 首先我们导入了类[**`Flask`**](http://flask.readthedocs.org/en/latest/api/#flask.Flask)。此类的一个实例，就将成为我们的WSGI应用。
 
-    2. 接着，创建了类Flask的一个实例。实例构造函数的第一个参数，就是应用的模块或包的名称（the name of the application‘s module or package）。如只要到单一模块（如同本例中这样），就可以使用*`__name__`*作为该参数，因为根据其作为应用启动，还是作为一个模块导入两种情况的不同，该名称参数会有所不同（可以是‘`__main__`’或实际用到的导入名称）。该参数是必须的，有了该参数，Flask才知道去哪里查找相应的模版、静态文件等。关于此实例构造函数的参数，请参阅[Flask](http://flask.readthedocs.org/en/latest/api/#flask.Flask)文档。
+2. 接着，创建了类Flask的一个实例。实例构造函数的第一个参数，就是应用的模块或包的名称（the name of the application‘s module or package）。如只要到单一模块（如同本例中这样），就可以使用*`__name__`*作为该参数，因为根据其作为应用启动，还是作为一个模块导入两种情况的不同，该名称参数会有所不同（可以是‘`__main__`’或实际用到的导入名称）。该参数是必须的，有了该参数，Flask才知道去哪里查找相应的模版、静态文件等。关于此实例构造函数的参数，请参阅[Flask](http://flask.readthedocs.org/en/latest/api/#flask.Flask)文档。
 
-    3. 这里接着使用[`route()`](http://flask.readthedocs.org/en/latest/api/#flask.Flask.route)修饰器，告诉Flask激发应用的是什么URL。
+3. 这里接着使用[`route()`](http://flask.readthedocs.org/en/latest/api/#flask.Flask.route)修饰器，告诉Flask激发应用的是什么URL。
 
-    4. 为函数赋予了一个名称，同时也用于生成该特定函数的URLs，并返回打算显示在用户浏览器中的消息。
+4. 为函数赋予了一个名称，同时也用于生成该特定函数的URLs，并返回打算显示在用户浏览器中的消息。
 
 将这些代码保存为`hello.py`并在Python解释器下运行。
 
