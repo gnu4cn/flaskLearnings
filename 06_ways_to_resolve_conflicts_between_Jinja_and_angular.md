@@ -38,7 +38,7 @@ if __name__ == '__main__':
  </html>
 ```
 
-2、3出自[这里](http://lorenhoward.com/blog/how-to-get-angular-to-work-with-jinja/)
+>2、3出自[这里](http://lorenhoward.com/blog/how-to-get-angular-to-work-with-jinja/)
 
 2. 使用verbatim暂停Jinja2的解析：
 
