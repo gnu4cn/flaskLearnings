@@ -184,7 +184,7 @@ args = parser.parse_args()
 
 >与argparse模块不同，[`reqparse.RequestParser.parse_args()`](http://flask-restful.readthedocs.org/en/0.3.5/api.html#reqparse.RequestParser.parse_args)返回一个Python字典，而不是一种定制的数据结构。
 
-使用该`reqparse`模块，还免费给出了完整的错误消息。如果某个参数未能通过验证，Flask-RESTful就会给出一个400 Bad Request的响应，以及一个突出显示该错误的响应。
+使用该`reqparse`模块，还附带给出了完整的错误消息。如果某个参数未能通过验证，Flask-RESTful就会给出一个400 Bad Request的响应，以及一个突出显示该错误的响应。
 
 ```bash
 $ curl -d 'rate=foo' http://127.0.0.1:5000/todos
