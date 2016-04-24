@@ -128,3 +128,23 @@ $ curl http://localhost:5000/todo2
 {u'todo2': u'Change my brakepads'}
 ```
 
+Flask-RESTful对来自视图方法的多种返回值类型，都是理解的。与Flask类似，可以返回任何可迭代的值，同时其会被转换成一个相应，以及原始的Flask响应对象（similar to Flask, you can return any interable and it will be converted into a response, including raw Flask response objects）。使用多个的返回值，Flask-RESTful同样支持响应代码与响应头部的设置，如下所示：
+
+```python
+class Todo1(Resource):
+    def get(self):
+        # Default to 200 OK
+        return {'task': 'Hello world'}
+
+class Todo2(Resource):
+    def get(self):
+        # Set the response code to 201
+        return {'task': 'Hello world'}, 201
+
+class Todo3(Resource):
+    def get(self):
+        # Set the response code 201 and return custom headers
+        return {'task', 'Hello world'}, 201, {'Etag': 'some-opaque-string'}
+```
+
+
