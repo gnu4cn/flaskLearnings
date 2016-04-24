@@ -170,7 +170,7 @@ api.add_resource(Todo,
 
 ###参数解析，Argument Parsing
 
-尽管Flask提供了容易的对请求数据的访问（比如查询字串<querystring>或POST的表单编码数据），但对于验证表单数据，仍然比较痛苦。而Flask-RESTful就通过使用一个类似于[argparse](http://docs.python.org/dev/library/argparse.html)的库，具有对请求数据验证的内建支持。
+尽管Flask提供了容易的对请求数据的访问（比如查询字串<querystring>或POST的表单编码数据），但对于验证表单数据，仍然比较痛苦。而Flask-RESTful就通过使用一个类似于[argparse](http://docs.python.org/dev/library/argparse.html)的库，具有对请求数据进行验证的内建支持。
 
 ```python
 from flask_restful import reqparse
