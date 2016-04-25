@@ -208,4 +208,72 @@ Flask-SQLAlchemy有着下面这些配置值。Flask-SQLAlchemy从Flask主配置�
 | SQLALCHEMY_MAX_OVERFLOW   | 对数据池达到最大大小后，控制可建立的连接数。在这些额外连接返回数据池时，其被断开并丢弃。  |
 | SQLALCHEMY_TRACK_MODIFICATIONS    | 如设置为`True`，Flask-SQLAlchemy将对对象的修改进行追踪并发射出信号。而设置为`None`时，将开启追逐而发出一条通知其将在后面默认关闭的警告。这会需要更多内存同时在不需要时应将其关闭。    |
 
+*0.8版本中的新配置键值情况*： 新加入的`SQLALCHEMY_NATIVE_UNICODE`, `SQLALCHEMY_POOL_SIZE`, `SQLALCHEMY_POOL_TIMEOUT`及`SQLALCHEMY_POOL_RECYCLE`。
 
+*0.12版本新键值*：加入了`SQLALCHEMY_BINDS`。
+
+*0.17版本新键值*：加入了`SQLALCHEMY_MAX_OVERFLOW`。
+
+*2.0版本新建值*：加入了`SQLALCHEMY_TRACK_MODIFICATIONS`。
+
+*2.1版本新情况*：在为对`SQLALCHEMY_TRACK_MODIFICATIONS`进行设置时将发出警告。
+
+
+###连接URI的格式
+
+完整的连接URIs清单，请查看SQLAlchemy文档[Supported Databases](http://www.sqlalchemy.org/docs/core/engines.html)。这里是一些常见的连接字串。
+
+SQLAlchemy将某种引擎的资源，表示为带有指明该引擎各种选项的可选关键字参数的URI。URI的格式为：
+
+```
+dialect+driver://username:password@host:port/database
+```
+
+字串中的多个部分都是可选的。如未指定数据库驱动，则就选择默认驱动（但要确保此时不要包括`+`号）。
+
+Postgres:
+
+```
+postgresql://scott:tiger@localhost/mydatabase
+```
+
+MySQL：
+
+```
+mysql://scott:tiger@localhost/mydatabase
+```
+
+Oracle:
+
+```
+oracle://scott:tiger@127.0.0.1:1521/sidname
+```
+
+SQLite(请注意开头的四个斜杠)：
+
+```
+sqlite:////absolute/path/to/foo.db
+```
+
+###使用定制元数据MetaData及命名约定
+
+可以使用一个定制的**MetaData**对象，来构建出**SQLAlchemy**对象。这样做除了其它一些目的外，允许指定一种[定制的常量命令约定(custom constraint naming convention)](http://docs.sqlalchemy.org/en/latest/core/constraints.html#constraint-naming-conventions)。在处理数据库迁移时，这么做是重要的（比如[这里](http://alembic.readthedocs.org/en/latest/naming.html)指出的使用[alembic](https://alembic.readthedocs.org/)）。因为SQL并没有定义标准的命名约定，所以其默认在不同数据库实现之间既没有保证，也没有有效的兼容性。此时就可以定义一种定制的命名约定，如同这里的SQLAlchemy文档中所建议的那样：
+
+```python
+from sqlalchemy import MetaData
+from flask import Flask
+from flask.ext.sqlalchemy import SQLAlchemy
+
+convention = {
+        "ix": 'ix_%(column_0_label)s',
+        "uq": "uq_%(table_name)s_%(column_0_name)s",
+        "ck": "ck_%(table_name)s_%(constrant_names)s",
+        "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+        "pk": "pk_%(table_name)s"
+        }
+
+metadata = MetaData(naming_convention=convention)
+db = SQLAlchemy(app, metadata=metadata)
+```
+
+关于**MetaData**的更多内容，参见[check out the offical docs on it](http://docs.sqlalchemy.org/en/latest/core/metadata.html)。
