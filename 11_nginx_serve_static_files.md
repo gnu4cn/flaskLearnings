@@ -9,7 +9,7 @@
 
 **注意**： 要使用
 
-```
+```bash
 $sudo chown -R www-data:www-data /path/to/static/files
 ```
 
