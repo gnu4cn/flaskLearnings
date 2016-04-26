@@ -277,3 +277,49 @@ db = SQLAlchemy(app, metadata=metadata)
 ```
 
 关于**MetaData**的更多内容，参见[check out the offical docs on it](http://docs.sqlalchemy.org/en/latest/core/metadata.html)。
+
+##模型的声明
+
+一般来讲，Flask-SQLAlchemy与一个已被良好配置的[declarative](http://www.sqlalchemy.org/docs/orm/extensions/declarative/api.html#module-sqlalchemy.ext.declarative)扩展中的声明性基类表现一致（Generally Flask-SQLAlchemy behaves like a properly configured declarative base from the [declarative](http://www.sqlalchemy.org/docs/orm/extensions/declarative/api.html#module-sqlalchemy.ext.declarative) extension）。因此这里建议阅读一下SQLAlchemy的文档，以获得全面的掌握。但最常用的一些用例，在这里都有说明。
+
+要记住下面一些事情：
+
+- 所有应用模型的基类，叫做*db.Model*。该基类是存储在必须要创建的SQLAlchemy实例上的。
+
+- SQLAlchemy中所必须的一些部分，在Flask-SQLAlchemy中是可选的。比如数据表名称在没有刻意重写时，会被自动设置。其是派生自类名称转换成小写形式，及驼峰表示法“CamelCase”到“camel_case”的转换。
+
+###简单示例
+
+这里有一个非常简单的示例：
+
+```python
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True)
+    email = db.Column(db.String(120), unique=True)
+
+    def __init__(self, username, email):
+        self.username = username
+        self.email = email
+
+    def __repr__(self):
+        return '<User %r>' % self.username
+```
+
+可以看出，这里使用`db`对象的**Column**方法来定义一个列。列的名称就是指派给它的名称。如打算在数据表中用一个不同的名称，可提供可选的第一个参数，该参数就是一个所需列名称的字符串（if you want to use a different name in the table you can provide a optional first argument which is a string with the desired column name）。主键是使用`primary_key=True`来标记出的。可将多个键标记为主键，此时它们就成为了一个复合主键。
+
+列的类型是`Column`方法的第一个参数。既可以直接提供出列类型，也可以在稍后对其进行调用来加以指定（比如提供一个长度值）。下面是一些最常见的列类型：
+
+| 列数据类型                | 说明                                      |
+| :-----------:             | :------------------:                      |
+| 整数（Integer）           | 一个整数                                  |
+| 字符串（String(size)）    | 一个有着最大长度的字符串                  |
+| 文本（Text）              | 一些较长的unicode文本                     |
+| 日期时间数据（DateTime）  | 以Python的`datetime`对象表示日期和时间    |
+| 浮点值数据（Float）       | 存储浮点值                                |
+| 逻辑值（Boolean）         | 存储一个逻辑数值                          |
+| PickleType                | 存储一个经Python的pickle模块转换后的Python 对象  |
+| 大型二进制文件            | 存储任意的大型二进制数据                  |
+
+
+
