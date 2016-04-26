@@ -383,3 +383,81 @@ class Tag(db.Model):
 ```
 
 这里将*Page.tags*配置为一个装入后的标签清单，因为这里不期望一个页面有太多标签。而每个标签下的页面（*Tag.pages*）则是一个动态的backref。如上面提到的一样，这意味着将获取到一个查询对象，随后可对该查询对象进行自主的选择。
+
+##数据的选择、插入和删除操作
+
+现在已经完成了模型的声明，是时间从数据库进行数据的查询了。这里是使用到快速起步章节中的模型定义（the model definitions）。
+
+###插入记录
+
+在能查询到数据前，务必要插入一些数据。所有模型都应具备一个构造器，所以如果忘记了这个构造器，那么要记得添加一个进去。构造器是仅供SQLAlchemy的用户使用的，其内部并不会用到，所以如何定义构造器完全是代码编写者自己决定的。
+
+将数据插入到数据库分三步：
+
+1. 创建相关Python对象
+
+2. 将其加入到数据库会话
+
+3. 提交会话
+
+此会话并非Flask的会话，而是Flask-SQLAlchemy的会话。其本质上是一个数据库事务的加强版本（it is essentially a beefed up version of a database transaction）。下面是如何使用的示例：
+
+```python
+>>> from relations import User
+>>> from relations import db
+>>> her = User('Feng Xiaochun', 'xchunf@gmail.com')
+>>> db.session.add(her)
+>>> db.session.commit()
+```
+
+那么，这并不那么难吧。这里发生了什么呢？在将该对象加入到数据库会话前，SQLAlchemy基本上没有将其加入到事务。那是很好的，因为到这里仍然可以丢弃变更。比如在某个页面建立文章时，只打算将该文章传递给模版做预览渲染，而不需要存入到数据库时。
+
+这里的`add()`函数调用随后加入了该对象。其将执行一条数据库的*INSERT*语句，但因为该事务仍未被提交，所以不会立即获取到一个ID。如完成了提交，则用户就有了一个ID：
+
+```python
+>>>her.id
+4
+```
+
+
+###删除记录
+
+删除记录与此非常类似，只不过使用`delete()`方法，而不是`add()`方法：
+
+```python
+>>> db.session.delete(me)
+>>> db.session.commit()
+```
+
+###查询记录
+
+那么怎样从数据库取回数据呢？为此Flask-SQLAlchemy提供了一个`Model`类上的`query`属性。在访问该属性时，就会取回一个新的包含所有记录的查询对象（a query object）。随后就可以使用诸如`filter()`等的方法，在启动使用`all()`或`first()`方法进行选择前，对这些记录进行过滤。而如打算使用逐渐进行记录查询，则要使用`get()`方法。
+
+随后的查询假设数据库中有着一下数据条目：
+
+| id        | username      | email             |
+| :-------: | :------:      | :----------:      |
+| 1         | admin         | admin@example.com |
+| 2         | peter         | peter@example.org |
+| 3         | guest         | guest@example.com |
+
+
+通过username获取到一名用户：
+
+```python
+>>> peter = User.query.filter_by(username='peter').first()
+>>> peter.id
+1
+>>> peter.email
+u'peter@example.org'
+```
+
+与上面一样，不过要查找一个不存在的username，将给出*None*：
+
+```python
+>>> missing = User.query.filter_by(username='missing').first()
+>>> missing is None
+True
+```
+
+
