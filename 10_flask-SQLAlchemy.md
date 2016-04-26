@@ -322,4 +322,64 @@ class User(db.Model):
 | 大型二进制文件            | 存储任意的大型二进制数据                  |
 
 
+###一到多的关系
 
+最常见的关系，就是一到多的关系了。因为关系时在确立前声明的，所以可以使用字符串来代表一些尚未建立的类（举例来说比如类*Person*定义了一个到*Article*的关系，而*Article*时在文件的后面才声明的）。
+
+关系是用[`relationship()`](http://www.sqlalchemy.org/docs/orm/relationship_api.html#sqlalchemy.orm.relationship)函数进行表达的。但是外键就必须使用类[`sqlalchemy.schema.ForeignKey`](http://www.sqlalchemy.org/docs/core/constraints.html#sqlalchemy.schema.ForeignKey)进行单独声明：
+
+```python
+class Person(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50))
+    addresses = db.relationship('Address', backref='person',
+            lazy='dynamic')
+
+class Address(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(50))
+    person_id = db.Column(db.Integer, db.ForeignKey('person.id'))
+```
+
+那么`db.relationship()`到底做了什么呢？该函数返回了一个新的可以完成多个事情的属性值。在本例中，告诉它指向到`Address`类并装入多个的此类。其是怎么知道这将返回多个的地址的呢？因为SQLAlchemy从声明中猜到一个有用的默认值。而如果打算要一个一对一的关系，可将`uselist=False`传递给`relationship()`方法。
+
+这里的*backref*和*lazy*又是什么意思呢？*backref*是一种同时在*Address*类上声明一个新的属性值的简单方式。随后就可以使用`my_address.person`来获取到该地址上的那个人了。*lazy*定义出了SQLAlchemy于何时从数据库装入数据：
+
+- `'select'`（这时默认的*lazy*选项），意思是SQLAlchemy将在必要的使用标准*select*语句时，才装入数据（`'select'`(which is the default) means that SQLAlchemy will load the data as neccessary in one go using a standard *select* statement）。
+
+- `'joined'`告诉SQLAlchemy，在父类使用*JOIN*语句时，在同一查询中装入该关系（`'joined'`tells SQLAlchemy to load the relationship in the same query as the parent using a *JOIN* statement）。
+
+- `'subquery'`与`'joined'`工作类似，但此时SQLAlchemy将使用一个子查询（`'subquery'` works like `'joined'` but instead SQLAlchemy will use a subquery）。
+
+- `'dynamic'` 是比较特殊的，同时在有着许多关系数据条目时是有用的。SQLAlchemy将返回另一个可在装入之前进一步处理的查询对象，而不是装入这些数据条目。在期望得到许多的此关系的数据时，通常会采用此选项（`'dynamic'` is special and useful if you have many items. Instead of loading the items SQLAlchemy will return another query object which you can further refine before loading the items. This is usually what you want if you expect more than a handful of items for this relationship）。
+
+怎样来定义backrefs的lazy状态呢？使用[`backref()`](http://www.sqlalchemy.org/docs/orm/relationship_api.html#sqlalchemy.orm.backref)函数：
+
+```python
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50))
+    addresses = ad.relationship('Address',
+            backref=db.backref('person', lazy='joined'), lazy='dynamic')
+```
+
+###多到多的关系
+
+在打算使用多到多关系时，需要定义出一个用于关系的助手数据表（a helper table）。对于助手数据表，这里强烈建立**不要**使用模型，而是一个实际的数据表：
+
+```python
+tags = db.Table('tags',
+        db.Column('tag_id', db.Integer, db.ForeignKey('tag.id')),
+        db.Column('page_id', db.Integer, db.ForeignKey('page.id'))
+        )
+
+class Page(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    tags = db.relationship('Tag', secondary=tags,
+            backref=backref('pages', lazy='dynamic'))
+
+class Tag(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+```
+
+这里将*Page.tags*配置为一个装入后的标签清单，因为这里不期望一个页面有太多标签。而每个标签下的页面（*Tag.pages*）则是一个动态的backref。如上面提到的一样，这意味着将获取到一个查询对象，随后可对该查询对象进行自主的选择。
