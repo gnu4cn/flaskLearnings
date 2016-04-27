@@ -57,8 +57,9 @@ app.config.update(
 | APPLICATION_ROOT              | 在应用没有占据一个完整的域或子域时，此配置可设置为该应用配置做存活的路径。该配置将作为session cookie的路径值。而在使用了域时，就应将此配置设置为`None`。  |
 | MAX_CONTENT_LENGTH            | 如此配置被设置为一个字节数，那么Flask将以返回一个413状态代码方式，拒绝那些内容长度超过此配置值的请求。   |
 | SEND_FILE_MAX_AGE_DEFAULT     | 与[`send_static_file()`](http://flask.readthedocs.org/en/latest/api/#flask.Flask.send_static_file)（默认的静态文件处理函数）及[`send_file()`](http://flask.readthedocs.org/en/latest/api/#flask.send_file)一起使用的，默认缓存控制最大存活时间，可已是[`datetime.timedelta`](https://docs.python.org/dev/library/datetime.html#datetime.timedelta)类型的值，或秒数。可使用[Flask](http://flask.readthedocs.org/en/latest/api/#flask.Flask)或[Blueprint](http://flask.readthedocs.org/en/latest/api/#flask.Blueprint)上相应的[`get_send_file_max_age()`](http://flask.readthedocs.org/en/latest/api/#flask.Flask.get_send_file_max_age)钩子，来对其进行覆写。默认为43200（也就是12小时）。    |
-| TRAP_BAD_REQUEST_ERRORS       | 
-| PREFFERED_URL_SCHEME          |
+| TRAP_HTTP_EXCEPTIONS          | 如将此配置设为`True`，Flask就不会执行HTTP例外错误处理器（the error handlers of HTTP exceptions），而会将例外像其它例外一样处理，同时通过例外堆栈将其冒出。这样做对于在不得不找出HTTP例外来自何处的危险的调试情形下，是有帮助的。    |
+| TRAP_BAD_REQUEST_ERRORS       | Werkzeug模块用于处理特定于请求数据的内部数据结构，将出现特殊的键错误，这也是不良请求例外。
+| PREFFERED_URL_SCHEME          | 
 | JSON_AS_ASCII                 |
 | JSON_SORT_KEYS                |
 | JSONIFY_PRETTYPRINT_REGULAR   |
