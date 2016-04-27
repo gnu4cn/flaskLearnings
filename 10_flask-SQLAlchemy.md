@@ -431,7 +431,7 @@ class Tag(db.Model):
 
 ###查询记录
 
-那么怎样从数据库取回数据呢？为此Flask-SQLAlchemy提供了一个`Model`类上的`query`属性。在访问该属性时，就会取回一个新的包含所有记录的查询对象（a query object）。随后就可以使用诸如`filter()`等的方法，在启动使用`all()`或`first()`方法进行选择前，对这些记录进行过滤。而如打算使用逐渐进行记录查询，则要使用`get()`方法。
+那么怎样从数据库取回数据呢？为此Flask-SQLAlchemy提供了一个`Model`类上的`query`属性。在访问该属性时，就会取回一个新的包含所有记录的查询对象（a query object）。随后就可以使用诸如`filter()`等的方法，在启动使用`all()`或`first()`方法进行选择前，对这些记录进行过滤。而如打算使用主键进行记录查询，则要使用`get()`方法。
 
 随后的查询假设数据库中有着一下数据条目：
 
@@ -460,4 +460,109 @@ u'peter@example.org'
 True
 ```
 
+通过稍加复杂的表达式，来选择出一批用户：
 
+```python
+>>> User.query.filter(User.email.endswith('@example.com')).all()
+[<User u'admin'>, <User u'guest'>]
+```
+
+按照某种条件对用户进行排序：
+
+```python
+>>> User.query.order_by(User.username).all() #修正
+[<User u'admin'>, <User u'guest'>, <User u'peter'>]
+```
+
+限制用户数：
+
+```python
+>>> User.query.limit(1).all()
+[<User u'admin'>]
+```
+
+通过主键获取到某名用户：
+
+```python
+>>> User.query.get(1)
+<User u'admin'>
+```
+
+###视图中的记录查询
+
+如编写一个Flask视图函数，那么为一些缺失的数据条目返回404错误，是很常见的。因为这是一种十分常见的做法，Flask-SQLAlchemy专为此目的提供了一个助手函数。这种情况下可使用`get_or_404()`而不是`get()`函数，以及使用`first_or_404()`而不是`first()`函数。这都会生成404错误而不是返回`None`：
+
+```python
+@app.route('/user/<username>')
+def show_user(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    return render_template('show_user.html', user=user)
+```
+
+##使用Binds功能实现多个数据库
+
+从0.12版本的Flask-SQLAlchemy开始，就可以连接到多个数据库了。为达到连接多个数据库的目的，Flask-SQLAlchemy将SQLAlchemy预配置为支持多个“binds”。
+
+那么什么是binds呢？在SQLAlchemy中讲到的一个bind，是某种可以执行SQL语句，且通常是一个连接或引擎。在Flask-SQLAlchemy中，binds就总是指的在场景背后自动创建出的引擎了。创建出的每个这些引擎，随后都被关联上一个简短的键（就是bind键）。该键随后又在模型声明时被用于将某个模型关联到特定于该键的引擎（What are binds? In SQLAlchemy speak a bind is something that can execute SQL statements and is usually a connection or engine. In Flask-SQLAlchemy binds are always engines that are created for you automatically behind the scences. Each of these engines is then associated with a short key(the bind key). This key is then used at model declaration time to associate a model with a specific engine）。
+
+如未对某个模型指定bind键，则该模型就使用默认连接（默认连接就是用`SQLALCHEMY_DATABASE_URI`所配置的那个数据库连接）。
+
+###示例配置
+
+下面的配置声明了三个数据库连接。特殊的默认连接，以及另外两个名为*users*（用于存储用户数据）及名为*appmeta*（该数据库引擎连接到一个sqlite数据库，用于对一些应用内部提供的一些数据只读操作）：
+
+```python
+SQLALCHEMY_DATABASE_URI = 'postgres://localhost/main'
+SQLALCHEMY_BINDS = {
+    'users':        'mysqldb://localhost/users',
+    'appmeta':      'sqlite:////path/to/appmeta.db'
+}
+```
+
+###数据表的建立和丢弃
+
+默认下[`create_all()`](http://flask-sqlalchemy.pocoo.org/2.1/api/#flask.ext.sqlalchemy.SQLAlchemy.create_all)及[`drop_all()`](http://flask-sqlalchemy.pocoo.org/2.1/api/#flask.ext.sqlalchemy.SQLAlchemy.drop_all)方法会在所有声明的binds上进行操作，包括默认数据库引擎。此行为可通过提供*bind*参数，进行定制。既可给该参数一个单独的bind名称，也可给它`'__all__'`以表示所有的binds，还可以给其一个binds的清单。而默认的bind(`SQLALCHEMY_DATABASE_URI`)则名为*None*:
+
+```python
+>>> db.create_all()
+>>> db.create_all(bind=['users'])
+>>> db.create_all(bind='appmeta')
+>>> db.drop_all(bind=None)
+```
+
+###对binds的引用，Referring to Binds
+
+在声明某个模型时，可通过使用内建的`__bind_key__`属性，来指定其bind：
+
+```python
+class User(db.Model):
+    __bind_key__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True)
+```
+
+在Flask-SQLAlchemy内部，该bind键是以`'bind_key'`，存储在该数据表的*info*字典中的。知道这点，对于打算直接创建一个数据表对象来说是很重要的，因为必须把bind键放在那里（在建立多对多关系时，需要直接创建数据表）：
+
+```python
+user_favorites = db.Table('user_favorites',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+    db.Column('message_id', db.Integer, db.ForeignKey('message.id')),
+    info={'bind_key': 'users'}
+)
+```
+
+如已在模型中指定了*__bind_key__*，就可以惯常方式，使用这些模型了。该模型将连接到其所指定的数据库连接。
+
+
+##信号发射的支持，Singalling Support
+
+要在数据变更提交到数据库之前或之后收到提示，就要连接到下面的这些信号。只有在配置中开启了`SQLALCHEMY_TRACK_MODIFICATIONS`选项后，才会追踪这些变更。
+
+*这是0.10版本中新引入的特性*。
+
+*2.1版本中的修改*：`before_models_committed`已可被正确地触发。
+
+*自2.1版本起弃用的特性*：在未来的版本中此特性将被关闭。
+
+
+##API，编程接口
