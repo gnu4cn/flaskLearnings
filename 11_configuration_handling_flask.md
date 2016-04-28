@@ -59,10 +59,11 @@ app.config.update(
 | SEND_FILE_MAX_AGE_DEFAULT     | 与[`send_static_file()`](http://flask.readthedocs.org/en/latest/api/#flask.Flask.send_static_file)（默认的静态文件处理函数）及[`send_file()`](http://flask.readthedocs.org/en/latest/api/#flask.send_file)一起使用的，默认缓存控制最大存活时间，可已是[`datetime.timedelta`](https://docs.python.org/dev/library/datetime.html#datetime.timedelta)类型的值，或秒数。可使用[Flask](http://flask.readthedocs.org/en/latest/api/#flask.Flask)或[Blueprint](http://flask.readthedocs.org/en/latest/api/#flask.Blueprint)上相应的[`get_send_file_max_age()`](http://flask.readthedocs.org/en/latest/api/#flask.Flask.get_send_file_max_age)钩子，来对其进行覆写。默认为43200（也就是12小时）。    |
 | TRAP_HTTP_EXCEPTIONS          | 如将此配置设为`True`，Flask就不会执行HTTP例外错误处理器（the error handlers of HTTP exceptions），而会将例外像其它例外一样处理，同时通过例外堆栈将其冒出。这样做对于在不得不找出HTTP例外来自何处的危险的调试情形下，是有帮助的。    |
 | TRAP_BAD_REQUEST_ERRORS       | Werkzeug模块用于处理特定于请求数据的内部数据结构，将出现特殊的键错误，这也是不良请求例外。
-| PREFFERED_URL_SCHEME          | 
-| JSON_AS_ASCII                 |
-| JSON_SORT_KEYS                |
-| JSONIFY_PRETTYPRINT_REGULAR   |
-| JSONIFY_MIMETYPE              |
-| TEMPLATES_AUTO_RELOAD         |
-| EXPLAIN_TEMPLATE_LOADING      |
+| PREFFERED_URL_SCHEME          | 在没有可用的URL方案时，用于URL生成的方案。默认为`http`。  |
+| JSON_AS_ASCII                 | 默认情况下，Flask将对象序列化为ascii编码的JSON。而如将此配置设置为`False`，就不会编码为ASCII，而原样输出字串并返回unicode编码的字符串。`jsonify`会自动将对象进行编码，随后做为实例进行传输（`jsonify` will automatically encode it in `utf-8` then for transport for instance）。    |
+| JSON_SORT_KEYS                | 默认下，Flask将按键值排序的方式，对JSON对象进行序列化处理。这样做是为了确保字典的散列化种子数据的独立，从而令到返回值的一致性而不会造成外部HTTP缓存的碎片化。可通过修改此变量，来覆写该默认行为。尽管不推荐这样做，但可在牺牲缓存性能上，得到一些性能的提升。    |
+| JSONIFY_PRETTYPRINT_REGULAR   | 在此配置项设置为`True`（也就是默认设置），同时在不是由一个XMLHttpRequest对象发起请求时（这是由`X-Requested-With`头部控制的），jsonify的响应就会是打印友好的。 |
+| JSONIFY_MIMETYPE              | 用于jsonify响应的MIME类型。   |
+| TEMPLATES_AUTO_RELOAD         | （略）    |
+| EXPLAIN_TEMPLATE_LOADING      | （略）    |
+
