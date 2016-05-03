@@ -378,4 +378,17 @@ $ curl http://localhost:5000/todos/todo3 -d "task=something different" -X PUT -v
 {"task": "something different"}
 ```
 
+##请求解析
 
+>警告：
+
+>Flask-RESTful的整个请求解析器都将被移除，并将用如何集成其它可更好地完成输入/输出功能的Python包（比如[marshmallow](http://marshmallow.readthedocs.org/)）的文档取代，这就意味着到版本2.0后就将弃用而不会进行维护了。但无需担心，如仍有代码使用了Flask-RESTful的`reqparse`并希望继续使用，其也不会那么快就没有。
+
+Flask-RESTful的请求解析接口[reqparse](http://flask-restful.readthedocs.io/en/0.3.5/api.html#module-reqparse)，是模仿的[argparse](http://docs.python.org/dev/library/argparse.html)接口。设计用于提供对Flask中的[`flask.request`](http://flask.pocoo.org/docs/api/#flask.request)对象上的所有变量的简单与同一的访问。
+
+###基本参数
+
+下面是一个简单的请求解析器示例。其查找[`flask.request.values`](http://flask.pocoo.org/docs/api/#flask.Request.values)字典中的两个参数：一个整数和一个字符串：
+
+```python
+from flask_restful impor
