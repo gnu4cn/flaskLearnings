@@ -1,0 +1,19 @@
+server {
+
+    listen 80;
+
+    # for angularJS web application
+    location / {
+        alias /home/peng/flask/infoFMP/www-root/;
+    }
+
+    # To uwsgi-flask
+    location /api/ {
+        include uwsgi_params;
+        uwsgi_pass 127.0.0.1:8001;
+    }
+
+    #server_name app.local:80;
+    server_name app.local;
+
+}
