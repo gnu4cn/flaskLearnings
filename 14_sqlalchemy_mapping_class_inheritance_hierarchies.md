@@ -236,8 +236,8 @@ class Manager(Employee):
 
 >`sqlalchemy.orm.with_polymorphic(base, classes, selectable=False, flat=False, polymorphic_on=None, aliased=False, innerjoin=False, _use_mapper_path=False, _existing_alias=None)`
 
-    *生成一个指定出所给的基类的后代映射器的指定列的`AliasedClass`结构体（Produce an `AliasedClass` construct which specifies columns for descendant mappers of the given base）。
+    生成一个指定出所给的基类的后代映射器的指定列的`AliasedClass`结构体（Produce an `AliasedClass` construct which specifies columns for descendant mappers of the given base）。
 
-    *>版本0.8中的新特性：`orm.with_polymorphic`是对既有的`Query`方法`Query.with_polymorphic`的补充，该方法有着同样目的，但在使用中不那么灵活。
+    >版本0.8中的新特性：`orm.with_polymorphic`是对既有的`Query`方法`Query.with_polymorphic`的补充，该方法有着同样目的，但在使用中不那么灵活。
 
 
