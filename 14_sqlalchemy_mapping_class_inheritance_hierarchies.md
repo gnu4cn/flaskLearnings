@@ -134,4 +134,110 @@ FROM employee
 []
 ```
 
-`orm.with_polymorphic`所返回的实体，是一个[`AliasedClass`](http://docs.sqlalchemy.org/en/latest/orm/query.html#sqlalchemy.orm.util.AliasedClass)对象
+`orm.with_polymorphic`所返回的实体，是一个[`AliasedClass`](http://docs.sqlalchemy.org/en/latest/orm/query.html#sqlalchemy.orm.util.AliasedClass)对象，其可像其它别名一样，用在某个`Query`，包含了在`Employee`类上的那些命名熟悉。在这个示例中，`eng_plus_manager`成为了用于对上面的三向外部连接的引用实体（the entity that use to refer to the three-way outer join above）。其同时包含了类清单中所命名的各个类的命名空间，因此就可以访问到这些特定子类的属性。下面的例子，演示了对`eng_plus_manager`中`Engineer`以及`Manager`属性的访问：
+
+```python
+eng_plus_manager = with_polymorphic(Employee, [Engineer, Manager])
+query = db.session.query(eng_plus_manager).filter(
+    or_(
+        eng_plus_manager.Engineer.engineer_name=='x',
+        eng_plus_manager.Manager.manager_name=='y'
+)
+)
+```
+
+>译者注：这里的`or_`是一个函数（方法），使用前需要从`sqlalchemy`导入进来。
+
+`orm.with_polymorphic`方法接受单一类或映射器、类及映射器清单，或者字符串`'*'`以表明所有子类：
+
+```python
+# join to the engineer table
+entity = with_polymorphic(Employee, Engineer)
+
+# join to the engineer and manager tables
+entity = with_polymorphic(Employee, [Engineer, Manager])
+
+# join to all subclass tables
+entity = with_polymorphic(Employee, '*')
+
+# use the 'entity' with a Query object
+session.query(entity).all()
+```
+
+该方法还接受第三个参数`selectable`，该参数取代自动的连接建立并由提供的selectable参数来代替select操作（It also accepts a third argument `selectable` which replaces the automatic join creation and instead selects directly from the selectable given）。该特性通常与稍后要介绍到的‘具体（concrete）’继承一起使用，但可在需要使用多态性装入的特殊SQL使用中，与任何的继承一起应用：
+
+```python
+# custom selectable
+employee = Employee.__table__
+manager = Manager.__table__
+engineer = Engineer.__table__
+entity = with_polymorphic(
+            Employee,
+            [Engineer, Manager],
+            employee.outerjoin(manager).outerjoin(engineer)
+        )
+
+# use the 'entity' with a Query object
+session.query(entity).all()
+```
+
+请注意如仅需装入单一的子类型（subtype），比如仅是`Engineer`对象，那么就不需要使用`orm.with_polymorphic`, 因为可以直接对`Engineer`类进行查询。
+
+[`Query.with_polymorphic`](http://docs.sqlalchemy.org/en/latest/orm/query.html#sqlalchemy.orm.query.Query.with_polymorphic)有着与`orm.with_polymorphic`同样的目的，除了在其使用模式中没有那么灵活外，因为其仅应用到第一个的完整映射，这就在`Query`中影响到那个类或目标类的所有事件（except is not as flexible in its usage patterns in that it only applies to the first full mapping, which then impacts all occurrences of that class or the subclasses within the Query）。作为简单示例，可以认为其较为简洁：
+
+```python
+db.session.query(Employee).with_polymorphic([Engineer, Manager]).\
+    filter(or_(Engineer.engineer_name=='w', Manager.manager_name=='q'))
+```
+
+>版本0.8中的新特性：`orm.with_polymorphic`，一个`Query.with_polymorphic`方法的改进版本。
+
+映射器也接受`with_polymorphic`作为一个配置性参数，因此连接样式的装入就可自动执行了（the joined-style load will be issued automaticly）。此参数可以是字符串`'*'`、一个类清单，或包含了它们的一个元组，后面跟随一个selectable参数：
+
+```python
+class Employee(db.Model, ModelMixin):
+
+    __tablename__ = 'employee'
+
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String(50))
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'employee',
+        'polymorphic_on': type,
+        'with_polymorphic': '*'
+    }
+
+class Engineer(Employee):
+
+    __tablename__ = 'engineer'
+
+    id = db.Column(db.Integer, db.ForeignKey('employee.id'), primary_key=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'engineer'
+    }
+
+class Manager(Employee):
+
+    __tablename__ = 'manager'
+
+    id = db.Column(db.Integer, db.ForeignKey('employee.id'), primary_key=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'manager'
+    }
+
+```
+
+上面的映射将生成一个类似于对`Employee`对象的每次`with_polymorphic`查询的查询。
+
+而使用`orm.with_polymorphic`或`Query.with_polymorphic`，将覆盖映射器级别的`with_polymorphic`设置（the mapper-level `with_polymorphic` setting）。
+
+>`sqlalchemy.orm.with_polymorphic(base, classes, selectable=False, flat=False, polymorphic_on=None, aliased=False, innerjoin=False, _use_mapper_path=False, _existing_alias=None)`
+
+    * 生成一个指定出所给的基类的后代映射器的指定列的`AliasedClass`结构体（Produce an `AliasedClass` construct which specifies columns for descendant mappers of the given base）。
+
+    * >版本0.8中的新特性：`orm.with_polymorphic`是对既有的`Query`方法`Query.with_polymorphic`的补充，该方法有着同样目的，但在使用中不那么灵活。
+
+
