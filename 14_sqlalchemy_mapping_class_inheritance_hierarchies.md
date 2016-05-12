@@ -266,6 +266,20 @@ class Manager(Employee):
 
 - **innerjoin** -- 在此参数为`True`时，就会使用一个`INNER JOIN`。只会在仅查询某个指定的子类型时，才指定此参数（This should only be specified if querying for one specific subtype only）。
 
+##对所查询数据表的高级控制
 
+`with_polymorphic`函数（`orm.with_polymorphic`及`Query.with_polymorphic`）在简单场景下工作得很好。但在诸如某人想要只输出子类数据表而并非父数据表，这样的数据表输出时，就要使用到直接控制（direct control of table rendering is called for, such as the case when one wants to render to only the subclass table and not the parent table）。
+
+下面的用例同通过直接使用映射的`Table`对象实现。比如，要查询特定条件下`employees`的名字：
+
+```python
+engineer = Engineer.__table__
+manager = Manager.__table__
+
+db.session.query(Employee.name).\
+    outerjoin((engineer, engineer.c.employee_id==Employee.employee_id)).\
+    outerjoin((manager, manager.c.employee_id==Employee.employee_id)).\
+    filter(or_(Engineer.engineer_info==`w`, Manager.manager_data==`q`))
+```
 
 
