@@ -1,10 +1,21 @@
-from flask_sqlalchemy import SQLAlchemy
-
-db = SQLAlchemy()
+from app import db
 
 def model_to_dict(inst, cls):
     convert = dict()
     d = dict()
+
+    for c in super(cls, inst).__table__.columns:
+        v = getattr(inst, c.name)
+        if c.type in convert.keys() and v is not None:
+            try:
+                d[c.name] = convert[c.type](v)
+            except:
+                d[c.name] = "Error: Failed to convert using ", str(convert[c.type])
+        elif v is None:
+            d[c.name] = str()
+        else:
+            d[c.name] = v
+
     for c in cls.__table__.columns:
         v = getattr(inst, c.name)
         if c.type in convert.keys() and v is not None:
@@ -16,8 +27,8 @@ def model_to_dict(inst, cls):
             d[c.name] = str()
         else:
             d[c.name] = v
-    return d
 
+    return d
 
 class ModelMixin(object):
     def __repr__(self):
@@ -27,10 +38,63 @@ class ModelMixin(object):
     def to_dict(self):
         return model_to_dict(self, self.__class__)
 
-class User(db.Model, ModelMixin):
-    __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(60), unique=True)
+class Employee(db.Model, ModelMixin):
 
-    def __init__(self, username):
-        self.username = username
+    __tablename__ = 'employee'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50))
+    type = db.Column(db.String(50))
+
+    def __init__(self, name):
+        self.name = name
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'employee',
+        'polymorphic_on': type
+    }
+
+class Engineer(Employee):
+
+    __tablename__ = 'engineer'
+
+    id = db.Column(db.Integer, db.ForeignKey('employee.id'), primary_key=True)
+    engineer_info = db.Column(db.String(30))
+
+    def __init__(self, engineer_info, name):
+        super(Engineer, self).__init__(name)
+        self.engineer_info = engineer_info
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'engineer'
+    }
+
+class Manager(Employee):
+
+    __tablename__ = 'manager'
+
+    id = db.Column(db.Integer, db.ForeignKey('employee.id'), primary_key=True)
+    manager_data = db.Column(db.String(30))
+
+    def __init__(self, manager_data, name):
+        super(Manager, self).__init__(name)
+        self.manager_data = manager_data
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'manager'
+    }
+
+class Equipment(db.Model, ModelMixin):
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # relationship to Employee
+    em_id = db.Column(db.Integer, db.ForeignKey('employee.id'), index=True)
+    employee = db.relationship('Employee')
+
+    name = db.Column(db.String(64))
+
+    def __init__(self, em_id, name):
+        self.em_id = em_id
+        self.name = name
+
