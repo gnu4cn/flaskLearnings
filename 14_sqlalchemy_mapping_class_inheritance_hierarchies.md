@@ -240,4 +240,32 @@ class Manager(Employee):
 
 >版本0.8中的新特性：`orm.with_polymorphic`是对既有的`Query`方法`Query.with_polymorphic`的补充，该方法有着同样目的，但在使用中不那么灵活。
 
+此方法的使用，将确保各个后代映射器的数据表是包括在`FROM`条文（the `FROM` clause）中的，且将允许对这些数据表应用`filter()`规则。而结果实例也已将这些列进行了装入，因此不再需要对这些列的“后取（post fetch）”操作。
+
+请参见[Basic Control of Which Tables are Queried](http://docs.sqlalchemy.org/en/latest/orm/inheritance.html#with-polymorphic)中的例子。
+
+###参数：
+
+- **base** -- 要进行别名操作的基类（Base class to be aliased）。
+
+- **classes** -- 单一的类或映射器，或类/映射器的清单，这些类或映射器都是继承自基类的。此外，该参数也可以是字符串`'*'`，此时所有后代的被映射类都将加入到`FROM`条文（the FROM clause）。
+
+- **aliased** -- 在此参数为`True`时，selectable参数将被封装在一个别名中，也就是`(SELECT * FROM <fromclauses>) AS anon_1`。当在使用`with_polymorphic()`方法创建一个在不支持放入括号中的连接的后端（a backend that does not support parenthesized joins）上，比如SQLite及老版本的MySQl，的`JOIN`目标时，这是重要的。
+
+- **flat** -- 这是一个逻辑值参数，将传递给`FromClause.alia()`调用，由此`Join`对象的别名就不包含一个封闭的`SELECT`了。此参数可在许多情形下带来更高的效率。某个嵌套的`JOIN`上的`JOIN`，将被重写为对某个别名的在后端上的不支持此语法的`SELECT`子查询的`JOIN`（A JOIN against a nested JOIN will be rewritten as a JOIN against an aliased SELECT subquery on backends that do not support this syntax）。
+
+将`flat`设置为`True`就意味着`aliased`参数也是`True`。
+
+>这是版本0.9.0中的新特性。
+
+>参见[`Join.alias()`](http://docs.sqlalchemy.org/en/latest/core/selectable.html#sqlalchemy.sql.expression.Join.alias)
+
+- **selectable**，该参数是将用在生成的`FROM`条文处的一个数据表或`select()`语句。在所需类使用了具体数据表继承（concrete table inheritance），因为当前SQLAlchemy无法在数据表之间自动生成`UNIONs`。如使用了该参数，其就必须表示经由每个映射类所映射的数据表及列的完整集合。否则那些未计入的映射列就将导致其数据表直接追加到`FROM`条文，这就将造成错误的查询结果。
+
+- **polymorphic_on** -- 该参数是一个用作“辨别器（discriminator）”的列，提供给`selectable`。如未提供此参数，当基类有着`polymorphic_on`属性时，就默认使用基类的`polymorphic_on`属性。此参数对于那些默认不具有多态装入行为（do not have polymorphic loading behavior by default）的映射来说，是有用的。
+
+- **innerjoin** -- 在此参数为`True`时，就会使用一个`INNER JOIN`。只会在仅查询某个指定的子类型时，才指定此参数（This should only be specified if querying for one specific subtype only）。
+
+
+
 
