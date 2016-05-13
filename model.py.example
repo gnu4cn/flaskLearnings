@@ -1,10 +1,19 @@
+# -*- coding: utf-8 -*-
+##########################
+#本验证模型验证了：
+#    1、Mixin 的继承；
+#    2、使用了Mixin的类的初始化（需要关键字）
+#    3、to_dict方法
+#    ......
+#############################
 from app import db
+from sqlalchemy.ext.declarative import declared_attr
 
 def model_to_dict(inst, cls):
     convert = dict()
     d = dict()
 
-    if super(cls, inst) != None:
+    if (super(cls, inst) != None) & (hasattr(super(cls, inst), '__table__')):
         for c in super(cls, inst).__table__.columns:
             v = getattr(inst, c.name)
             if c.type in convert.keys() and v is not None:
@@ -39,16 +48,52 @@ class ModelMixin(object):
     def to_dict(self):
         return model_to_dict(self, self.__class__)
 
-class Employee(db.Model, ModelMixin):
+class Department(db.Model, ModelMixin):
 
-    __tablename__ = 'employee'
+    __tablename__ = 'department'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50))
-    type = db.Column(db.String(50))
+    name = db.Column(db.Unicode(64))
 
     def __init__(self, name):
         self.name = name
+
+class PersonnelMixin(ModelMixin):
+
+    @declared_attr
+    def id(cls):
+        return db.Column(db.Integer, primary_key=True)
+
+    @declared_attr
+    def name(cls):
+        return db.Column(db.String(50))
+
+    @declared_attr
+    def gender(cls):
+        return db.Column(db.SmallInteger, default=1)
+
+class EmployeeMixin(PersonnelMixin):
+
+    @declared_attr
+    def department_id(cls):
+        department = db.relationship('Department')
+        return db.Column(db.Integer, db.ForeignKey(Department.id))
+
+    def __init__(self, name, gender, department_id, *args, **kwargs):
+        super(EmployeeMixin, self).__init__(*args, **kwargs)
+        self.name = name
+        self.gender = gender
+        self.department_id = department_id
+
+class Employee(db.Model, EmployeeMixin):
+
+    __tablename__ = 'employee'
+
+    type = db.Column(db.String(50))
+    birthday = db.Column(db.Date)
+
+    def __init__(self, *args, **kwargs):
+        super(Employee, self).__init__(*args, **kwargs)
 
     __mapper_args__ = {
         'polymorphic_identity': 'employee',
@@ -62,8 +107,8 @@ class Engineer(Employee):
     id = db.Column(db.Integer, db.ForeignKey('employee.id'), primary_key=True)
     engineer_info = db.Column(db.String(30))
 
-    def __init__(self, engineer_info, name):
-        super(Engineer, self).__init__(name)
+    def __init__(self, engineer_info, *args, **kwargs):
+        super(Engineer, self).__init__(*args, **kwargs)
         self.engineer_info = engineer_info
 
     __mapper_args__ = {
@@ -77,8 +122,8 @@ class Manager(Employee):
     id = db.Column(db.Integer, db.ForeignKey('employee.id'), primary_key=True)
     manager_data = db.Column(db.String(30))
 
-    def __init__(self, manager_data, name):
-        super(Manager, self).__init__(name)
+    def __init__(self, manager_data, *args, **kwargs):
+        super(Manager, self).__init__(*args, **kwargs)
         self.manager_data = manager_data
 
     __mapper_args__ = {
