@@ -146,6 +146,8 @@ class Category(db.Model):
 
 如在函数中定义应用，却是全局性地定义**SQLAlchemy**对象，后者是如何知道前者的呢？答案就是**`init_app()`**函数：
 
+>译者注：无论是经由直接使用SQLAlchemy的构造函数`SQLAlchemy(app)`, 抑或使用SQLAlchemy的`init_app(app)`方式，都会在生成的`db`实例中，生成一个`app`属性，该属性就是`app`这个flask的实例，可以经由`db.app`访问到这个flask的`app`实例的方法或属性。
+
 ```python
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
