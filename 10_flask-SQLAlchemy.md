@@ -8,7 +8,7 @@ Flask-SQLAlchemy使用起来非常有意思，对于简单应用是难以置信�
 
 通常情况下，要制作一个Flask应用，必须要做的就是创建该Flask应用，装入选择配置并通过传入到应用来建立**SQLAlchemy**对象。
 
-一旦建立起来，该对象就包含了来自**sqlalchemy**及**sqlalchemy.org**的那些函数及助理对象及方法了（contains all the functions and helpers from both **sqlalchemy** and **sqlalchemy.org**）。此外，该对象还提供了一个名为*Model*的类，该类是一个可用于声明应用模型的生命基础（furthermore it provides a class called *Model* that is a declarative base which can be used to declare models）：
+一旦建立起来，该对象就包含了来自**sqlalchemy**及**sqlalchemy.orm**的那些函数及助理对象及方法了（contains all the functions and helpers from both **sqlalchemy** and **sqlalchemy.orm**）。此外，该对象还提供了一个名为*Model*的类，该类是一个可用于声明应用模型的生命基础（furthermore it provides a class called *Model* that is a declarative base which can be used to declare models）：
 
 ```python
 from flask import Flask
