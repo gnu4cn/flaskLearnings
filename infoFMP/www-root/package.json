@@ -1,0 +1,19 @@
+{
+  "name": "www-root",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "angular-bootstrap-show-errors": "^2.3.0",
+    "angular-file-upload": "^2.3.2",
+    "angular-moment": "^1.0.0-beta.6",
+    "moment": "^2.13.0",
+    "textangular": "^1.5.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

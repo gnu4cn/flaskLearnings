@@ -1,0 +1,85 @@
+<div class="container">
+    <div public-menu lang="{{ lang}}" active-menu="{{ currentMenu}}"></div>
+
+    <div class="row under-menu">
+        <div class="col-sm-6 left-column">
+            <form role="form" name="login" novalidate ng-submit="login.$valid && submitLogin()">
+                <!-- 用户名部分 -->
+                <!--不显示的 user.locale 字段，用于向服务器提供用户locale。-->
+                <input type="text" ng-model="user.locale" style="display: none;"/>
+                <div class="form-group" show-errors>
+                    <label for ="username" >{{ lang.Username}}</label>
+                    <div class="row">
+                        <div class="col-xs-8">
+                            <input type="text" required class='form-control'
+                                   name="username" autocomplete="off"
+                                   id="username" ng-model-options="{debounce: 500}"
+                                   placeholder="{{ lang.PleaseInputaUsername}}" 
+                                   ng-model="user.username" />
+                        </div>
+                        <div class="col-xs-2">
+                        </div>
+                    </div>
+                    <p class="help-block">{{ lang.UsernameHelpLogin}}</p>
+                    <div role="alert">
+                        <span class="label label-danger" ng-show="login.username.$error.required">
+                            {{ lang.Required}}</span>
+                    </div>
+                </div>
+                <!-- 密码部分 -->
+                <div class="form-group" show-errors>
+                    <label for="password" >{{ lang.Password}}</label>                    
+                    <div class="row">
+                        <div class="col-xs-8">
+                            <input ng-init="showPassord = false"
+                                   type="{{ showPassword ? 'text': 'password'}}" 
+                                   class="form-control" name="password" required
+                                   id="password"
+                                   ng-model="user.password" />
+                        </div>
+                        <div class="col-xs-2">
+                            <span id="spanPassword" class="input-group-btn pull-left"
+                                  style="cursor: pointer; border: none;">
+                                <button type="button" 
+                                        class="btn btn-default hide-show-password" 
+                                        ng-click="showPassword = !showPassword">
+                                    <i id="iconPassword" 
+                                       class="{{ showPassword ? 'glyphicon glyphicon-eye-close': 'glyphicon glyphicon-eye-open' }}">
+                                    </i>
+                                </button>
+                            </span>
+                        </div>
+                    </div>
+                    <p class="help-block">{{ lang.PasswordHelpLogin}}</p>
+                    <div role='alert'>
+                        <span class="label label-danger" ng-show="login.password.$error.required">
+                            {{ lang.Required}}</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-xs-9">
+                            <button class="btn btn-success pull-right" 
+                                    type="submit">{{ lang.loginSubmit}}</button>
+                        </div>
+                        <div class="col-xs-3">
+                            <button class="btn btn-danger pull-left" 
+                                    ng-click="reset(login)">{{ lang.Reset}}</button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <span  class="label label-success" ng-init="loginSuccess = false" 
+                               ng-show="loginSuccess">
+                            {{ responseMsg}}</span>
+                        <span class="label label-warning" ng-init="serverFault = false"
+                              ng-show="serverFault">
+                            {{ responseMsg}}</span>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-5 right-column">
+            <p>{{ lang.Agreement}}</p>
+        </div>
+    </div>
+</div>

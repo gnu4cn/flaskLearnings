@@ -1,0 +1,52 @@
+.nav, .pagination, .carousel, .panel-title a {
+    cursor: pointer;
+}
+html, body {
+    height: 100%;
+    background-color: #f0f0f0;
+    font-size: 100%;
+}
+.green {
+    color: green;
+}
+
+.glyphicon {
+    font-size: 18px;
+}
+.fa-check {
+    color: green;
+}
+.fa {
+    font-size: 18px;
+}
+
+.glyphicon-ok {
+    color: green;
+}
+
+.under-menu {
+    background-color: #f4f4f4;
+    margin: 60px 0 0 0px;
+}
+
+@media (min-width: 768px){
+    .left-column{
+        border-right: solid #555555 1px;
+    }
+    .right-column{
+        margin-left: 10px;
+    }
+}
+
+@media (max-width: 767px){
+    .left-column{
+        border-bottom: solid #555555 1px;
+        padding-bottom: 10px;
+    }    
+    .right-column{
+        margin-top: 10px;
+    }
+    .help-block {
+        display: none;
+    }
+}

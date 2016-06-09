@@ -1,0 +1,34 @@
+<uib-accordion close-others="true">
+    <uib-accordion-group heading="{{lang.accountAndPassword}}" 
+                         panel-class="panel-info" 
+                         is-disabled="false" is-open="true">
+        <div>
+            <table class="table table-striped table-condensed">
+                <tbody>
+                    <tr>
+                        <th class="row-head">{{lang.Username}}: </th>
+                        <td>{{user.username}}</td>
+                    </tr>
+
+                    <tr>
+                        <th class="row-head">{{lang.Password}}: </th>
+                        <td>********</td>
+                    </tr>
+
+                    <tr>
+                        <th class="row-head">{{lang.Category}}: </th>
+                        <td>{{user.category.data}}</td>
+                    </tr>
+
+                    <tr>
+                        <th class="row-head">{{lang.Created}}: </th>
+                        <td>{{user.created_at | amUtc | amLocal | amDateFormat: 'YYYY-M-D HH:mm:ss'}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+
+        <button class="btn btn-warning pull-right">{{lang.UpdatePassword}}</button>
+    </uib-accordion-group>
+</uib-accordion>
