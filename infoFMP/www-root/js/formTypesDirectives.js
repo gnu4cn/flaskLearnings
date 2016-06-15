@@ -2,6 +2,36 @@
 
 var formTypesDirectives = angular.module('formTypesDirectives', []);
 
+formTypesDirectives.directive('typeFirstname', [
+    function typeFirstname(){
+        var NAME_REGEX = /^([A-Z\u4e00-\u9fa5])[ÆÐƎƏƐƔĲŊŒẞÞǷȜæðǝəɛɣĳŋœĸſßþƿȝĄƁÇĐƊĘĦĮƘŁØƠŞȘŢȚŦŲƯY̨Ƴąɓçđɗęħįƙłøơşșţțŧųưy̨ƴÁÀÂÄǍĂĀÃÅǺĄÆǼǢƁĆĊĈČÇĎḌĐƊÐÉÈĖÊËĚĔĒĘẸƎƏƐĠĜǦĞĢƔáàâäǎăāãåǻąæǽǣɓćċĉčçďḍđɗðéèėêëěĕēęẹǝəɛġĝǧğģɣĤḤĦIÍÌİÎÏǏĬĪĨĮỊĲĴĶƘĹĻŁĽĿʼNŃN̈ŇÑŅŊÓÒÔÖǑŎŌÕŐỌØǾƠŒĥḥħıíìiîïǐĭīĩįịĳĵķƙĸĺļłľŀŉńn̈ňñņŋóòôöǒŏōõőọøǿơœŔŘŖŚŜŠŞȘṢẞŤŢṬŦÞÚÙÛÜǓŬŪŨŰŮŲỤƯẂẀŴẄǷÝỲŶŸȲỸƳŹŻŽẒŕřŗſśŝšşșṣßťţṭŧþúùûüǔŭūũűůųụưẃẁŵẅƿýỳŷÿȳỹƴźżžẓa-zA-Z .\u4e00-\u9fa5]{0,}$/;
+        return {
+            restrict: 'A',
+            require: 'ngModel',
+            link: function (scope, elm, attrs, ctrl) {
+                ctrl.$validators.format = function (modelValue, viewValue) {
+                    return ctrl.$isEmpty(modelValue) || NAME_REGEX.test(viewValue);                    
+                };
+            }
+        };
+        
+    }]);
+
+formTypesDirectives.directive('typeLastname', [
+    function typeLastname(){
+        var NAME_REGEX = /^([A-Z\u4e00-\u9fa5])[ÆÐƎƏƐƔĲŊŒẞÞǷȜæðǝəɛɣĳŋœĸſßþƿȝĄƁÇĐƊĘĦĮƘŁØƠŞȘŢȚŦŲƯY̨Ƴąɓçđɗęħįƙłøơşșţțŧųưy̨ƴÁÀÂÄǍĂĀÃÅǺĄÆǼǢƁĆĊĈČÇĎḌĐƊÐÉÈĖÊËĚĔĒĘẸƎƏƐĠĜǦĞĢƔáàâäǎăāãåǻąæǽǣɓćċĉčçďḍđɗðéèėêëěĕēęẹǝəɛġĝǧğģɣĤḤĦIÍÌİÎÏǏĬĪĨĮỊĲĴĶƘĹĻŁĽĿʼNŃN̈ŇÑŅŊÓÒÔÖǑŎŌÕŐỌØǾƠŒĥḥħıíìiîïǐĭīĩįịĳĵķƙĸĺļłľŀŉńn̈ňñņŋóòôöǒŏōõőọøǿơœŔŘŖŚŜŠŞȘṢẞŤŢṬŦÞÚÙÛÜǓŬŪŨŰŮŲỤƯẂẀŴẄǷÝỲŶŸȲỸƳŹŻŽẒŕřŗſśŝšşșṣßťţṭŧþúùûüǔŭūũűůųụưẃẁŵẅƿýỳŷÿȳỹƴźżžẓa-zA-Z .\u4e00-\u9fa5]{0,}$/;
+        return {
+            restrict: 'A',
+            require: 'ngModel',
+            link: function (scope, elm, attrs, ctrl) {
+                ctrl.$validators.format = function (modelValue, viewValue) {
+                    return ctrl.$isEmpty(modelValue) || NAME_REGEX.test(viewValue);                    
+                };
+            }
+        };
+        
+    }]);
+
 // 身份证好验证代码
 formTypesDirectives.directive('typeIdNumber', ['checkIDCardNumber',
     function (checkIDCardNumber) {
@@ -10,9 +40,7 @@ formTypesDirectives.directive('typeIdNumber', ['checkIDCardNumber',
             require: 'ngModel',
             link: function (scope, elm, attrs, ctrl) {
                 ctrl.$validators.format = function (modelValue, viewValue) {
-                    //console.log(viewValue);
                     return ctrl.$isEmpty(modelValue) || checkIDCardNumber(viewValue);
-                    //console.log("It is ID number");                    
                 };
             }
         };
@@ -25,7 +53,7 @@ formTypesDirectives.directive('typePassportNumber', ['checkPassportNumber',
             require: 'ngModel',
             link: function (scope, elm, attrs, ctrl) {
                 ctrl.$validators.format = function (modelValue, viewValue) {
-                    console.log(ctrl.$isEmpty(modelValue) || checkPassportNumber(viewValue));                    
+                    return ctrl.$isEmpty(modelValue) || checkPassportNumber(viewValue);                    
                 };
             }
         };
@@ -73,14 +101,7 @@ formTypesDirectives.directive('typePassword', function () {
         require: 'ngModel',
         link: function (scope, elm, attrs, ctrl) {
             ctrl.$validators.typePassword = function (modelValue, viewValue) {
-                if (ctrl.$isEmpty(modelValue)) {
-                    return true;
-                }
-
-                if (PASSWORD_REGEXP.test(viewValue)) {
-                    return true;
-                }
-                return false;
+                return ctrl.$isEmpty(modelValue) || PASSWORD_REGEXP.test(viewValue);
             };
         }
     };

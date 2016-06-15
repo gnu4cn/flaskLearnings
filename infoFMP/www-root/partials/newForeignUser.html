@@ -1,16 +1,83 @@
-<!DOCTYPE html>
-<!--
-To change this license header, choose License Headers in Project Properties.
-To change this template file, choose Tools | Templates
-and open the template in the editor.
--->
-<html>
-    <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body>
-        <div>TODO write content</div>
-    </body>
-</html>
+<div class="container">
+    <div public-menu lang="{{lang}}" active-menu="{{currentMenu}}"></div>
+
+    <div class="row under-menu">
+        <div class="col-sm-7 left-column">
+            <form role="form" name="register" novalidate
+                  ng-submit="register.$valid && submitRegistration()">
+                <!-- 用户名部分 -->
+                <!--不显示的 user.locale 字段，用于向服务器提供用户locale。-->
+                <input type="text" ng-model="user.locale" style="display: none;"/>
+                <!--不显示的 user.category 字段，用于向服务器提供用户类别。-->
+                <input type="text" ng-model="user.category" style="display: none;"/>
+                <div class="row">
+                    <div class="col-xs-4 cell">
+                        <div class="form-group has-feedback has-feedback-right" show-errors>
+                            <label class="control-label">{{lang.passportNumber}}</label>
+                            <input type="text" class="form-control" required 
+                                   name="passport_number" 
+                                   ng-model-options="{debounce: 1000}"
+                                   placeholder="{{lang.YourPassportNumber}}" 
+                                   ng-model="user.passportNumber" 
+                                   autocomplete="off"
+                                   uib-tooltip="{{lang.PassportNumberHelp}}"
+                                   tooltip-placement="bottom-left"
+                                   tooltip-trigger="focus"
+                                   type-passport-number />
+
+                            <span class="glyphicon glyphicon-ok form-control-feedback"
+                                  ng-show='register.passport_number.$valid'></span>
+                            <!--
+                            <i class="fa fa-check form-control-feedback" ng-show='register.username.$valid'></i>
+                            -->
+                        </div>   
+                        <div role="alert" style="margin-bottom: 10px;">
+                            <span class="label label-warning" ng-show="register.passport_number.$error.required">
+                                {{ lang.Required}}</span>
+                            <span class="label label-danger" ng-show="register.passport_number.$error.format">
+                                {{ lang.PassportNumberNotQualified}}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-6 col-xs-5 cell">
+                        <div class="form-group">
+                            <label class="control-label">{{lang.Gender}}</label>
+                            <select class="form-control" required id="gender" 
+                                    ng-model="user.gender"
+                                    ng-options="g.id as g.data for g in Genders| orderBy:'id' track by g.id">
+                                <option value="">-- {{lang.selectGender}} --</option>
+                                <!-- <option ng-repeat="p_c in pCategories| orderBy: 'id'" 
+                                        value="{{p_c.id}}">{{p_c.data}}</option>-->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div register-form-common-parts lang="{{lang}}"></div>
+                <div class="row">
+                    <div class="col-xs-9">
+                        <button class="btn btn-success pull-right" 
+                                type="submit">{{lang.newuserSubmit}}</button>
+                    </div>
+                    <div class="col-xs-3">
+                        <button class="btn btn-danger pull-left" 
+                                ng-click="reset(register)">{{lang.Reset}}</button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12">
+                        <span  class="label label-success" ng-init="registeredSuccess = false" 
+                               ng-show="registeredSuccess">
+                            {{responseMsg}}</span>
+                        <span class="label label-warning" ng-init="serverFault = false"
+                              ng-show="serverFault">
+                            {{responseMsg}}</span>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-md-4 right-column">
+            <p>{{lang.Agreement}}</p>
+        </div>
+    </div>
+</div>

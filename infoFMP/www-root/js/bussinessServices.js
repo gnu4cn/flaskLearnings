@@ -17,7 +17,7 @@ bussinessServices.factory('getLocale', ['$cookies',
             if (locale !== undefined && locale !== '') {
                 return locale;
             } else
-                return 'en';
+                return 'en-us';
         };
     }]);
 
@@ -84,7 +84,7 @@ bussinessServices.factory('beforeAuthorizedOps', ['checkCreds', 'getLocale', 'ge
                                 size: 'sm',
                                 resolve: {
                                     lang: function () {
-                                        return lang;
+                                        return JSON.parse(lang);
                                     },
                                     message: function () {
                                         return res.message;
@@ -97,11 +97,11 @@ bussinessServices.factory('beforeAuthorizedOps', ['checkCreds', 'getLocale', 'ge
                                     $location.path('/user/login');
                                 },
                                 function () {
-                                    deleteCreds();
                                     $location.path('/');
                                 });
-                        }
+                        }                        
                     });
+                    
             }
         };
     }]);
@@ -115,26 +115,26 @@ bussinessServices.factory('setamMomentLocal', ['amMoment',
 
 bussinessServices.factory('checkPassportNumber',
     function checkPassportNumber() {
-        return function(Number){
-            var PASSPORT_NUMBER_REGEXP = /^[A-Z0-9<]{9}[0-9]{1}[A-Z]{3}[0-9]{7}[A-Z]{1}[0-9]{7}[A-Z0-9<]{14}[0-9]{2}$/;
+        return function (Number) {
+            var PASSPORT_NUMBER_REGEXP = /^([A-Z0-9])[A-Z0-9]{3,8}$/;
             return PASSPORT_NUMBER_REGEXP.test(Number);
         };
     });
-    
-bussinessServices.factory('setPersonCategory', ['$cookies', 
-    function setPersonCategory($cookies){
-        return function(category){
+
+bussinessServices.factory('setPersonCategory', ['$cookies',
+    function setPersonCategory($cookies) {
+        return function (category) {
             $cookies.put('PersonCategory', category);
         };
     }]);
 
-bussinessServices.factory('getPersonCategory', ['$cookies', 
-    function getPersonCategory($cookies){
-        return function(){
-            var returnVal =  $cookies.get('PersonCategory');
+bussinessServices.factory('getPersonCategory', ['$cookies',
+    function getPersonCategory($cookies) {
+        return function () {
+            var returnVal = $cookies.get('PersonCategory');
             if (returnVal !== undefined && returnVal !== '')
-                return returnVal;            
-            else 
+                return returnVal;
+            else
                 return 6;
         };
     }]);
@@ -343,8 +343,8 @@ bussinessServices.factory('checkIDCardNumber',
             return true;
         };
     });
-    
-    
+
+
 
 
 

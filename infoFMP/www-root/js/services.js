@@ -87,7 +87,7 @@ services.factory('UserService', ['$http', 'languageService',
         }
         
         function CheckCredValid(locale, cred){
-            return $http.get('/api/user/'+locale+'/'+ cred)
+            return $http.get('/api/user/checkcredentialvalid/'+locale+'/'+ cred)
                 .then(
                     handleSuccess,
                     handleError(lang.serviceRequestFault)

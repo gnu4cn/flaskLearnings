@@ -16,26 +16,49 @@ from languages import lang
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer, \
     SignatureExpired, BadSignature
 from flask import jsonify
-from datetime import datetime
+from datetime import datetime, date
 from constant import ROLE_USER, MALE, TOKEN_EXPIRE
 from constant import PRSN_CAT as p_c
 from appdemo import db
 from passlib.apps import custom_app_context as pwd_context
+from sqlalchemy.orm import with_polymorphic, MapperExtension
+
+### 这是为了last_updated
+class MixinExtension(MapperExtension):
+    def before_insert(self, mapper, connection, instance):
+        instance.created_at = datetime.now()
+        instance.last_updated = datetime.now()
+
+    def before_update(self, mapper, connection, instance):
+        instance.created_at = instance.created_at
+        instance.last_updated = datetime.now()
 
 # 使用db实例中的app属性
 app = db.app
 
+dbSession = db.session
+
+def create_profile(firstName, lastName, uId, idNumber, sexality, \
+                   passportNumber, category):
+    return {
+        '0': lambda: Staff(u_id=uId, id_number=idNumber, f_name=firstName, \
+                           l_name=lastName),
+        '1': lambda: StaffFamily(u_id=uId, id_number=idNumber, f_name=firstName, \
+                                 l_name=lastName),
+        '2': lambda: ExternalChinese(u_id=uId, id_number=idNumber, \
+                                     f_name=firstName, l_name=lastName),
+        '5': lambda: Trainee(u_id=uId, gender=sexality, \
+                             passport_number=passportNumber, \
+                             f_name=firstName, l_name=lastName),
+        '6': lambda: TraineeFamily(u_id=uId, gender=sexality, \
+                                   passport_number=passportNumber, \
+                                   f_name=firstName, l_name=lastName),
+        '7': lambda: ExternalForeigner(u_id=uId, gender=sexality, \
+                                       passport_number=passportNumber, \
+                                       f_name=firstName, l_name=lastName)
+    }[category]()
+
 #db = SQLAlchemy()
-
-#def create_military_officer_user(r, username, password, \
-    #                                 category, firstName, lastName, idNumber, \
-    #                                 passportNumber, locale):
-#    try:
-#        u = User(username, password, category)
-#        p = MilitaryOfficer()
-
-
-
 
 # The final model_to_dict
 def model_to_dict(inst, cls):
@@ -103,18 +126,28 @@ class ModelMixin(object):
 
         return jsonify(r)
 
-##用户表
-class User(db.Model, ModelMixin):
-    '''
-    用户表，存储了用户名、一卡通卡号、密码，用户角色。与个人资料相关联。
-    '''
-    __tablename__ = 'user_table'
 
-    card_number = db.Column(db.String(64), index=True)
-    username = db.Column(db.String(32), index=True, unique=True)
-    password_hash = db.Column(db.String(128))
-    role = db.Column(db.SmallInteger, default=ROLE_USER)
-    person_type = db.Column(db.String(1))
+##用户表
+class UserMinxin(ModelMixin):
+    @declared_attr
+    def card_number(cls):
+        return db.Column(db.String(64), index=True)
+
+    @declared_attr
+    def username(cls):
+        return db.Column(db.String(32), index=True, unique=True)
+
+    @declared_attr
+    def password_hash(cls):
+        return db.Column(db.String(128))
+
+    @declared_attr
+    def role(cls):
+        return db.Column(db.SmallInteger, default=ROLE_USER)
+
+    @declared_attr
+    def person_type(cls):
+        return db.Column(db.String(1))
 
     # 为导入现有数据、管理员建立个人资料、外军学员建立家属资料而设置的一个
     # 初始化标志。该标志初始值为0表明是系统自动建立的帐号，在对应的用户自主注册后
@@ -123,14 +156,16 @@ class User(db.Model, ModelMixin):
     # 经由注册页面建立的帐号，此字段都设置为True，而系统自动建立的帐号，都设置为
     # False
 
-    is_registered = db.Column(db.Boolean, default=False)
+    @declared_attr
+    def is_registered(cls):
+        return db.Column(db.Boolean, default=False)
 
     def generate_auth_token(self, expiration=TOKEN_EXPIRE):
         s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
         return s.dumps({'id': self.id})
 
-    @staticmethod
-    def verify_auth_token(token):
+    @classmethod
+    def verify_auth_token(self, token):
         s = Serializer(app.config['SECRET_KEY'])
         try:
             data = s.loads(token)
@@ -139,10 +174,11 @@ class User(db.Model, ModelMixin):
         except BadSignature:
             return None
 
-        user = User.query.get(data['id'])
+        user = self.query.get(data['id'])
 
         return user
 
+    ### 为何这里必须用静态方法？
     @staticmethod
     def check_auth_token_expired(cred, locale):
         r = {}
@@ -184,41 +220,6 @@ class User(db.Model, ModelMixin):
         return jsonify(r)
 
     @classmethod
-    def create(self, username, password, category, firstName, lastName, \
-               idNumber, passportNumber, locale):
-        r = {}
-        if username is None or password is None or category is None:
-            r['success'] = False
-            r['message'] = lang.get_item('usernameOrpasswordOrcategoryIsBlank', locale)
-
-        if self.query.filter_by(username=username).first() is not None:
-            r['success'] = False
-            r['message'] = lang.get_item('usernameAlreadyExist', locale)
-
-#        {
-#            0: lambda:
-#
-#        }[int(category)]()
-
-#        if int(category) <= 5:
-        try:
-            u = User('', username, password, category)
-            try:
-                db.session.add(u)
-                db.session.commit()
-                r['success'] = True
-                r['message'] = lang.get_item('createUserSuccessfully', locale)
-
-            except:
-                r['success'] = False
-                r['message'] = lang.get_item('databaseInsertionError', locale)
-        except:
-            r['success'] = False
-            r['message'] = lang.get_item('makeInstanceError', locale)
-
-        return r
-
-    @classmethod
     def check_username(self, testUsername):
         r = {}
         r['success'] = True
@@ -229,14 +230,14 @@ class User(db.Model, ModelMixin):
 
         return jsonify(r)
 
-    @staticmethod
-    def get_by_credential(cred, locale):
+    @classmethod
+    def get_by_credential(self, cred, locale):
         r = {}
 
         token = cred[0:-7]
 
         try:
-            r['user'] = User.verify_auth_token(token).to_dict
+            r['user'] = self.verify_auth_token(token).to_dict
             r['user']['category'] = p_c.get_by_id(r['user']['person_type'], locale)
             r['success'] = True
             r['message'] = lang.get_item('GetUserAccountInfoSuccessfully', locale)
@@ -247,12 +248,56 @@ class User(db.Model, ModelMixin):
 
         return jsonify(r)
 
-
     def hash_password(self, password):
         self.password_hash = pwd_context.encrypt(password)
 
+    @classmethod
+    def create(self, username, password, category, firstName, lastName, \
+               idNumber, gender, passportNumber, locale):
+        r = {}
+        try:
+            u = self(username, password, category)
+
+            try:
+                dbSession.add(u)
+                dbSession.commit()
+                uId = u.id
+
+                try:
+                    p = create_profile(firstName, lastName, uId, idNumber, \
+                                       gender, passportNumber, category)
+                    try:
+                        dbSession.add(p)
+                        dbSession.commit()
+
+                        r['success'] = True
+                        r['message'] = lang.get_item('createUserSuccessfully', locale)
+
+                    except:
+                        r['success'] = False
+                        r['message'] = lang.get_item('ProfileInsertionError', locale)
+                        dbSession.delete(u)
+                        dbSession.commit()
+
+                except:
+                    r['success'] = False
+                    r['message'] = lang.get_item('makeProfileInstanceFail', locale)
+                    dbSession.delete(u)
+                    dbSession.commit()
+
+            except:
+                r['success'] = False
+                r['message'] = lang.get_item('UserInsertionError', locale)
+
+        except:
+            r['success'] = False
+            r['message'] = lang.get_item('makeUserInstanceError', locale)
+
+        return jsonify(r)
+
     def __init__(self, username, password, person_type, card_number='', \
-                 role='0', is_registered=False):
+                 role='0', is_registered=False, *args, **kwargs):
+        super(UserMinxin, self).__init__(*args, **kwargs)
         self.card_number = card_number
         self.username = username
         self.password_hash = pwd_context.encrypt(password)
@@ -260,15 +305,33 @@ class User(db.Model, ModelMixin):
         self.person_type = person_type
         self.is_registered = is_registered
 
+### http://stackoverflow.com/questions/15534147/python-inheritance-in-sqlalchemy
+### the mixin must come first!!!
+class User(UserMinxin, db.Model):
+    '''
+    用户表，存储了用户名、一卡通卡号、密码，用户角色。与个人资料相关联。
+    '''
+    __tablename__ = 'user_table'
+
+    type = db.Column(db.String(32))
+
+    def __init__(self, *args, **kwargs):
+        super(User, self).__init__(*args, **kwargs)
+
+    __mapper_args__ = {
+        'extension': MixinExtension(),
+        'polymorphic_on': type,
+        'polymorphic_identity': 'user_table',
+    }
+
 class MediaMixin(ModelMixin):
     '''
     媒体数据表，可存储图片、音乐、视频等内容。国家表、人员表都用到此表的数据。
     '''
     @declared_attr
     def u_id(cls):
-        return db.Column(db.Integer, db.ForeignKey(User.id))
-        user = db.relationship('User', cascade="all, delete-orphan", \
-                               single_parent=True)
+        user = db.relationship('User')
+        return db.Column(db.Integer, db.ForeignKey(User.id, ondelete='cascade'))
 
     @declared_attr
     def title(cls):
@@ -286,15 +349,15 @@ class MediaMixin(ModelMixin):
     def uri(cls):
         return db.Column(db.String(255), nullable=False)
 
-    def __init__(self, u_id, title, description, filesize, uri, *args, **kwargs):
+    def __init__(self, u_id, title='', description='', filesize=0, uri='', \
+                 *args, **kwargs):
         self.title = title
         self.description = description
         self.uri = uri
         self.filesize = filesize
         self.u_id = u_id
 
-class Media(db.Model, MediaMixin):
-
+class Media(MediaMixin, db.Model):
     __tablename__ = 'media'
 
     type = db.Column(db.String(32))
@@ -302,10 +365,10 @@ class Media(db.Model, MediaMixin):
     def __init__(self, *args, **kwargs):
         super(Media, self).__init__(*args, **kwargs)
 
-
     __mapper_args__ = {
+        'extension': MixinExtension(),
+        'polymorphic_on': type,
         'polymorphic_identity': 'media',
-        'polymorphic_on': type
     }
 
 class Image(Media):
@@ -328,7 +391,6 @@ class Image(Media):
     }
 
 class Audio(Media):
-
     __tablename__ = 'audio'
 
     id = db.Column(db.Integer, db.ForeignKey(Media.id, ondelete='cascade'), \
@@ -346,7 +408,6 @@ class Audio(Media):
     }
 
 class Video(Media):
-
     __tablename__ = 'video'
 
     id = db.Column(db.Integer, db.ForeignKey(Media.id, ondelete='cascade'), \
@@ -355,7 +416,7 @@ class Video(Media):
     duration = db.Column(db.DECIMAL('9,2'))
 
     video = db.relationship('Video', cascade='all, delete-orphan', \
-                               single_parent=True)
+                            single_parent=True)
 
     def __init__(self, duration, *args, **kwargs):
         super(Video, self).__init__(*args, **kwargs)
@@ -365,8 +426,7 @@ class Video(Media):
         'polymorphic_identity': 'video'
     }
 
-class Province(db.Model, ModelMixin):
-
+class Province(ModelMixin, db.Model):
     __tablename__ = 'province'
 
     pinyin = db.Column(db.String(64))
@@ -387,8 +447,7 @@ class Province(db.Model, ModelMixin):
         self.pinyin = pinyin
         self.hanzi = hanzi
 
-class City(db.Model, ModelMixin):
-
+class City(ModelMixin, db.Model):
     __tablename__ = 'city'
 
     #province
@@ -418,7 +477,7 @@ class City(db.Model, ModelMixin):
         self.pinyin = pinyin
         self.hanzi = hanzi
 
-class CustomPort(db.Model, ModelMixin):
+class CustomPort(ModelMixin, db.Model):
     '''
     中国的出入境口岸。
     '''
@@ -437,8 +496,7 @@ class CustomPort(db.Model, ModelMixin):
         self.alpha_3 = alpha_3
         self.alpha_4 = alpha_4
 
-class Language(db.Model, ModelMixin):
-
+class Language(ModelMixin, db.Model):
     __tablename__ = 'language'
 
     code = db.Column(db.String(3))
@@ -453,7 +511,7 @@ class Language(db.Model, ModelMixin):
         self.zh_name = zh_name
         self.native_name = native_name
 
-class Country(db.Model, ModelMixin):
+class Country(ModelMixin, db.Model):
     '''
     国家表（国旗和国歌都保存在Media表中）。
     '''
@@ -486,8 +544,8 @@ class Country(db.Model, ModelMixin):
 ## Mixins 部分
 class PersonMixin(ModelMixin):
     @declared_attr
-    def gender(cls):
-        return db.Column(db.String(1), default=MALE)
+    def mobile(cls):
+        return db.Column(db.String(11))
 
     @declared_attr
     def f_name(cls):
@@ -501,39 +559,36 @@ class ProfileMixin(PersonMixin):
     # relationship to User
     @declared_attr
     def u_id(cls):
-        user = db.relationship('User', cascade="all, delete-orphan", single_parent=True)
+        user = db.relationship('User')
         return db.Column(db.Integer, \
                          db.ForeignKey(User.id, ondelete='cascade'), unique=True)
 
 class ChineseMixin(ProfileMixin):
     @declared_attr
-    def type_(cls):
-        return db.Column(db.String(32))
+    def id_number(cls):
+        return db.Column(db.String(18), default='')
 
-    @declared_attr
-    def ID_Number(cls):
-        return db.Column(db.String(18))
-
-    def __init__(self, gender, f_name, l_name, u_id, ID_Number, *args, **kwargs):
+    def __init__(self, u_id, id_number='', mobile='', f_name='', l_name='', \
+                 *args, **kwargs):
         super(ChineseMixin, self).__init__(*args, **kwargs)
-        self.gender = gender
         self.f_name = f_name
         self.l_name = l_name
         self.u_id = u_id
-        self.ID_Number = ID_Number
-
-    __mapper_args__ = {
-        'polymorphic_on': type_
-    }
+        self.id_number = id_number
+        self.mobile = mobile
 
 # 这里使用了数据表映射
-class Chinese(db.Model, ChineseMixin):
+class Chinese(ChineseMixin, db.Model):
     __tablename__ = 'chinese'
 
-    def __init__(*args, **kwargs):
+    type = db.Column(db.String(32))
+
+    def __init__(self, *args, **kwargs):
         super(Chinese, self).__init__(*args, **kwargs)
 
     __mapper_args__ = {
+        'extension': MixinExtension(),
+        'polymorphic_on': type,
         'polymorphic_identity': 'chinese',
     }
 
@@ -553,12 +608,9 @@ class Staff(Chinese):
 
     position = db.Column(db.String(2))
 
-    mobile = db.Column(db.String(11))
-
-    def __init__(self, position, mobile, *args, **kwargs):
+    def __init__(self, position='00', *args, **kwargs):
         super(Staff, self).__init__(*args, **kwargs)
         self.position = position
-        self.mobile = mobile
 
     __mapper_args__ = {
         'polymorphic_identity': 'staff'
@@ -571,16 +623,20 @@ class StaffFamily(Chinese):
     id = db.Column(db.Integer, \
                    db.ForeignKey(Chinese.id, ondelete='cascade'), primary_key=True)
 
-    staff = db.relationship('Staff', foreign_keys='StaffFamily.staff_id')
-    staff_id = db.Column(db.Integer, db.ForeignKey(Staff.id, ondelete='cascade'))
-
-    def __init__(self, staff_id, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(StaffFamily, self).__init__(*args, **kwargs)
-        self.staff_id = staff_id
 
     __mapper_args__ = {
         'polymorphic_identity': 'staff_family',
     }
+
+Staff_StaffFamily = db.Table(
+    'staff_stafffamily',
+    db.Column('staff_id', db.Integer, db.ForeignKey(Staff.id, ondelete='cascade'), \
+              primary_key=True),
+    db.Column('stafffamily_id', db.Integer, \
+              db.ForeignKey(StaffFamily.id, ondelete='cascade'), primary_key=True)
+)
 
 class ExternalChinese(Chinese):
     __tablename__ = 'external_chinese'
@@ -588,13 +644,10 @@ class ExternalChinese(Chinese):
     id = db.Column(db.Integer, \
                    db.ForeignKey(Chinese.id, ondelete='cascade'), primary_key=True)
 
-    mobile = db.Column(db.String(11))
-
     work_place = db.Column(db.String(255))
 
-    def __init__(self, mobile, work_place, *args, **kwargs):
+    def __init__(self, work_place='', *args, **kwargs):
         super(ExternalChinese, self).__init__(*args, **kwargs)
-        self.mobile = mobile
         self.work_place = work_place
 
     __mapper_args__ = {
@@ -603,31 +656,28 @@ class ExternalChinese(Chinese):
 
 class ForeignerMixin(ProfileMixin):
     @declared_attr
-    def type_(cls):
-        return db.Column(db.String(32))
+    def gender(cls):
+        return db.Column(db.String(1), default=MALE)
+
+    @declared_attr
+    def passport_number(cls):
+        return db.Column(db.String(12), default='')
 
     @declared_attr
     def visa_number(cls):
         return db.Column(db.String(10))
 
-    @declared_attr
-    def passport_number(cls):
-        return db.Column(db.String(12))
-
-    def __init__(self, gender, f_name, l_name, u_id, passport_number, \
-                 visa_number, *args, **kwargs):
+    def __init__(self, u_id, gender='', passport_number='', visa_number='', \
+                 mobile='', f_name='', l_name='', *args, **kwargs):
         self.gender = gender
         self.f_name = f_name
         self.l_name = l_name
         self.u_id = u_id
         self.passport_number = passport_number
         self.visa_number = visa_number
+        self.mobile = mobile
 
-    __mapper_args__ = {
-        'polymorphic_on': type_
-    }
-
-class Foreigner(db.Model, ForeignerMixin):
+class Foreigner(ForeignerMixin, db.Model):
     __tablename__ = 'foreigner'
 
     type = db.Column(db.String(32))
@@ -636,6 +686,8 @@ class Foreigner(db.Model, ForeignerMixin):
         super(Foreigner, self).__init__(*args, **kwargs)
 
     __mapper_args__ = {
+        'extension': MixinExtension(),
+        'polymorphic_on': type,
         'polymorphic_identity': 'foreigner',
     }
 
@@ -673,7 +725,7 @@ class Trainee(Foreigner):
     visa_type = db.Column(db.String(1))
     visa_valid_date = db.Column(db.Date)
 
-    mobile = db.Column(db.String(11))
+    birthday = db.Column(db.Date)
 
     student_id = db.Column(db.String(10))
     height = db.Column(db.DECIMAL(4,1))
@@ -687,22 +739,22 @@ class Trainee(Foreigner):
     education = db.Column(db.String(1))
 
     #当前工作部门
-    department = db.Column(db.Unicode(256))
+    department = db.Column(db.String(255))
 
     #职务
-    position = db.Column(db.Unicode(256))
+    position = db.Column(db.String(255))
 
     #任职日期
     position_date = db.Column(db.Date)
 
     #未来从事工作
-    future_position = db.Column(db.Unicode(256))
+    future_position = db.Column(db.String(255))
 
     #婚姻状况
-    marriage = db.Column(db.Boolean)
+    marriage = db.Column(db.String(1))
 
     #中文名字
-    xingming = db.Column(db.Unicode(24))
+    xingming = db.Column(db.String(24))
 
     # 两位整数表示班级，除十取整为年级，求模为班级
     grade_class = db.Column(db.SmallInteger)
@@ -710,12 +762,14 @@ class Trainee(Foreigner):
     # 军衔军种
     rank = db.Column(db.String(4))
 
-
-    def __init__(self, entrance_date, exit_date, passport_type, \
-                 passport_valid_date, visa_type, visa_valid_date, mobile, \
-                 student_id, height, weight, shoesize, religion, education, \
-                 department, position, position_date, future_position, \
-                 marriage, xingming, grade_class, rank, *args, **kwargs):
+    def __init__(self, entrance_date=date(1900, 1, 1), exit_date=date(1900, 1, 1), \
+                 passport_type='1', passport_valid_date=date(1900, 1, 1), \
+                 visa_type='2', visa_valid_date=date(1900, 1, 1), \
+                 birthday=date(1900, 1, 1), student_id='', height=0, weight=0, \
+                 shoesize=0, religion='00', education='3', department='', \
+                 position='', position_date=date(1900, 1, 1), \
+                 future_position='', marriage='0', xingming='', grade_class=11, \
+                 rank='0010', *args, **kwargs):
         super(Trainee, self).__init__(*args, **kwargs)
         self.entrance_date = entrance_date
         self.exit_date = exit_date
@@ -723,7 +777,7 @@ class Trainee(Foreigner):
         self.passport_valid_date = self.passport_valid_date
         self.visa_type = visa_type
         self.visa_valid_date = visa_valid_date
-        self.mobile = mobile
+        self.birthday = birthday
         self.student_id = student_id
         self.height = height
         self.weight = weight
@@ -772,10 +826,6 @@ TraineeLanguage = db.Table(
 #学员亲属表
 class RelativeMixin(PersonMixin):
     @declared_attr
-    def type_(cls):
-        return db.Column(db.String(32))
-
-    @declared_attr
     def trainee_id(cls):
         trainee = db.relationship('Trainee')
         return db.Column(db.Integer, \
@@ -786,34 +836,30 @@ class RelativeMixin(PersonMixin):
     def relation(cls):
         return db.Column(db.String(1))
 
-    def __init__(self, gender, f_name, l_name, trainee_id, relation, \
+    def __init__(self, trainee_id, relation='0', mobile='', f_name='', l_name='', \
                  *args, **kwargs):
         super(RelativeMixin, self).__init__(*args, **kwargs)
-        self.gender = gender
         self.f_name = f_name
         self.l_name = l_name
         self.trainee_id = trainee_id
         self.relation = relation
+        self.mobile = mobile
 
-    __mapper_args__ = {
-        'polymorphic_on': type_
-    }
-
-class Relative(db.Model, RelativeMixin):
+class Relative(RelativeMixin, db.Model):
     __tablename__ = 'relative'
+
+    type = db.Column(db.String(32))
 
     def __init__(self, *args, **kwargs):
         super(Relative, self).__init__(*args, **kwargs)
 
     __mapper_args__ = {
+        'extension': MixinExtension(),
+        'polymorphic_on': type,
         'polymorphic_identity': 'relative',
     }
 
 class ExperienceMixin(ModelMixin):
-    @declared_attr
-    def type_(cls):
-        return db.Column(db.String(32))
-
     @declared_attr
     def trainee_id(cls):
         trainee = db.relationship('Trainee')
@@ -830,46 +876,53 @@ class ExperienceMixin(ModelMixin):
 
     @declared_attr
     def detail(cls):
-        return db.Column(db.Unicode(1024))
+        return db.Column(db.String(1024))
 
-    def __init__(self, trainee_id, start_date, end_date, detail, *args, **kwargs):
+    def __init__(self, trainee_id, start_date=date(1900, 1, 1), \
+                 end_date=date(1900, 1, 1), detail='', *args, **kwargs):
         super(ExperienceMixin, self).__init__(*args, **kwargs)
         self.trainee_id = trainee_id
         self.start_date = start_date
         self.end_date = end_date
         self.detail = detail
 
-    __mapper_args__ = {
-        'polymorphic_on': type_
-    }
-
-class TrainingExperience(db.Model, ExperienceMixin):
+class TrainingExperience(ExperienceMixin, db.Model):
     __tablename__ = 'training_experience'
+
+    type = db.Column(db.String(32))
 
     def __init__(self, *args, **kwargs):
         super(TrainingExperience, self).__init__(*args, **kwargs)
 
     __mapper_args__ = {
+        'extension': MixinExtension(),
+        'polymorphic_on': type,
         'polymorphic_identity': 'training_experience',
     }
 
 #学员工作记录
-class WorkingExperience(db.Model, ExperienceMixin):
+class WorkingExperience(ExperienceMixin, db.Model):
     __tablename__ = 'working_experience'
+
+    type = db.Column(db.String(32))
 
     department = db.Column(db.String(255))
 
-    def __init__(self, department, *args, **kwargs):
+    def __init__(self, department='', *args, **kwargs):
         super(WorkingExperience, self).__init__(*args, **kwargs)
         self.department = department
 
     __mapper_args__ = {
+        'extension': MixinExtension(),
+        'polymorphic_on': type,
         'polymorphic_identity': 'working_experience',
     }
 
 #学员其它国家学习记录
-class StudyAbroadExperience(db.Model, ExperienceMixin):
+class StudyAbroadExperience(ExperienceMixin, db.Model):
     __tablename__ = 'study_abroad_experience'
+
+    type = db.Column(db.String(32))
 
     country = db.relationship('Country')
     country_id = db.Column(db.Integer, \
@@ -880,14 +933,12 @@ class StudyAbroadExperience(db.Model, ExperienceMixin):
         self.country_id = country_id
 
     __mapper_args__ = {
+        'extension': MixinExtension(),
+        'polymorphic_on': type,
         'polymorphic_identity': 'study_abroad_experience',
     }
 
 class ContactMixin(PersonMixin):
-    @declared_attr
-    def type_(cls):
-        return db.Column(db.String(32))
-
     @declared_attr
     def trainee_id(cls):
         trainee = db.relationship('Trainee')
@@ -900,36 +951,31 @@ class ContactMixin(PersonMixin):
         return db.Column(db.Integer, db.ForeignKey(City.id, ondelete='cascade'))
 
     @declared_attr
-    def mobile(cls):
-        return db.Column(db.String(11))
-
-    @declared_attr
     def address(cls):
-        return db.Column(db.Unicode(128))
+        return db.Column(db.String(128))
 
-    def __init__(self, trainee_id, city_id, gender, f_name, l_name, mobile, \
-                 address, *args, **kwargs):
+    def __init__(self, trainee_id, city_id, address='', mobile='', f_name='', \
+                 l_name='', *args, **kwargs):
         super(ContactMixin, self).__init__(*args, **kwargs)
         self.trainee_id = trainee_id
-        self.gender = gender
+        self.mobile = mobile
         self.f_name = f_name
         self.l_name = l_name
-        self.mobile = mobile
         self.city_id = city_id
         self.address = address
 
-    __mapper_args__ = {
-        'polymorphic_on': type_
-    }
-
 #学员在中国的联系人
-class Contact(db.Model, ContactMixin):
+class Contact(ContactMixin, db.Model):
     __tablename__ = 'contact'
+
+    type = db.Column(db.String(32))
 
     def __init__(self, *args, **kwargs):
         super(Contact, self).__init__(*args, **kwargs)
 
     __mapper_args__ = {
+        'extension': MixinExtension(),
+        'polymorphic_on': type,
         'polymorphic_identity': 'contact',
     }
 
@@ -951,12 +997,10 @@ class TraineeFamily(Foreigner):
     visa_type = db.Column(db.String(1))
     visa_valid_date = db.Column(db.Date)
 
-    trainee = db.relationship('Trainee', foreign_keys='TraineeFamily.trainee_id')
-    trainee_id = db.Column(db.Integer, db.ForeignKey(Trainee.id, ondelete='cascade'))
-
-    def __init__(self, entrance_date, exit_date, passport_type, \
-                 passport_valid_date, visa_type, visa_valid_date, *args, **kwargs):
-        super(Trainee, self).__init__(*args, **kwargs)
+    def __init__(self, entrance_date=date(1900, 1, 1), exit_date=date(1900, 1, 1), \
+                 passport_type='1', passport_valid_date=date(1900, 1, 1), \
+                 visa_type='3', visa_valid_date=date(1900, 1, 1), *args, **kwargs):
+        super(TraineeFamily, self).__init__(*args, **kwargs)
         self.entrance_date = entrance_date
         self.exit_date = exit_date
         self.passport_type = passport_type
@@ -967,6 +1011,14 @@ class TraineeFamily(Foreigner):
     __mapper_args__ = {
         'polymorphic_identity': 'trainee_family'
     }
+
+Trainee_TraineeFamily = db.Table(
+    'trainee_traineefamily',
+    db.Column('trainee_id', db.ForeignKey(Trainee.id, ondelete='cascade'), \
+              primary_key=True),
+    db.Column('traineefamily_id', \
+              db.ForeignKey(TraineeFamily.id, ondelete='cascade'), primary_key=True)
+)
 
 class ExternalForeigner(Foreigner):
     __tablename__ = 'external_foreigner'
@@ -980,11 +1032,8 @@ class ExternalForeigner(Foreigner):
     __mapper_args__ = {
         'polymorphic_identity': 'external_foreigner'
     }
-class ArticleMixin(ModelMixin):
-    @declared_attr
-    def type_(cls):
-        return db.Column(db.String(32))
 
+class ArticleMixin(ModelMixin):
     @declared_attr
     def u_id(cls):
         user = db.relationship('User')
@@ -993,7 +1042,7 @@ class ArticleMixin(ModelMixin):
 
     @declared_attr
     def abstract(cls):
-        return db.Column(db.Unicode(140))
+        return db.Column(db.String(140))
 
     @declared_attr
     def content(cls):
@@ -1003,23 +1052,23 @@ class ArticleMixin(ModelMixin):
     def category(cls):
         return db.Column(db.String(1))
 
-    def __init__(self, u_id, abstract, content, category, *args, **kwargs):
+    def __init__(self, u_id, abstract='', content='', category='0', *args, **kwargs):
         super(ArticleMixin, self).__init__(*args, **kwargs)
         self.u_id = u_id
         self.abstract = abstract
         self.content = content
         self.category = category
 
-    __mapper_args__ = {
-        'polymorphic_on': type_
-    }
-
-class Article(db.Model, ArticleMixin):
+class Article(ArticleMixin, db.Model):
     __tablename__ = 'article'
+
+    type = db.Column(db.String(32))
 
     def __init__(self, *args, **kwargs):
         super(Article, self).__init__(*args, **kwargs)
 
     __mapper_args__ = {
+        'extension': MixinExtension(),
+        'polymorphic_on': type,
         'polymorphic_identity': 'article',
     }

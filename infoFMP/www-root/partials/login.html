@@ -38,16 +38,7 @@
                                    ng-model="user.password" />
                         </div>
                         <div class="col-xs-2">
-                            <span id="spanPassword" class="input-group-btn pull-left"
-                                  style="cursor: pointer; border: none;">
-                                <button type="button" 
-                                        class="btn btn-default hide-show-password" 
-                                        ng-click="showPassword = !showPassword">
-                                    <i id="iconPassword" 
-                                       class="{{ showPassword ? 'glyphicon glyphicon-eye-close': 'glyphicon glyphicon-eye-open' }}">
-                                    </i>
-                                </button>
-                            </span>
+
                         </div>
                     </div>
                     <p class="help-block">{{ lang.PasswordHelpLogin}}</p>
@@ -55,6 +46,18 @@
                         <span class="label label-danger" ng-show="login.password.$error.required">
                             {{ lang.Required}}</span>
                     </div>
+
+                </div>
+                <div class="checkbox form-group">
+                    <input class="form-control" type="checkbox" 
+                           id="show-hide-password"
+                           ng-model="showPassword" ng-init="showPassword = False"/>
+                    <label for="show-hide-password">
+                        {{showPassword ? lang.hidePassword: lang.showPassword }}
+                        <i 
+                            class="{{ showPassword ? 'glyphicon glyphicon-eye-close': 'glyphicon glyphicon-eye-open' }}">
+                        </i>
+                    </label>
                 </div>
                 <div class="form-group">
                     <div class="row">

@@ -7,27 +7,29 @@ pagePartsDirectives.directive('profileAccordion', [
             templateUrl: 'partials/directives/profileAccordion.html',
             link: function (scope, el, attrs) {
                 scope.lang = JSON.parse(attrs.lang);
-                scope.user = JSON.parse(attrs.user);
+                scope.user = attrs.user;
             }
         };
     }]);
 
 //注册表单共用部分的指令
 pagePartsDirectives.directive('registerFormCommonParts', [
-    function(){
+    function () {
         return {
             restrict: 'A',
             templateUrl: 'partials/directives/registerCommonParts.html',
             link: function (scope, el, attrs) {
                 scope.lang = JSON.parse(attrs.lang);
-                
+
             }
         };
     }]);
 
-pagePartsDirectives.directive('publicMenu', ['setLocale', 'getLocale', '$route',
-    'checkCreds', 'deleteCreds', '$uibModal', 'setamMomentLocal',
-    function (setLocale, getLocale, $route, checkCreds, deleteCreds, $uibModal, setamMomentLocal) {
+pagePartsDirectives.directive('publicMenu', ['getLocale', '$route',
+    'checkCreds', 'deleteCreds', '$uibModal', '$rootScope',
+    'tmhDynamicLocale', '$locale', 'getLocale', 'setLocale',
+    function (getLocale, $route, checkCreds, deleteCreds, $uibModal,
+        $rootScope, tmhDynamicLocale, $locale, getLocale, setLocale) {
         return {
             restrict: 'A',
             templateUrl: 'partials/directives/menu.html',
@@ -81,14 +83,19 @@ pagePartsDirectives.directive('publicMenu', ['setLocale', 'getLocale', '$route',
                             //nothing to do
                         });
                 };
-
-                scope.selectLocale = function () {
-                    var locale = scope.localeSelected;
-                    if (locale !== undefined) {
-                        setLocale(locale);
-                        setamMomentLocal(locale);
-                        $route.reload();
-                    }
+                
+                $rootScope.availableLocales = {
+                    'en-us': 'English',
+                    'zh-cn': '中  文'};
+                $rootScope.$locale = $locale;
+                tmhDynamicLocale.set(getLocale());
+                $rootScope.model = {selectedLocale: getLocale()};
+                scope.changeLocale = function(selectedLocale){
+                    //console.log(selectedLocale);                   
+                    tmhDynamicLocale.set(selectedLocale);
+                    //console.log($locale);
+                    setLocale(selectedLocale);
+                    $route.reload();
                 };
             }
         };

@@ -5,6 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "angular-bootstrap-show-errors": "^2.3.0",
+    "angular-dynamic-locale": "^0.1.32",
     "angular-file-upload": "^2.3.2",
     "angular-moment": "^1.0.0-beta.6",
     "moment": "^2.13.0",

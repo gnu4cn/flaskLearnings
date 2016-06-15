@@ -24,9 +24,18 @@ html, body {
     color: green;
 }
 
+div.cell {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
 .under-menu {
     background-color: #f4f4f4;
     margin: 60px 0 0 0px;
+}
+
+th.row-head{
+    text-align: right;
 }
 
 @media (min-width: 768px){
@@ -35,6 +44,18 @@ html, body {
     }
     .right-column{
         margin-left: 10px;
+    }
+    .navbar-collapse{
+        height: auto !important;
+        padding-left: 0 !important;
+        /* 这个很重要 */
+        overflow-x: hidden;
+    }
+    .collapse.in{
+        display:block !important;
+    }
+    th.row-head {        
+        width: 30%;
     }
 }
 
@@ -48,5 +69,8 @@ html, body {
     }
     .help-block {
         display: none;
+    }
+    th.row-head {        
+        width: 35%;
     }
 }

@@ -1,3 +1,4 @@
+
 <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
 
     <!-- Brand and toggle get grouped for better mobile display -->
@@ -64,14 +65,10 @@
         </ul>
 
         <form role="form" class="navbar-form navbar-right form-inline" 
-              ng-click="selectLocale()">
+              ng-click="changeLocale(model.selectedLocale)">
             <div class="form-group">
                 <select id="language-select" class="form-control"
-                        ng-model="localeSelected">
-                    <option value="zh-cn">
-                        zh-CN, 中文</option>
-                    <option value="en">
-                        en-US, English</option>
+                        ng-model="model.selectedLocale" ng-options="key as value for (key, value) in availableLocales">
                 </select>
             </div>
         </form>

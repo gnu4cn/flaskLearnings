@@ -3,13 +3,10 @@
 var infoFMPControllers = angular.module('infoFMPControllers', []);
 
 infoFMPControllers.controller('ProfileCtrl', ['$scope', 'getToken',
-    'languageService', '$location', 'checkCreds', 'UserService', 'getLocale',
+    'languageService', 'checkCreds', 'UserService', 'getLocale',
     'beforeAuthorizedOps',
-    function ProfileCtrl($scope, getToken, languageService, $location, checkCreds,
+    function ProfileCtrl($scope, getToken, languageService, checkCreds,
         UserService, getLocale, beforeAuthorizedOps) {
-
-        //检查登录凭据是否过期
-        beforeAuthorizedOps();
 
         $scope.currentMenu = {
             about: '',
@@ -23,21 +20,31 @@ infoFMPControllers.controller('ProfileCtrl', ['$scope', 'getToken',
         var userLocale = getLocale();
         var userCred = getToken();
 
-        // 功能性代码开始
-        //获取user_table数据
-        UserService.GetByCred(userLocale, userCred).then(
-            function (res) {
-                if (res.success) {
-                    $scope.user = res.user;
-                } else {
-                }
-            });
+        ////检查登录凭据是否过期
+        beforeAuthorizedOps();
+        
+        //这里再度检查登录凭据，耗时一下午，尽然不需要business service的返回值，这么简单
+        //就实现了。
+        if (checkCreds()) {
+            // 功能性代码开始
+            //获取user_table数据
+            UserService.GetByCred(userLocale, userCred).then(
+                function (res) {
+                    if (res.success) {
+                        //console.log(res.user);
+                        $scope.user = res.user;
+                        $scope.user.created_at = new Date(res.user.created_at);
+                    } else {
+                    }
+                });
+        }
 
     }]);
 
 infoFMPControllers.controller('CredInvalidModalInstanceCtrl', ['$scope',
     '$uibModalInstance', 'lang', 'message', '$sce',
     function ($scope, $uibModalInstance, lang, message, $sce) {
+        //console.log(JSON.stringify(lang));
         $scope.message = $sce.trustAsHtml(message);
         $scope.lang = lang;
         $scope.ok = function () {
@@ -84,7 +91,6 @@ infoFMPControllers.controller('LoginCtrl', ['$scope', '$location',
                 form.$setPristine();
                 form.$setUntouched();
             }
-            ;
             $scope.user = angular.copy($scope.master);
             $scope.$broadcast('show-errors-reset');
             $scope.serverFault = false;
@@ -144,11 +150,12 @@ infoFMPControllers.controller('RegisterStepOneCtrl', ['$scope', '$location',
 
         $scope.submitSelection = function () {
             var category_id = $scope.category.id;
+            //console.log(category_id);
             if (category_id === undefined) {
                 category_id = 6;
             }
             setPersonCategory(category_id);
-            if (category_id <= 5) {
+            if (category_id < 5) {
                 $location.path('/user/new-chinese-user');
             } else {
                 $location.path('/user/new-foreign-user');
@@ -156,34 +163,11 @@ infoFMPControllers.controller('RegisterStepOneCtrl', ['$scope', '$location',
         };
     }]);
 
-infoFMPControllers.controller('NewChineseUserCtrl', ['$scope',
-    'languageService', 'getLocale', 'getPersonCategory',
-    function ($scope, languageService, getLocale, getPersonCategory) {
-        $scope.currentMenu = {
-            about: '',
-            news: '',
-            notices: '',
-            profile: '',
-            login: '',
-            register: 'active'
-        };
-        
-        $scope.lang = languageService();
-        
-        $scope.user = {};
-        $scope.user.locale = getLocale();
-        $scope.user.category = getPersonCategory();
-        
-        $scope.submitRegistration = function (){
-            console.log(JSON.stringify($scope.user));
-        };
-    }]);
-//已经完善的 NewUserCtrl
-infoFMPControllers.controller('NewUserCtrl', ['$scope', '$location',
-    'languageService', 'UserService', '$timeout', '$q', 'getLocale',
-    'PersonCategoryList', 'setIsForeigner', 'getIsForeigner',
-    function NewUserCtrl($scope, $location, languageService, UserService,
-        $timeout, $q, getLocale, PersonCategoryList, setIsForeigner, getIsForeigner) {
+infoFMPControllers.controller('NewForeignUserCtrl', ['$scope',
+    'languageService', 'getLocale', 'getPersonCategory', 'UserService', '$q',
+    '$timeout', '$location', 'GenderList',
+    function ($scope, languageService, getLocale, getPersonCategory, UserService,
+        $q, $timeout, $location, GenderList) {
         $scope.currentMenu = {
             about: '',
             news: '',
@@ -198,45 +182,68 @@ infoFMPControllers.controller('NewUserCtrl', ['$scope', '$location',
         $scope.user = {};
         var userLocale = $scope.user.locale = getLocale();
 
-        PersonCategoryList.get(
+        GenderList.get(
             {locale: userLocale},
             function success(response) {
-                $scope.pCategories = response;
+                $scope.Genders = response;
             },
             function error(errorResponse) {
                 console.log(JSON.stringify(errorResponse));
             }
         );
 
-        $scope.person_category_changed = function () {
-            var category_id = $scope.category.id;
-            if (category_id <= 5) {
-                setIsForeigner(false);
-                $scope.isForeigner = getIsForeigner();
-                console.log($scope.isForeigner);
-            } else {
-                setIsForeigner(true);
-                $scope.isForeigner = getIsForeigner();
-                console.log($scope.isForeigner);
-            }
-        };
-
-        $scope.reset = function (form) {
-            $scope.master = {};
-            if (form) {
-                form.$setPristine();
-                form.$setUntouched();
-            }
-            ;
-            $scope.user = angular.copy($scope.master);
-            $scope.$broadcast('show-errors-reset');
-            $scope.serverFault = false;
-        };
+        $scope.user.category = getPersonCategory();
 
         $scope.submitRegistration = function () {
-            $scope.user.category = $scope.category.id;
             var data = $scope.user;
 
+            UserService.Create(data)
+                .then(function (res) {
+                    //发送请求成功
+                    if (res.success) {
+                        $scope.registeredSuccess = true;
+                        $scope.serverFault = false;
+                        $scope.responseMsg = res.message;
+                        var defer = $q.defer();
+                        $timeout(function () {
+                            $location.path('/user/login');
+                        }, 3000);
+                        return defer.promise;
+                    }
+                    //发送请求失败
+                    else {
+                        $scope.responseMsg = res.message;
+                        $scope.registeredFail = true;
+                        $scope.serverFault = true;
+                    }
+                });
+
+        };
+    }]);
+
+infoFMPControllers.controller('NewChineseUserCtrl', ['$scope', 'languageService',
+    'getLocale', 'getPersonCategory', 'UserService', '$q', '$timeout', '$location',
+    function ($scope, languageService, getLocale, getPersonCategory,
+        UserService, $q, $timeout, $location) {
+        $scope.currentMenu = {
+            about: '',
+            news: '',
+            notices: '',
+            profile: '',
+            login: '',
+            register: 'active'
+        };
+
+        $scope.lang = languageService();
+
+        $scope.user = {};
+        $scope.user.locale = getLocale();
+
+        $scope.user.category = getPersonCategory();
+
+        $scope.submitRegistration = function () {
+            var data = $scope.user;
+            console.log(JSON.stringify(data));
             UserService.Create(data)
                 .then(function (res) {
                     //发送请求成功

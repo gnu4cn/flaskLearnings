@@ -59,16 +59,17 @@ class UsersApi(Resource):
         parser.add_argument('password', type=str, required=True, location='json')
         parser.add_argument('locale', type=str, location='json', default='zh-cn')
         parser.add_argument('category', type=str, location='json', required=True)
-        parser.add_argument('firstName', type=str, required=True, location='json')
-        parser.add_argument('lastName', type=str, required=True, location='json')
+        parser.add_argument('firstName', required=True, location='json')
+        parser.add_argument('lastName', required=True, location='json')
         parser.add_argument('idNumber', type=str, location='json', default='')
         parser.add_argument('passportNumber', type=str, location='json', default='')
+        parser.add_argument('gender', type=str, location='json', default='1')
 
         args = parser.parse_args()
         #jsonify(User('', args['username'], args['password']).to_dict)
         return User.create(args['username'], args['password'], \
                            args['category'], args['firstName'], \
-                           args['lastName'], args['idNumber'], \
+                           args['lastName'], args['idNumber'], args['gender'], \
                            args['passportNumber'], args['locale'])
 
 @api.route('/api/user/<string:locale>/<string:cred>')

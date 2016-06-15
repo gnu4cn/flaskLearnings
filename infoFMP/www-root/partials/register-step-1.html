@@ -14,6 +14,7 @@
                     <select class="form-control" required id="category" 
                             ng-model="category"
                             ng-options="p_c as p_c.data for p_c in pCategories| orderBy:'id' track by p_c.id">
+                        <option value="">-- {{lang.selectPersonCategory}} --</option>
                         <!-- <option ng-repeat="p_c in pCategories| orderBy: 'id'" 
                                 value="{{p_c.id}}">{{p_c.data}}</option>-->
                     </select>

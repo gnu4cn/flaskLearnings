@@ -12,17 +12,25 @@ var infoFMP = angular.module('infoFMP', [
     'bussinessServices',
     'ui.bootstrap.showErrors',
     'angularMoment',
-    'languageService'
+    'languageService',
+    'ngMaterial',
+    'tmh.dynamicLocale'
 ]);
 
-infoFMP.run(['getLocale', 'amMoment',
-    function(getLocale, amMoment){
-        amMoment.changeLocale(getLocale());
-    }]);
+//infoFMP.run(['getLocale', 'amMoment',
+//    function(getLocale, amMoment){
+//        amMoment.changeLocale(getLocale());
+//    }]);
 
-infoFMP.config(['$routeProvider', '$locationProvider', '$provide', 'showErrorsConfigProvider',
-    function ($routeProvider, $locationProvider, $provide, showErrorsConfigProvider) {
+infoFMP.config(['$routeProvider', '$locationProvider', '$provide', 'showErrorsConfigProvider', 
+    'tmhDynamicLocaleProvider',
+    function ($routeProvider, $locationProvider, $provide, showErrorsConfigProvider, 
+    tmhDynamicLocaleProvider) {
+        //angular-dynamic-locale
+        tmhDynamicLocaleProvider.localeLocationPattern('js/libs/angular-locale_{{locale}}.js');
+        //angular-showerrors
         showErrorsConfigProvider.showSuccess(true);
+        // routes
         $routeProvider
             .when('/', {
                 templateUrl: 'partials/main.html',
@@ -40,7 +48,7 @@ infoFMP.config(['$routeProvider', '$locationProvider', '$provide', 'showErrorsCo
                 templateUrl: 'partials/newChineseUser.html',
                 controller: 'NewChineseUserCtrl'
             })
-            .when('/user/login', {
+            .when('/user/new-foreign-user', {
                 templateUrl: 'partials/newForeignUser.html',
                 controller: 'NewForeignUserCtrl'
             })
