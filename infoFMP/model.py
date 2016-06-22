@@ -157,9 +157,6 @@ class Account(BaseMixin, db.Model):
     password_hash = db.Column(db.String(128))
     role = db.Column(db.SmallInteger, default=ROLE_USER)
     person_type = db.Column(db.String(1))
-    is_registered = db.Column(db.Boolean, default=False)
-
-    # 到各种profile的one-to-one relationship
 
     def generate_auth_token(self, expiration=TOKEN_EXPIRE):
         s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
