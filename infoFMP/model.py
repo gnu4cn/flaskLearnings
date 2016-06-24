@@ -204,6 +204,29 @@ class Account(BaseMixin, db.Model):
         return jsonify(r)
 
     @classmethod
+    def update_password(self, cred, oldPassword, newPassword, locale):
+        r = {}
+        r['success'] = True
+        r['updated'] = False
+        r['message'] = lang.get_item('OldPasswordNotCorrect', locale)
+
+        user = self.verify_auth_cred(cred)
+
+        if user is not None:
+            if user.verify_password(oldPassword):
+                user.hash_password(newPassword)
+                dbSession.commit()
+                r['updated'] = True
+                r['message'] = lang.get_item('PasswordUpdateSuccessfully',
+                                             locale)
+
+        else:
+            r['message'] = lang.get_item('CredentialIncorrectOrExpired',
+                                         locale)
+
+        return jsonify(r)
+
+    @classmethod
     def check_username(self, testUsername):
         r = {}
         r['success'] = True
@@ -223,10 +246,10 @@ class Account(BaseMixin, db.Model):
             r['user'] = user.to_dict()
             r['user']['category'] = p_c.get_by_id(user.person_type, locale)
             r['profile'] = {
-                '0': lambda: user.staff.profile(locale),
-                '1': lambda: user.sfamily.profile(locale),
-                '5': lambda: user.trainee.profile(locale),
-                '6': lambda: user.tfamily.profile(locale)
+                '0': lambda: user.staff.get(locale),
+                '1': lambda: user.sfamily.get(locale),
+                '5': lambda: user.trainee.get(locale),
+                '6': lambda: user.tfamily.get(locale)
             }[user.person_type]()
 
             r['success'] = True
@@ -506,7 +529,7 @@ class Staff(Chinese):
     def _families(self, family):
         self.families.append(family)
 
-    def profile(self, locale):
+    def get(self, locale):
         r = {}
         r = self.to_dict()
         r['position'] = po.get_by_id(self.position, locale)
@@ -550,7 +573,7 @@ class Sfamily(Chinese):
     def _staff(self, staff):
         self.staff = staff
 
-    def profile(self, locale):
+    def get(self, locale):
         r = {}
         r = self.to_dict()
 
@@ -597,7 +620,6 @@ ForeignerPhoto = db.Table(
 class Foreigner(IssuedCardPersonMixin, db.Model):
     gender = db.Column(db.String(1))
     passport_number = db.Column(db.String(12))
-    visa_number = db.Column(db.String(10))
     photo = db.relationship('Image', secondary=ForeignerPhoto,
                             lazy='dynamic',
                             backref=db.backref('foreigner', lazy='dynamic'))
@@ -619,12 +641,10 @@ class Foreigner(IssuedCardPersonMixin, db.Model):
         return jsonify(r)
 
     def __init__(self, country_id=138, gender=MALE, passport_number='',
-                 visa_number='', card_number='', mobile='', f_name='',
-                 l_name=''):
+                 card_number='', mobile='', f_name='', l_name=''):
         self.country_id = country_id
         self.gender = gender
         self.passport_number = passport_number
-        self.visa_number = visa_number
         self.mobile = mobile
         self.f_name = f_name
         self.l_name = l_name
@@ -643,10 +663,23 @@ class Trainee(Foreigner):
     birthday = db.Column(db.Date)
     student_id = db.Column(db.String(10))
     xingming = db.Column(db.String(24))
+    home_phone = db.Column(db.String(11))
+    home_address = db.Column(db.String(255))
 
     families = db.relationship('Tfamily',
                                secondary='trainee_tfamily', lazy='dynamic',
                                backref=db.backref('trainee', uselist=False))
+
+    def __init__(self, country_id, birthday=date(1900, 1, 1),
+                 student_id='', xingming='', home_phone='', home_address='',
+                 *args, **kwargs):
+        super(Trainee, self).__init__(*args, **kwargs)
+        self.country_id = country_id
+        self.birthday = birthday
+        self.student_id = student_id
+        self.xingming = xingming
+        self.home_phone = home_phone
+        self.home_address = home_address
 
     def _career(self, career):
         self.career = career
@@ -682,6 +715,10 @@ class Trainee(Foreigner):
         r = {}
         r = self.to_dict()
 
+        r['country'] = self.country.to_dict()
+
+        r['gender'] = ge.get_by_id(self.gender, locale)
+
         r['families'] = []
         families = self.families
         if families is not None:
@@ -690,19 +727,19 @@ class Trainee(Foreigner):
 
         career = self.career
         if career is not None:
-            r['career'] = career
+            r['career'] = career.get(locale)
 
         social_edu = self.socialedu
         if social_edu is not None:
-            r['social_edu'] = social_edu
+            r['social_edu'] = social_edu.get(locale)
 
         physical = self.physical
         if physical is not None:
-            r['physical'] = physical
+            r['physical'] = physical.get()
 
         tpassport_visa = self.tpassport_visa
         if tpassport_visa is not None:
-            r['passport_visa'] = tpassport_visa
+            r['passport_visa'] = tpassport_visa.get(locale)
 
         r['relatives'] = []
         relatives = self.relatives
@@ -735,14 +772,6 @@ class Trainee(Foreigner):
                 r['contacts'].append(contact.get())
 
         return r
-
-    def __init__(self, country_id, birthday=date(1900, 1, 1),
-                 student_id='', xingming='', *args, **kwargs):
-        super(Trainee, self).__init__(*args, **kwargs)
-        self.country_id = country_id
-        self.birthday = birthday
-        self.student_id = student_id
-        self.xingming = xingming
 
     __mapper_args__ = {
         'extension': MapperExtension(),
@@ -858,7 +887,7 @@ class Physical(BaseMixin, db.Model):
 
 @foreign_key('physical')
 class Speciality(BaseMixin, db.Model):
-    speciality = db.Column(db.String(255))
+    detail = db.Column(db.String(255))
 
     def __init__(self, speciality=''):
         self.speciality = speciality
@@ -872,6 +901,7 @@ class PassportVISA(BaseMixin, db.Model):
     __tablename__ = 'passport_visa'
 
     passport_type = db.Column(db.String(1))
+    visa_number = db.Column(db.String(10))
     visa_type = db.Column(db.String(1))
     visa_valid_date = db.Column(db.Date)
 
@@ -884,9 +914,10 @@ class PassportVISA(BaseMixin, db.Model):
 
         return r
 
-    def __init__(self, passport_type='1', visa_type='2',
+    def __init__(self, passport_type='1', visa_number='', visa_type='2',
                  visa_valid_date=date(1900, 1, 1)):
         self.passport_type = passport_type
+        self.visa_number = visa_number
         self.visa_type = visa_type
         self.visa_valid_date = visa_valid_date
 
@@ -1073,13 +1104,16 @@ class Tfamily(Foreigner):
         r = {}
         r = self.to_dict()
 
+        r['gender'] = ge.get_by_id(self.gender, locale)
+        r['country'] = self.country.to_dict()
+
         trainee = self.trainee
         if trainee is not None:
             r['trainee'] = trainee.to_dict()
 
         passport_visa = self.tfpassport_visa
         if passport_visa is not None:
-            r['PassportVISA'] = passport_visa.to_dict()
+            r['PassportVISA'] = passport_visa.get(locale)
 
         return r
 

@@ -10,6 +10,14 @@ html, body {
     color: green;
 }
 
+/*
+Angular Material DatePicker Calendar Shows Behind Angular Modal
+http://stackoverflow.com/questions/36627500/angular-material-datepicker-calendar-shows-behind-angular-modal
+*/
+.md-datepicker-calendar-pane{
+    z-index: 1151;
+}
+
 .glyphicon {
     font-size: 18px;
 }
@@ -71,6 +79,6 @@ th.row-head{
         display: none;
     }
     th.row-head {        
-        width: 35%;
+        width: 45%;
     }
 }

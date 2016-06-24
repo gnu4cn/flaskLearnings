@@ -2,7 +2,7 @@
  * Angular Material Design
  * https://github.com/angular/material
  * @license MIT
- * v1.1.0-rc.5-master-d6996b7
+ * v1.1.0-rc.5-master-15da974
  */
 goog.provide('ng.material.core');
 
@@ -1726,7 +1726,8 @@ function MdAriaService($$rAF, $log, $window, $interpolate) {
   return {
     expect: expect,
     expectAsync: expectAsync,
-    expectWithText: expectWithText
+    expectWithText: expectWithText,
+    expectWithoutText: expectWithoutText
   };
 
   /**
@@ -1773,6 +1774,15 @@ function MdAriaService($$rAF, $log, $window, $interpolate) {
         return getText(element);
       });
     } else {
+      expect(element, attrName, content);
+    }
+  }
+
+  function expectWithoutText(element, attrName) {
+    var content = getText(element);
+    var hasBinding = content.indexOf($interpolate.startSymbol()) > -1;
+
+    if ( !hasBinding && !content) {
       expect(element, attrName, content);
     }
   }
@@ -4578,6 +4588,7 @@ InkRippleCtrl.prototype.removeRipple = function (ripple) {
   if (index < 0) return;
   this.ripples.splice(this.ripples.indexOf(ripple), 1);
   ripple.removeClass('md-ripple-active');
+  ripple.addClass('md-ripple-remove');
   if (this.ripples.length === 0) this.container.css({ backgroundColor: '' });
   // use a 2-second timeout in order to allow for the animation to finish
   // we don't actually care how long the animation takes

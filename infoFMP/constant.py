@@ -5,7 +5,7 @@ MALE = '1'
 FEMALE = '0'
 ROLE_USER = 0
 ROLE_ADMIN = 1
-TOKEN_EXPIRE = 1200
+TOKEN_EXPIRE = 3600
 
 class ConstantBase(object):
 
@@ -43,6 +43,7 @@ class ARTICLE_CAT(ConstantBase):
         },
     }
 
+
 class PRSN_CAT(ConstantBase):
     data = {
         '0': {
@@ -53,10 +54,6 @@ class PRSN_CAT(ConstantBase):
             'en-us': 'Chinese - Staff Family',
             'zh-cn': '中方人员 - 员工家属',
         },
-        '2': {
-            'en-us': 'Chinese - Others',
-            'zh-cn': '中方人员 - 外部人员',
-        },
         '5': {
             'en-us': 'Foreigner - Trainee',
             'zh-cn': '外籍人员 - 学员',
@@ -65,12 +62,8 @@ class PRSN_CAT(ConstantBase):
             'en-us': 'Foreigner - Trainee Family',
             'zh-cn': '外籍人员 - 学员家属',
         },
-        '7': {
-            'en-us': 'Foreigner - Others',
-            'zh-cn': '外籍人员 - 外部人员',
-        },
-
     }
+
 
 class DEPARTMENT(ConstantBase):
     data = {
@@ -125,6 +118,7 @@ class DEPARTMENT(ConstantBase):
                 r.append(t)
 
         return r
+
 
 class POSITION(ConstantBase):
     data = {
@@ -284,6 +278,7 @@ class PPRT_TYPE(ConstantBase):
         },
     }
 
+
 class CERT_TYPE(ConstantBase):
     data = {
         '0': {
@@ -319,6 +314,7 @@ class CERT_TYPE(ConstantBase):
             'zh-cn': 'L',
         },
     }
+
 
 class RELIGION(ConstantBase):
     data = {
@@ -364,6 +360,7 @@ class RELIGION(ConstantBase):
         },
     }
 
+
 class SERVICE(ConstantBase):
     data = {
         '00': {
@@ -397,6 +394,7 @@ class SERVICE(ConstantBase):
                 r.append(t)
 
         return r
+
 
 class TRNEE_RANK(ConstantBase):
     data = {
@@ -932,6 +930,7 @@ class EDU(ConstantBase):
         },
     }
 
+
 class GENDER(ConstantBase):
     data = {
         '0': {
@@ -943,6 +942,7 @@ class GENDER(ConstantBase):
             'zh-cn': '男',
         },
     }
+
 
 class MARRIAGE(ConstantBase):
     data = {

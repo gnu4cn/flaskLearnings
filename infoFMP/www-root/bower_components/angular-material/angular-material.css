@@ -2,7 +2,7 @@
  * Angular Material Design
  * https://github.com/angular/material
  * @license MIT
- * v1.1.0-rc.5-master-d6996b7
+ * v1.1.0-rc.5-master-15da974
  */
 html, body {
   height: 100%;
@@ -118,6 +118,21 @@ input:-webkit-autofill {
             transform: translate(-50%, -50%) scale(1); }
   .md-ripple.md-ripple-active, .md-ripple.md-ripple-full, .md-ripple.md-ripple-visible {
     opacity: 0.20; }
+  .md-ripple.md-ripple-remove {
+    -webkit-animation: md-remove-ripple 0.9s cubic-bezier(0.25, 0.8, 0.25, 1);
+            animation: md-remove-ripple 0.9s cubic-bezier(0.25, 0.8, 0.25, 1); }
+
+@-webkit-keyframes md-remove-ripple {
+  0% {
+    opacity: .15; }
+  100% {
+    opacity: 0; } }
+
+@keyframes md-remove-ripple {
+  0% {
+    opacity: .15; }
+  100% {
+    opacity: 0; } }
 
 .md-padding {
   padding: 8px; }
@@ -879,7 +894,7 @@ md-card {
       md-card md-card-header md-card-header-text .md-subhead {
         font-size: 14px; }
   md-card > img,
-  md-card > :not(md-card-content) img {
+  md-card > md-card-header img {
     box-sizing: border-box;
     display: -ms-flexbox;
     display: flex;
@@ -1206,20 +1221,20 @@ md-checkbox {
     min-height: 32px; }
   .md-chips:not(.md-readonly) {
     cursor: text; }
-    .md-chips:not(.md-readonly) md-chip:not(.md-readonly) {
-      padding-right: 22px; }
-      [dir=rtl] .md-chips:not(.md-readonly) md-chip:not(.md-readonly) {
+  .md-chips.md-removable md-chip {
+    padding-right: 22px; }
+    [dir=rtl] .md-chips.md-removable md-chip {
+      padding-right: 0;
+      padding-right: auto;
+      padding-right: initial;
+      padding-left: 22px; }
+    .md-chips.md-removable md-chip ._md-chip-content {
+      padding-right: 4px; }
+      [dir=rtl] .md-chips.md-removable md-chip ._md-chip-content {
         padding-right: 0;
         padding-right: auto;
         padding-right: initial;
-        padding-left: 22px; }
-      .md-chips:not(.md-readonly) md-chip:not(.md-readonly) ._md-chip-content {
-        padding-right: 4px; }
-        [dir=rtl] .md-chips:not(.md-readonly) md-chip:not(.md-readonly) ._md-chip-content {
-          padding-right: 0;
-          padding-right: auto;
-          padding-right: initial;
-          padding-left: 4px; }
+        padding-left: 4px; }
   .md-chips md-chip {
     cursor: default;
     border-radius: 16px;
@@ -1491,7 +1506,7 @@ md-datepicker {
   background: none;
   vertical-align: middle; }
 
-.md-datepicker-input, label:not(.md-no-float):not(._md-container-ignore) {
+.md-datepicker-input {
   font-size: 14px;
   box-sizing: border-box;
   border: none;
@@ -1500,17 +1515,17 @@ md-datepicker {
   background: transparent;
   min-width: 120px;
   max-width: 328px; }
-  .md-datepicker-input::-ms-clear, label:not(.md-no-float):not(._md-container-ignore)::-ms-clear {
+  .md-datepicker-input::-ms-clear {
     display: none; }
 
 ._md-datepicker-floating-label > label:not(.md-no-float):not(._md-container-ignore) {
-  right: 6px;
+  right: 18px;
   left: auto;
-  width: calc(100% - 98px); }
+  width: calc(100% - 84px); }
   [dir=rtl] ._md-datepicker-floating-label > label:not(.md-no-float):not(._md-container-ignore) {
     right: auto; }
   [dir=rtl] ._md-datepicker-floating-label > label:not(.md-no-float):not(._md-container-ignore) {
-    left: 6px; }
+    left: 18px; }
 
 ._md-datepicker-floating-label > md-datepicker {
   overflow: visible; }
@@ -1543,10 +1558,9 @@ md-datepicker {
   z-index: 99; }
 
 .md-datepicker-calendar-pane {
-  left: -100%;
   position: absolute;
   top: 0;
-  left: 0;
+  left: -100%;
   z-index: 100;
   border-width: 1px;
   border-style: solid;

@@ -3,7 +3,7 @@
     数据表中。
 -->
 <div class="container">
-    <div public-menu lang="{{ lang}}" active-menu="{{ currentMenu}}"></div>
+    <div public-menu active-menu="{{currentMenu}}"></div>
 
     <div class="row under-menu">
         <div class="col-sm-7 left-column form-inline">
@@ -19,20 +19,20 @@
                                 value="{{p_c.id}}">{{p_c.data}}</option>-->
                     </select>
                 </div>
-                <p class="help-block">{{ lang.PersonCategoryHelp}}</p>
+                <p class="help-block">{{lang.PersonCategoryHelp}}</p>
 
 
                 <div class="row">
                     <div class="col-xs-9">
                     </div>
                     <div class="col-xs-3">
-                        <button type="submit" class="btn btn-success pull-left">{{ lang.NextStep}}</button>
+                        <button type="submit" class="btn btn-success pull-left">{{lang.NextStep}}</button>
                     </div>
                 </div>
             </form>
         </div>
         <div class="col-md-4 right-column">
-            <p>{{ lang.Agreement}}</p>
+            <p>{{lang.Agreement}}</p>
         </div>
     </div>
 </div>

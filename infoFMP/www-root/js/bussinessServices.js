@@ -1,16 +1,61 @@
 'use strict';
 
-var bussinessServices = angular.module('bussinessServices', ['ngCookies']);
+var bServices = angular.module('bServices', ['ngCookies']);
 
-bussinessServices.factory('setLocale', ['$cookies',
+
+bServices.factory('accountProfilePostProcess', [function () {
+        return function (scope, res) {
+            scope.user.type = parseInt(scope.user.category.id, 10);
+            //console.log($scope.cred);
+            if (scope.user.type >= 5) {
+                var today = scope.today = moment();
+                scope.fourYearsAgo = today.subtract(4, "years");
+                scope.minBirthYear = today.subtract(80, "years");
+                scope.oneWeekLater = today.add(7, "days");
+                if (res.passport_visa !== undefined) {
+                    scope.user.profile.passport_visa.visa_valid_date = new moment(res.profile.passport_visa.visa_valid_date);
+                    scope.user.profile.passport_visa.entrance_date = new moment(res.profile.passport_visa.entrance_date);
+                    scope.user.profile.passport_visa.exit_date = new moment(res.profile.passport_visa.exit_date);
+                }
+
+                if (scope.user.type === 5) {
+                    scope.user.profile.birthday = new moment(res.profile.birthday);
+                    if (res.profile.career !== undefined) {
+                        scope.user.profile.career.position_date = new moment(res.profile.career.position_date);
+                    }
+                    //console.log($scope.user.profile.birthday.getTime()<$scope.sixtyFiveYearsAgo.getTime());
+                }
+            }
+        };
+    }]);
+
+bServices.factory('setActiveTab', ['$cookies',
+    function ($cookies) {
+        return function (index) {
+            $cookies.put('active_tab', index);
+        };
+    }]);
+
+bServices.factory('getActiveTab', ['$cookies',
+    function ($cookies) {
+        return function () {
+            var active = $cookies.get('active_tab');
+            if (active!==undefined) {
+                return active;
+            } else {
+                return 0;
+            }
+        };
+    }]);
+
+bServices.factory('setLocale', ['$cookies',
     function setLocale($cookies) {
         return function (locale) {
             //这里有$cookies的用法
             $cookies.put('locale', locale);
         };
     }]);
-
-bussinessServices.factory('getLocale', ['$cookies',
+bServices.factory('getLocale', ['$cookies',
     function getLocale($cookies) {
         return function () {
             var locale = $cookies.get('locale');
@@ -20,16 +65,14 @@ bussinessServices.factory('getLocale', ['$cookies',
                 return 'en-us';
         };
     }]);
-
-bussinessServices.factory('setCreds',
+bServices.factory('setCreds',
     ['$cookies', function setCreds($cookies) {
             return function (token) {
                 var cred = token.concat(":", 'unused');
                 $cookies.put('Creds', cred);
             };
         }]);
-
-bussinessServices.factory('checkCreds',
+bServices.factory('checkCreds',
     ['$cookies', function checkCreds($cookies) {
             return function () {
                 var returnVal = false;
@@ -40,8 +83,7 @@ bussinessServices.factory('checkCreds',
                 return returnVal;
             };
         }]);
-
-bussinessServices.factory('getToken',
+bServices.factory('getToken',
     ['$cookies', function getToken($cookies) {
             return function () {
                 var returnVal = "";
@@ -52,15 +94,13 @@ bussinessServices.factory('getToken',
                 return returnVal;
             };
         }]);
-
-bussinessServices.factory('deleteCreds',
+bServices.factory('deleteCreds',
     ['$cookies', function deleteCreds($cookies) {
             return function () {
                 $cookies.remove('Creds');
             };
         }]);
-
-bussinessServices.factory('beforeAuthorizedOps', ['checkCreds', 'getLocale', 'getToken',
+bServices.factory('beforeAuthorizedOps', ['checkCreds', 'getLocale', 'getToken',
     'UserService', 'languageService', '$location', '$uibModal', 'deleteCreds',
     function beforeAuthorizedOps(checkCreds, getLocale, getToken, UserService,
         languageService, $location, $uibModal, deleteCreds) {
@@ -68,7 +108,6 @@ bussinessServices.factory('beforeAuthorizedOps', ['checkCreds', 'getLocale', 'ge
             var userLocale = getLocale();
             var userCred = getToken();
             var lang = languageService();
-
             if (!checkCreds()) {
                 $location.path('/user/login');
             } else {
@@ -91,7 +130,6 @@ bussinessServices.factory('beforeAuthorizedOps', ['checkCreds', 'getLocale', 'ge
                                     }
                                 }
                             });
-
                             CredInvalidModalInstance.result.then(
                                 function () {
                                     $location.path('/user/login');
@@ -99,36 +137,31 @@ bussinessServices.factory('beforeAuthorizedOps', ['checkCreds', 'getLocale', 'ge
                                 function () {
                                     $location.path('/');
                                 });
-                        }                        
+                        }
                     });
-                    
             }
         };
     }]);
-
-bussinessServices.factory('setamMomentLocal', ['amMoment',
+bServices.factory('setamMomentLocal', ['amMoment',
     function setamMomentLocal(amMoment) {
         return function (locale) {
             amMoment.changeLocale(locale);
         };
     }]);
-
-bussinessServices.factory('checkPassportNumber',
+bServices.factory('checkPassportNumber',
     function checkPassportNumber() {
         return function (Number) {
             var PASSPORT_NUMBER_REGEXP = /^([A-Z0-9])[A-Z0-9]{3,8}$/;
             return PASSPORT_NUMBER_REGEXP.test(Number);
         };
     });
-
-bussinessServices.factory('setPersonCategory', ['$cookies',
+bServices.factory('setPersonCategory', ['$cookies',
     function setPersonCategory($cookies) {
         return function (category) {
             $cookies.put('PersonCategory', category);
         };
     }]);
-
-bussinessServices.factory('getPersonCategory', ['$cookies',
+bServices.factory('getPersonCategory', ['$cookies',
     function getPersonCategory($cookies) {
         return function () {
             var returnVal = $cookies.get('PersonCategory');
@@ -138,8 +171,9 @@ bussinessServices.factory('getPersonCategory', ['$cookies',
                 return 6;
         };
     }]);
+
 // 这里创造性地将身份证号检查做成了业务逻辑服务！
-bussinessServices.factory('checkIDCardNumber',
+bServices.factory('checkIDCardNumber',
     function checkIDCardNumber() {
         return function (ID_Number) {
             var vcity = {
@@ -179,7 +213,6 @@ bussinessServices.factory('checkIDCardNumber',
                 82: "澳门",
                 91: "国外"
             };
-
             //检查号码是否符合规范，包括长度，类型
             function isCardNo(card)
             {
@@ -194,7 +227,6 @@ bussinessServices.factory('checkIDCardNumber',
                 return true;
             }
             ;
-
             //取身份证前两位,校验省份
             function checkProvince(card)
             {
@@ -206,7 +238,6 @@ bussinessServices.factory('checkIDCardNumber',
                 return true;
             }
             ;
-
             //检查生日是否正确
             function checkBirthday(card)
             {
@@ -236,7 +267,6 @@ bussinessServices.factory('checkIDCardNumber',
                 return false;
             }
             ;
-
             //校验日期
             function verifyBirthday(date)
             {
@@ -258,7 +288,6 @@ bussinessServices.factory('checkIDCardNumber',
                 return false;
             }
             ;
-
             //校验位的检测
             function checkParity(card)
             {
@@ -284,7 +313,6 @@ bussinessServices.factory('checkIDCardNumber',
                 return false;
             }
             ;
-
             //15位转18位身份证号
             function changeFivteenToEighteen(card)
             {

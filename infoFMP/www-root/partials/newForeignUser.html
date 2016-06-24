@@ -1,5 +1,5 @@
 <div class="container">
-    <div public-menu lang="{{lang}}" active-menu="{{currentMenu}}"></div>
+    <div public-menu active-menu="{{currentMenu}}"></div>
 
     <div class="row under-menu">
         <div class="col-sm-7 left-column">
@@ -37,6 +37,12 @@
                             <span class="label label-danger" ng-show="register.passport_number.$error.format">
                                 {{ lang.PassportNumberNotQualified}}
                             </span>
+                            <span class="label label-danger" ng-show="register.passport_number.$pending.isExisted">
+                                {{ lang.CheckingifThisPassportNumberisAvailable}}
+                            </span>
+                            <span class="label label-danger" ng-show="register.passport_number.$error.isExisted">
+                                {{ lang.ThisPassportNumberAlreadyTaken}}
+                            </span>
                         </div>
                     </div>
                     <div class="col-md-4 col-sm-6 col-xs-5 cell">
@@ -52,7 +58,34 @@
                         </div>
                     </div>
                 </div>
-                <div register-form-common-parts lang="{{lang}}"></div>
+                <div class="row">
+                    <div class="col-md-8 col-sm-9 col-xs-10 cell">
+                        <div class="form-group">
+                            <label class="control-label">{{lang.Nationality}}</label>
+                            <script type="text/ng-template" id="customCountrySelect.html">
+                                <a>
+                                    <!-- 注意，这里是用的match.model -->
+                                    <span class="flag-icon flag-icon-{{match.model.alpha_2.toLowerCase()}}"></span>
+                                    <span ng-bind-html="match.model.en_full | uibTypeaheadHighlight:query"></span>
+                                </a>
+                            </script>
+                            <input required class="form-control" type="text" ng-model="countrySelected"
+                                   style="background-image: url(bower_components/flag-icon-css/flags/4x3/{{countrySelected.alpha_2.toLowerCase()!==undefined? countrySelected.alpha_2.toLowerCase(): 'un'}}.svg); 
+                                   background-size: 20px auto; background-repeat: no-repeat;
+                                   background-color: #FFF; padding-left: 30px;
+                                   background-position: left 5px center;"
+                                   typeahead-loading='loadingCountries' 
+                                   typeahead-no-results="noResults"
+                                   typeahead-template-url='customCountrySelect.html'
+                                   uib-typeahead="country as country.en_full for country in countries | filter:$viewValue | limitTo:8"/>
+                            <i ng-show="loadingCountries" class="glyphicon glyphicon-refresh"></i>
+                            <div ng-show="noResults">
+                                <i class="glyphicon glyphicon-remove"></i><span class="label label-warning">{{lang.noResultFound}}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div register-form-common-parts></div>
                 <div class="row">
                     <div class="col-xs-9">
                         <button class="btn btn-success pull-right" 

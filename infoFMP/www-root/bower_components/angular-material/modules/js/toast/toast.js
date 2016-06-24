@@ -2,7 +2,7 @@
  * Angular Material Design
  * https://github.com/angular/material
  * @license MIT
- * v1.1.0-rc.5-master-d6996b7
+ * v1.1.0-rc.5-master-15da974
  */
 (function( window, angular, undefined ){
 "use strict";
@@ -365,8 +365,9 @@ function MdToastProvider($$interimElementProvider) {
             }
           }
 
-
-          return templateRoot.outerHTML;
+          // We have to return the innerHTMl, because we do not want to have the `md-template` element to be
+          // the root element of our interimElement.
+          return templateRoot.innerHTML;
         }
 
         return template || '';

@@ -3,10 +3,12 @@ from flask import Flask, jsonify
 import types
 
 from flask_restful import Api, Resource, reqparse
-from model import db, City, Province, CustomPort, Language, Country, User
+from model import db, City, Province, Language, Country, Chinese, Foreigner
+from model import Account as User
 from constant import PRSN_CAT as p_c, POSITION as po, DEPARTMENT as de, \
     SERVICE as se, TRNEE_RANK as t_r, RELATION as re, RELIGION as rel, \
-    GENDER as ge, MARRIAGE as ma, PPRT_TYPE as p_t, CERT_TYPE as c_t, EDU as edu
+    GENDER as ge, MARRIAGE as ma, PPRT_TYPE as p_t, CERT_TYPE as c_t, \
+    EDU as edu
 # ----------使用 HTTPBasicAuth-----------------
 from flask_httpauth import HTTPBasicAuth
 auth = HTTPBasicAuth()
@@ -55,65 +57,118 @@ class UsersApi(Resource):
 
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('username', type=str, required=True, location='json')
-        parser.add_argument('password', type=str, required=True, location='json')
-        parser.add_argument('locale', type=str, location='json', default='zh-cn')
-        parser.add_argument('category', type=str, location='json', required=True)
+        parser.add_argument('username', type=str, required=True,
+                            location='json')
+        parser.add_argument('password', type=str, required=True,
+                            location='json')
+        parser.add_argument('locale', type=str, location='json',
+                            default='zh-cn')
+        parser.add_argument('category', type=str, location='json',
+                            required=True)
         parser.add_argument('firstName', required=True, location='json')
         parser.add_argument('lastName', required=True, location='json')
         parser.add_argument('idNumber', type=str, location='json', default='')
-        parser.add_argument('passportNumber', type=str, location='json', default='')
+        parser.add_argument('passportNumber', type=str, location='json',
+                            default='')
         parser.add_argument('gender', type=str, location='json', default='1')
+        parser.add_argument('countryId', type=int, location='json')
 
         args = parser.parse_args()
-        #jsonify(User('', args['username'], args['password']).to_dict)
-        return User.create(args['username'], args['password'], \
-                           args['category'], args['firstName'], \
-                           args['lastName'], args['idNumber'], args['gender'], \
-                           args['passportNumber'], args['locale'])
+
+        return User.create(args['username'], args['password'],
+                           args['category'], args['firstName'],
+                           args['lastName'], args['idNumber'], args['gender'],
+                           args['countryId'], args['passportNumber'],
+                           args['locale'])
+
+
+@api.route('/api/user/password')
+class UpdatePassword(Resource):
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('cred', type=str, required=True,
+                            location='json')
+        parser.add_argument('oldPassword', type=str, required=True,
+                            location='json')
+        parser.add_argument('newPassword', type=str, required=True,
+                            location='json')
+        parser.add_argument('locale', type=str, location='json',
+                            default='en-us')
+
+        args = parser.parse_args()
+
+        return User.update_password(args['cred'], args['oldPassword'],
+                                    args['newPassword'], args['locale'])
+
+
+@api.route('/api/profile/exists')
+class ProfileExists(Resource):
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('category', type=str, location='json',
+                            required=True)
+        parser.add_argument('idNumber', type=str, location='json', default='')
+        parser.add_argument('passportNumber', type=str, location='json',
+                            default='')
+
+        args = parser.parse_args()
+
+        return User.profile_existed(category=args['category'],
+                                    idNumber=args['idNumber'],
+                                    passportNumber=args['passportNumber'])
+
 
 @api.route('/api/user/<string:locale>/<string:cred>')
 class GetUserByCredential(Resource):
     def get(self, locale, cred):
         return User.get_by_credential(cred, locale)
 
+
 @api.route('/api/user/checkcredentialvalid/<string:locale>/<string:cred>')
 class CheckUserCredentialExpired(Resource):
     def get(self, locale, cred):
         return User.check_auth_token_expired(cred, locale)
+
 
 @api.route('/api/user/exist/<string:r_username>')
 class CheckUsername(Resource):
     def get(self, r_username):
         return User.check_username(r_username)
 
+
 @api.route('/api/user/login')
 class UserLogin(Resource):
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('username', type=str, required=True, location='json')
-        parser.add_argument('password', type=str, location='json', required=True)
-        parser.add_argument('locale', type=str, location='json', default='zh')
+        parser.add_argument('username', type=str, required=True,
+                            location='json')
+        parser.add_argument('password', type=str, location='json',
+                            required=True)
+        parser.add_argument('locale', type=str, location='json',
+                            default='zh-cn')
         args = parser.parse_args()
 
         return User.login(args['username'], args['password'], args['locale'])
 
-# ------------------------------------------------------
 
+# ------------------------------------------------------
 @api.route('/api/cert_type/<string:locale>/<string:c_id>')
 class CERT_type(Resource):
     def get(self, c_id, locale):
         return jsonify(c_t.get_by_id(c_id, locale))
+
 
 @api.route('/api/cert_types/<string:locale>')
 class CertTypes(Resource):
     def get(self, locale):
         return jsonify(c_t.get_list(locale))
 
+
 @api.route('/api/edu/<string:locale>/<string:e_id>')
 class EDU(Resource):
     def get(self, e_id, locale):
         return jsonify(edu.get_by_id(e_id, locale))
+
 
 @api.route('/api/edus/<string:locale>')
 class EDUs(Resource):
@@ -241,16 +296,6 @@ class GetProvince(Resource):
 class Provinces(Resource):
     def get(self):
         return Province.get_list()
-
-@api.route('/api/customport/<int:customport_id>')
-class GetCustomPort(Resource):
-    def get(self, customport_id):
-        return CustomPort.get_by_id(customport_id)
-
-@api.route('/api/customports')
-class CustomPorts(Resource):
-    def get(self):
-        return CustomPort.get_list()
 
 @api.route('/api/language/<int:language_id>')
 class GetLanguage(Resource):

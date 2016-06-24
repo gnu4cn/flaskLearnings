@@ -1,0 +1,315 @@
+<uib-tabset active="active" type="pills">
+    
+    <!-- 帐号密码部分（所有人员） -->
+    <uib-tab heading="{{lang.accountAndPassword}}" index="0" select="setTabActive(0)">
+        <h4>
+            <span class="label label-info">{{lang.Username}}</span> {{user.username}}
+        </h4>
+        <h4><span class="label label-info">{{lang.Password}}</span> ********</h4>
+        
+        <!--人员类别（所有人员）-->
+        <h4><span class="label label-info">{{lang.Category}}</span> {{user.category.data}}</h4>
+        
+        <button class="btn btn-warning pull-right" ng-click='changePassword()'>{{lang.UpdatePassword}}</button>
+    </uib-tab>
+    
+    <!-- 基本资料（所有人员） -->
+    <uib-tab heading="{{lang.BasicProfile}}" index="1" select="setTabActive(1)">
+        <!--姓名（全部人员）-->
+        <h4>
+            <span class="label label-info">{{lang.Fullname}}</span> {{user.profile.f_name}} {{user.profile.l_name}}
+        </h4>
+        <h4 ng-show='user.type === 5'>
+            <span ng-class="user.profile.xingming===''? 'label label-danger': 'label label-info'">
+                {{lang.ChineseName}}</span>
+            {{user.profile.xingming===''? lang.notAdded: user.profile.xingming}}
+        </h4>
+        <h4 ng-show="user.type < 5">
+            <span class="label label-info">{{lang.IDNumber}}</span> {{user.profile.id_number}}
+        </h4>
+        
+        <!--性别（外籍人员，中方人员的性别需要从身份证号读出）-->
+        <h4 ng-show="user.type >= 5">
+            <span class="label label-info">{{lang.Gender}}</span> {{user.profile.gender.data}}
+        </h4>
+        
+        <!--国籍（外籍人员）-->
+        <h4 ng-show="user.type >= 5">
+            <span class="label label-info">{{lang.Nationality}}</span>
+            {{user.profile.country.en_simp+', '+user.profile.country.zh_simp}}
+            <span class="flag-icon flag-icon-{{user.profile.country.alpha_2.toLowerCase()}}"></span>
+        </h4>
+        
+        <!--生日（外籍学员）-->
+        <h4 ng-show="user.type === 5">
+            <span ng-class="user.profile.birthday.isBefore(minBirthYear) ? 'label label-danger' : 'label label-info'">
+                {{lang.Birthday}}</span> 
+            {{user.profile.birthday.isBefore(minBirthYear) ? lang.notAdded : user.profile.birthday.format("YYYY-MM-DD")}}
+        </h4>
+        
+        <!--护照及签证编号-->
+        <h4 ng-show="user.type >= 5">
+            <span class="label label-info">{{lang.passportNumber}}</span> {{user.profile.passport_number}}</h4>
+               
+        <!--手机号码（所有人员）-->
+        <h4>
+            <span ng-class="user.profile.mobile === '' ? 'label label-danger' : 'label label-info'">{{lang.mobile}}</span> 
+            {{user.profile.mobile!==''? user.profile.mobile: lang.notAdded}}
+        </h4>
+        
+        <!--岗位和部门（员工）-->
+        <h4 ng-show="user.type === 0">
+            <span class="label label-info">
+                {{lang.PositionDepartment}}</span>
+            {{user.profile.position.data}} - {{user.profile.position.DEPARTMENT.data}}
+        </h4>
+        
+        <!--本国电话号码（外籍学员）-->
+        <h4 ng-show="user.type === 5">
+            <span ng-class="user.profile.home_phone===''? 'label label-danger': 'label label-info'">
+                {{lang.homePhoneNumber}}</span>
+            {{user.profile.home_phone===''? lang.notAdded: user.profile.home_phone}}
+        </h4>
+        
+        <!--本国电话号码（外籍学员）-->
+        <h4 ng-show="user.type === 5">
+            <span ng-class="user.profile.home_address===''? 'label label-danger': 'label label-info'">
+                {{lang.homeAddress}}</span>
+            {{user.profile.home_address===''? lang.notAdded: user.profile.home_address}}
+        </h4>
+        
+        <button class="btn btn-warning pull-right" ng-click="updateBasicProfile()">{{lang.UpdateBasicProfile}}</button>
+    </uib-tab>
+    
+    <!--外籍学员在中国的联系人（外军学员）-->
+    <uib-tab heading="{{lang.ContactPersons}}" index="3" select="setTabActive(3)"
+             ng-show="user.type === 5">
+        <h4 ng-show="user.profile.contacts.length === 0">
+            <span class="label label-danger">{{lang.contact}}</span> 
+            {{lang.notAdded}}
+        </h4>
+        <h4 ng-show="user.profile.contacts.length > 0" ng-repeat="contact in user.profile.contacts">
+            <span class="label label-info">{{lang.contact}}</span> 
+            {{contact.f_name +' '+contact.l_name+', '+contact.mobile+', '}} +{{locale==='en-us'? contact.address+', '+contact.city: contact.city+', '+contact.address}}
+        </h4>
+        <button class="btn btn-warning pull-right">{{lang.UpdatePassword}}</button>
+    </uib-tab>
+
+    <!-- 护照及签证信息（外籍人员） -->
+    <uib-tab heading="{{lang.passportVisa}}" index="4" select="setTabActive(4)"
+             ng-show="user.type >= 5">
+        <h4>
+            <span ng-class="user.profile.passport_visa !== undefined ? 'label label-info' : 'label label-danger'">
+                {{lang.passportType}}</span>
+            {{user.profile.passport_visa !== undefined? user.profile.passport_visa.passport_type.data: lang.notAdded}}</h4>
+        <h4 ng-show="user.type >= 5">
+            <span ng-class="user.profile.passport_visa===undefined || user.profile.passport_visa.visa_number===''?  'label label-danger': 'label label-info'">
+                {{lang.visaNumber}}:
+            </span> {{user.profile.passport_visa===undefined || user.profile.passport_visa.visa_number===''? lang.notAdded: user.profile.passport_visa.visa_number}}</h4>
+        <h4>
+            <span ng-class="user.profile.passport_visa !== undefined ? 'label label-info' : 'label label-danger'">
+                {{lang.visaType}}</span> 
+            {{user.profile.passport_visa !== undefined? user.profile.passport_visa.visa_type.data: lang.notAdded}}</h4>
+        <h4>
+            <span ng-class="user.profile.passport_visa === undefined || user.profile.passport_visa.visa_valid_date.isBefore(today) ? 'label label-danger' : (user.profile.passport_visa.visa_valid_date.isBefore(oneWeekLater) ? 'label label-warning' : 'label label-info')">
+                {{lang.visaValidDate}}</span> 
+            {{user.profile.passport_visa === undefined? lang.notAdded: (user.profile.passport_visa.visa_valid_date.isBefore(today)? lang.Expired : ((user.profile.passport_visa.visa_valid_date.isBefore(oneWeekLater) ? lang.soonlyExpired : user.profile.passport_visa.visa_valid_date.format("YYYY-MM-DD"))))}}</h4>
+        <h4>
+            <span ng-class="user.profile.passport_visa === undefined ? 'label label-danger' : (user.profile.passport_visa.entrance_date.isBefore(fourYearsAgo) ? 'label label-warning' : 'label label-info')">{{lang.entranceDate}}</span>
+            {{user.profile.passport_visa===undefined? lang.notAdded: user.profile.passport_visa.entrance_date.format("YYYY-MM-DD")}}
+        </h4>
+        <h4>
+            <span ng-class="user.profile.passport_visa === undefined || user.profile.passport_visa.entrance_flight==='' ? 'label label-danger' : 'label label-info'">
+                {{lang.entranceFlight}}</span> 
+            {{user.profile.passport_visa === undefined || user.profile.passport_visa.entrance_flight==='' ? lang.notAdded : user.profile.passport_visa.entrance_flight}}</h4>
+        <h4>
+            <span ng-class="user.profile.passport_visa === undefined || user.profile.passport_visa.exit_date.isBefore(today) ? 'label label-danger' : 'label label-info'">
+                {{lang.exitDate}}</span> 
+            {{user.profile.passport_visa === undefined||user.profile.passport_visa.exit_date.isBefore(today) ? lang.notAdded : user.profile.passport_visa.exit_date.format("YYYY-MM-DD")}}</h4>
+        <h4>
+            <span ng-class="user.profile.passport_visa === undefined || user.profile.passport_visa.exit_flight==='' ? 'label label-danger' : 'label label-info'">
+                {{lang.exitFlight}}</span> 
+            {{user.profile.passport_visa === undefined || user.profile.passport_visa.exit_flight==='' ? lang.notAdded : user.profile.passport_visa.exit_flight}}</h4>
+        <button class="btn btn-warning pull-right">{{lang.UpdatePassword}}</button>
+    </uib-tab>
+
+    <!-- 中方工作人员及外籍学员家属-->
+    <uib-tab heading="{{lang.Families}}" index="5" select="setTabActive(5)"
+             ng-show="user.type === 0 || user.type === 5">
+        <h4 ng-show="user.profile.families.length === 0">
+            <span class="label label-danger">{{lang.family}}</span> 
+            {{lang.notAdded}}
+        </h4>
+        <h4 ng-show="user.profile.families.length > 0" ng-repeat="family in user.profile.families">
+            <span class="label label-info">{{lang.family}}</span> 
+            {{family.f_name}} {{family.l_name}}
+        </h4>        
+    </uib-tab>
+
+    <!--外籍学员亲属（外军学员）-->
+    <uib-tab heading="{{lang.FamilyMembers}}" index="6" select="setTabActive(6)"
+             ng-show="user.type === 5">
+        <h4 ng-show="user.profile.relatives.length === 0">
+            <span class="label label-danger">{{lang.familyMember}}</span> 
+            {{lang.notAdded}}
+        </h4>
+        <h4 ng-show="user.profile.relatives.length > 0" ng-repeat="relative in user.profile.relatives">
+            <span class="label label-info">{{lang.familyMember}}</span> 
+            {{relative.relation +' - '+relative.f_name+' '+relative.l_name+', '+relative.mobile}}
+        </h4>
+        <button class="btn btn-warning pull-right">{{lang.UpdatePassword}}</button>
+    </uib-tab>
+
+    <!-- 中方员工家属对应的工作人员（员工家属）-->
+    <uib-tab heading="{{lang.StaffBelongsto}}" index="7" select="setTabActive(7)"
+             ng-show="user.type === 1">
+        <h4 ng-show="user.profile.staff === undefined">
+            <span class="label label-danger">{{lang.Staff}}</span> 
+            {{lang.notAdded}}
+        </h4>
+        <h4 ng-show="user.profile.staff !== undefined">
+            <span class="label label-info">{{lang.Staff}}</span> 
+            {{user.profile.staff.f_name}} {{user.profile.staff.l_name}}
+        </h4>        
+    </uib-tab>
+
+    <!-- 外籍学员家属对应的外籍学员（外籍学员家属）-->
+    <uib-tab heading="{{lang.TraineeBelongsto}}" index="8" select="setTabActive(8)"
+             ng-show="user.type === 6">
+        <h4 ng-show="user.profile.trainee === undefined">
+            <span class="label label-danger">{{lang.Trainee}}</span> 
+            {{lang.notAdded}}
+        </h4>
+        <h4 ng-show="user.profile.trainee !== undefined">
+            <span class="label label-info">{{lang.Trainee}}</span> 
+            {{user.profile.trainee.f_name}} {{user.profile.trainee.l_name}}
+        </h4>        
+    </uib-tab>
+
+    <!-- 以下全是外籍学员的了。-->
+    <!-- 身高、体重、鞋码及特长 -->
+    <uib-tab heading="{{lang.physicalCondition}}" index="9" select="setTabActive(9)"
+             ng-show="user.type === 5">
+        <h4>
+            <span 
+                ng-class="user.profile.physical === undefined ? 'label label-danger' : (user.profile.physical.height < 140 && user.profile.physical.height > 300 ? 'label label-warning' : 'label label-info')">
+                {{lang.Height}}:
+            </span>
+            {{user.profile.physical===undefined? lang.notAdded: (user.profile.physical.height<140&&user.profile.physical.height>300? user.profile.physical.height+'('+lang.invalid+')': user.profile.physical.height)}}</h4>
+        <h4>
+            <span ng-class="user.profile.physical === undefined ? 'label label-danger' : (user.profile.physical.weight < 30 && user.profile.physical.weight > 150 ? 'label label-warning' : 'label label-info')">
+                {{lang.Weight}}:
+            </span> {{user.profile.physical===undefined?  lang.notAdded: (user.profile.physical.weight<30&&user.profile.physical.weight>150? user.profile.physical.weight+'('+lang.invalid+')': user.profile.physical.weight)}}</h4>
+        <h4>
+            <span ng-class="user.profile.physical === undefined ? 'label label-danger' : (user.profile.physical.shoesize < 18 && user.profile.physical.shoesize > 55 ? 'label label-warning' : 'label label-info')">
+                {{lang.Shoesize}}:
+            </span>
+            {{user.profile.physical===undefined?  lang.notAdded: (user.profile.physical.shoesize<18&&user.profile.physical.shoesize>55? user.profile.physical.shoesize+'('+lang.invalid+')': user.profile.physical.shoesize)}}</h4>
+        <h4 ng-show='user.profile.physical===undefined || user.profile.physical.specialities.length===0'>
+            <span class="label label-danger">
+                {{lang.Specialities}}:
+            </span>
+            {{lang.notAdded}}</h4>
+        <h4 ng-show='user.profile.physical!==undefined && user.profile.physical.specialities.length!==0'>
+            <span class="label label-danger">
+                {{lang.Specialities}}:
+            </span>
+            <ul><li ng-repeat='speciality in user.profile.physical.specialities'>speciality.detail</li></ul></h4>
+        <button class="btn btn-warning pull-right">{{lang.UpdatePassword}}</button>
+    </uib-tab>
+
+    <!-- 社会属性 -->
+    <uib-tab heading="{{lang.socialEdu}}" index="10" select="setTabActive(10)"
+             ng-show="user.type === 5">
+        <h4>
+            <span ng-class="user.profile.socialedu === undefined ? 'label label-danger' : 'label label-info'">
+                {{lang.Marriage}}</span>
+            {{user.profile.socialedu===undefined? lang.notAdded: user.profile.socialedu.marriage.data}}</h4>
+        <h4>
+            <span ng-class="user.profile.socialedu === undefined ? 'label label-danger' : 'label label-info'">
+                {{lang.Religion}}</span>
+            {{user.profile.socialedu===undefined? lang.notAdded: user.profile.socialedu.religion.data}}</h4>
+        <h4>
+            <span ng-class="user.profile.socialedu === undefined ? 'label label-danger' : 'label label-info'">
+                {{lang.Education}}</span>
+            {{user.profile.socialedu===undefined? lang.notAdded: user.profile.socialedu.edu.data}}</h4>
+        <h4>
+            <span ng-class="user.profile.socialedu === undefined ? 'label label-danger' : 'label label-info'">
+                {{lang.Major}}</span>
+            {{user.profile.socialedu===undefined? lang.notAdded: user.profile.socialedu.major}}</h4>
+        <h4>
+            <span ng-class="user.profile.socialedu === undefined ? 'label label-danger' : 'label label-info'">
+                {{lang.College}}</span>
+            {{user.profile.socialedu===undefined? lang.notAdded: user.profile.socialedu.college}}</h4>
+        <button class="btn btn-warning pull-right">{{lang.UpdatePassword}}</button>
+    </uib-tab>
+    
+    <!--外籍学员其它国家培训记录（外军学员）-->
+    <uib-tab heading="{{lang.AbroadStudies}}" index="11" select="setTabActive(11)"
+             ng-show="user.type === 5">
+        <h4 ng-show="user.profile.studys_abroad.length === 0">
+            <span class="label label-danger">{{lang.abroadStudy}}</span> 
+            {{lang.notAdded}}
+        </h4>
+        <h4 ng-show="user.profile.studys_abroad.length > 0" ng-repeat="abroadstudy in user.profile.studys_abroad">
+            <span class="label label-info">{{lang.training}}</span> 
+            {{abroadstudy.start_date +' - '+abroadstudy.end_date+', '+abroadstudy.country.en_simp+', '+abroadstudy.detail}}
+        </h4>
+        <button class="btn btn-warning pull-right">{{lang.UpdatePassword}}</button>
+    </uib-tab>
+
+    <!-- 职业情况 -->
+    <uib-tab heading="{{lang.careerInfo}}" index="12" select="setTabActive(12)"
+             ng-show="user.type === 5">
+        <h4>
+            <span ng-class="user.profile.career === undefined ? 'label label-danger' : 'label label-info'">
+                {{lang.rankService}}</span> 
+            {{user.profile.career === undefined ? lang.notAdded: user.profile.career.rank.TRNEE_RANK + ' - ' + user.profile.career.rank.SERVICE.data}}</h4>
+        <h4>
+            <span ng-class="user.profile.career === undefined || user.profile.career.position === '' ? 'label label-danger' : 'label label-info'">
+                {{lang.Position}}</span> 
+            {{user.profile.career === undefined||user.profile.career.position===''? lang.notAdded: user.profile.career.position}}</h4>
+        <h4>
+            <span ng-class="user.profile.career === undefined || user.profile.career.department === '' ? 'label label-danger' : 'label label-info'">
+                {{lang.Department}}</span> 
+            {{user.profile.career === undefined|| user.profile.career.department === '' ? lang.notAdded: user.profile.department}}</h4>
+        <h4>
+            <span ng-class="user.profile.career === undefined ? 'label label-danger' : (user.profile.career.position_date.isAfter(today)? 'label label-warning': 'label label-info')">
+                {{lang.positionDate}}</span> 
+            {{user.profile.career === undefined ? lang.notAdded : (user.profile.career.position_date.isAfter(today)? user.profile.career.position_date.format("YYYY-MM-DD")+'('+lang.invalid+')': user.profile.career.position_date.format("YYYY-MM-DD"))}}
+        </h4>
+        <h4>
+            <span ng-class="user.profile.career === undefined || user.profile.career.future_position === '' ? 'label label-danger' : 'label label-info'">
+                {{lang.futurePosition}}</span>
+            {{user.profile.career === undefined|| user.profile.career.future_position === ''? lang.notAdded: user.profile.career.future_position}}</h4>
+        <button class="btn btn-warning pull-right">{{lang.UpdatePassword}}</button>
+    </uib-tab>
+    
+    <!--外籍学员工作履历（外军学员）-->
+    <uib-tab heading="{{lang.WorkingExperiences}}" index="13" select="setTabActive(13)"
+             ng-show="user.type === 5">
+        <h4 ng-show="user.profile.workings.length === 0">
+            <span class="label label-danger">{{lang.working}}</span> 
+            {{lang.notAdded}}
+        </h4>
+        <h4 ng-show="user.profile.workings.length > 0" ng-repeat="working in user.profile.workings">
+            <span class="label label-info">{{lang.training}}</span> 
+            {{working.start_date +' - '+working.end_date+', '+working.job+', '+working.department+', '+working.detail}}
+        </h4>
+        <button class="btn btn-warning pull-right">{{lang.UpdatePassword}}</button>
+    </uib-tab>
+    
+    <!--外籍学员受训情况（外军学员）-->
+    <uib-tab heading="{{lang.Trainings}}" index="14" select="setTabActive(14)"
+             ng-show="user.type === 5">
+        <h4 ng-show="user.profile.trainings.length === 0">
+            <span class="label label-danger">{{lang.training}}</span> 
+            {{lang.notAdded}}
+        </h4>
+        <h4 ng-show="user.profile.trainings.length > 0" ng-repeat="training in user.profile.trainings">
+            <span class="label label-info">{{lang.training}}</span> 
+            {{training.start_date +' - '+training.end_date+', '+training.detail}}
+        </h4>
+        <button class="btn btn-warning pull-right">{{lang.UpdatePassword}}</button>
+    </uib-tab>
+</uib-tabset>

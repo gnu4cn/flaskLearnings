@@ -2,7 +2,7 @@
  * Angular Material Design
  * https://github.com/angular/material
  * @license MIT
- * v1.1.0-rc.5-master-d6996b7
+ * v1.1.0-rc.5-master-15da974
  */
 (function( window, angular, undefined ){
 "use strict";
@@ -1763,7 +1763,8 @@ function MdAriaService($$rAF, $log, $window, $interpolate) {
   return {
     expect: expect,
     expectAsync: expectAsync,
-    expectWithText: expectWithText
+    expectWithText: expectWithText,
+    expectWithoutText: expectWithoutText
   };
 
   /**
@@ -1810,6 +1811,15 @@ function MdAriaService($$rAF, $log, $window, $interpolate) {
         return getText(element);
       });
     } else {
+      expect(element, attrName, content);
+    }
+  }
+
+  function expectWithoutText(element, attrName) {
+    var content = getText(element);
+    var hasBinding = content.indexOf($interpolate.startSymbol()) > -1;
+
+    if ( !hasBinding && !content) {
       expect(element, attrName, content);
     }
   }
@@ -4651,6 +4661,7 @@ InkRippleCtrl.prototype.removeRipple = function (ripple) {
   if (index < 0) return;
   this.ripples.splice(this.ripples.indexOf(ripple), 1);
   ripple.removeClass('md-ripple-active');
+  ripple.addClass('md-ripple-remove');
   if (this.ripples.length === 0) this.container.css({ backgroundColor: '' });
   // use a 2-second timeout in order to allow for the animation to finish
   // we don't actually care how long the animation takes
@@ -7018,8 +7029,30 @@ MdAnchorDirective.$inject = ["$mdTheming"];
  * the FAB button background is filled with the accent color [by default]. The primary color palette may be used with
  * the `md-primary` class.
  *
+ * Developers can also change the color palette of the button, by using the following classes
+ * - `md-primary`
+ * - `md-accent`
+ * - `md-warn`
+ *
+ * See for example
+ *
+ * <hljs lang="html">
+ *   <md-button class="md-primary">Primary Button</md-button>
+ * </hljs>
+ *
+ * Button can be also raised, which means that they will use the current color palette to fill the button.
+ *
+ * <hljs lang="html">
+ *   <md-button class="md-accent md-raised">Raised and Accent Button</md-button>
+ * </hljs>
+ *
+ * It is also possible to disable the focus effect on the button, by using the following markup.
+ *
+ * <hljs lang="html">
+ *   <md-button class="md-no-focus">No Focus Style</md-button>
+ * </hljs>
+ *
  * @param {boolean=} md-no-ink If present, disable ripple ink effects.
- * @param {boolean=} md-no-focus-style If present, disable focus style on button
  * @param {expression=} ng-disabled En/Disable based on the expression
  * @param {string=} md-ripple-size Overrides the default ripple size logic. Options: `full`, `partial`, `auto`
  * @param {string=} aria-label Adds alternative text to button for accessibility, useful for icon buttons.
@@ -7085,7 +7118,7 @@ function MdButtonDirective($mdButtonInkRipple, $mdTheming, $mdAria, $timeout) {
     $mdButtonInkRipple.attach(scope, element);
 
     // Use async expect to support possible bindings in the button label
-    $mdAria.expectWithText(element, 'aria-label');
+    $mdAria.expectWithoutText(element, 'aria-label');
 
     // For anchor elements, we have to set tabindex manually when the
     // element is disabled
@@ -7103,7 +7136,7 @@ function MdButtonDirective($mdButtonInkRipple, $mdTheming, $mdAria, $timeout) {
       }
     });
 
-    if (!angular.isDefined(attr.mdNoFocusStyle)) {
+    if (!element.hasClass('md-no-focus')) {
       // restrict focus styles to the keyboard
       scope.mouseActive = false;
       element.on('mousedown', function() {
@@ -7121,6 +7154,7 @@ function MdButtonDirective($mdButtonInkRipple, $mdTheming, $mdAria, $timeout) {
         element.removeClass('md-focused');
       });
     }
+
   }
 
 }
@@ -7853,7 +7887,7 @@ angular.module('material.components.chips', [
             });
           }
 
-          scope.$on('destroy', function () {
+          scope.$on('$destroy', function () {
             unregisterChanges();
           });
 
@@ -11336,8 +11370,9 @@ function inputTextareaDirective($mdUtil, $window, $mdAria, $timeout, $mdGesture)
 
         if (!lineHeight) {
           // offsetHeight includes padding which can throw off our value
+          var originalPadding = element[0].style.padding || '';
           lineHeight = element.css('padding', 0).prop('offsetHeight');
-          element.css('padding', null);
+          element[0].style.padding = originalPadding;
         }
 
         if (minRows && lineHeight) {
@@ -12023,6 +12058,7 @@ mdListDirective.$inject = ["$mdTheming"];
  * Currently supported proxy items are
  * - `md-checkbox` (Toggle)
  * - `md-switch` (Toggle)
+ * - `md-menu` (Open)
  *
  * This means, when using a supported proxy item inside of `md-list-item`, the list item will
  * become clickable and executes the associated action of the proxy element on click.
@@ -12044,6 +12080,41 @@ mdListDirective.$inject = ["$mdTheming"];
  * </hljs>
  *
  * The recognized `md-switch` will toggle its state, when the user clicks on the `md-list-item`.
+ *
+ * It is also possible to have a `md-menu` inside of a `md-list-item`.
+ * <hljs lang="html">
+ *   <md-list-item>
+ *     <p>Click anywhere to fire the secondary action</p>
+ *     <md-menu class="md-secondary">
+ *       <md-button class="md-icon-button">
+ *         <md-icon md-svg-icon="communication:message"></md-icon>
+ *       </md-button>
+ *       <md-menu-content width="4">
+ *         <md-menu-item>
+ *           <md-button>
+ *             Redial
+ *           </md-button>
+ *         </md-menu-item>
+ *         <md-menu-item>
+ *           <md-button>
+ *             Check voicemail
+ *           </md-button>
+ *         </md-menu-item>
+ *         <md-menu-divider></md-menu-divider>
+ *         <md-menu-item>
+ *           <md-button>
+ *             Notifications
+ *           </md-button>
+ *         </md-menu-item>
+ *       </md-menu-content>
+ *     </md-menu>
+ *   </md-list-item>
+ * </hljs>
+ *
+ * The menu will automatically open, when the users clicks on the `md-list-item`.<br/>
+ *
+ * If the developer didn't specify any position mode on the menu, the `md-list-item` will automatically detect the
+ * position mode and applies it to the `md-menu`.
  *
  * ### Avatars
  * Sometimes you may want to have some avatars inside of the `md-list-item `.<br/>
@@ -12191,12 +12262,20 @@ function mdListItemDirective($mdAria, $mdConstant, $mdUtil, $timeout) {
           );
 
           buttonWrap[0].setAttribute('aria-label', tEl[0].textContent);
+
           copyAttributes(tEl[0], buttonWrap[0]);
+
+          // We allow developers to specify the `md-no-focus` class, to disable the focus style
+          // on the button executor. Once more classes should be forwarded, we should probably make the
+          // class forward more generic.
+          if (tEl.hasClass('md-no-focus')) {
+            buttonWrap.addClass('md-no-focus');
+          }
 
           // Append the button wrap before our list-item content, because it will overlay in relative.
           itemContainer.prepend(buttonWrap);
           itemContainer.children().eq(1).append(tEl.contents());
-          
+
           tEl.addClass('_md-button-wrap');
         }
 
@@ -12215,12 +12294,21 @@ function mdListItemDirective($mdAria, $mdConstant, $mdUtil, $timeout) {
       }
 
       function wrapSecondaryItem(secondaryItem, container) {
+        // If the current secondary item is not a button, but contains a ng-click attribute,
+        // the secondary item will be automatically wrapped inside of a button.
         if (secondaryItem && !isButton(secondaryItem) && secondaryItem.hasAttribute('ng-click')) {
+
           $mdAria.expect(secondaryItem, 'aria-label');
           var buttonWrapper = angular.element('<md-button class="md-secondary md-icon-button">');
-          copyAttributes(secondaryItem, buttonWrapper[0]);
+
+          // Copy the attributes from the secondary item to the generated button.
+          // We also support some additional attributes from the secondary item,
+          // because some developers may use a ngIf, ngHide, ngShow on their item.
+          copyAttributes(secondaryItem, buttonWrapper[0], ['ng-if', 'ng-hide', 'ng-show']);
+
           secondaryItem.setAttribute('tabindex', '-1');
           buttonWrapper.append(secondaryItem);
+
           secondaryItem = buttonWrapper[0];
         }
 
@@ -12234,16 +12322,28 @@ function mdListItemDirective($mdAria, $mdConstant, $mdUtil, $timeout) {
         container.append(secondaryItem);
       }
 
-      function copyAttributes(item, wrapper) {
+      /**
+       * Copies attributes from a source element to the destination element
+       * By default the function will copy the most necessary attributes, supported
+       * by the button executor for clickable list items.
+       * @param source Element with the specified attributes
+       * @param destination Element which will retrieve the attributes
+       * @param extraAttrs Additional attributes, which will be copied over.
+       */
+      function copyAttributes(source, destination, extraAttrs) {
         var copiedAttrs = $mdUtil.prefixer([
           'ng-if', 'ng-click', 'ng-dblclick', 'aria-label', 'ng-disabled', 'ui-sref',
           'href', 'ng-href', 'target', 'ng-attr-ui-sref', 'ui-sref-opts'
         ]);
 
+        if (extraAttrs) {
+          copiedAttrs = copiedAttrs.concat($mdUtil.prefixer(extraAttrs));
+        }
+
         angular.forEach(copiedAttrs, function(attr) {
-          if (item.hasAttribute(attr)) {
-            wrapper.setAttribute(attr, item.getAttribute(attr));
-            item.removeAttribute(attr);
+          if (source.hasAttribute(attr)) {
+            destination.setAttribute(attr, source.getAttribute(attr));
+            source.removeAttribute(attr);
           }
         });
       }
@@ -12270,7 +12370,7 @@ function mdListItemDirective($mdAria, $mdConstant, $mdUtil, $timeout) {
 
       function postLink($scope, $element, $attr, ctrl) {
         $element.addClass('_md');     // private md component indicator for styling
-        
+
         var proxies       = [],
             firstElement  = $element[0].firstElementChild,
             isButtonWrap  = $element.hasClass('_md-button-wrap'),
@@ -12327,6 +12427,25 @@ function mdListItemDirective($mdAria, $mdConstant, $mdUtil, $timeout) {
           }
         }
 
+        function isEventFromControl(event) {
+          var forbiddenControls = ['md-slider'];
+
+          // If there is no path property in the event, then we can assume that the event was not bubbled.
+          if (!event.path) {
+            return forbiddenControls.indexOf(event.target.tagName.toLowerCase()) !== -1;
+          }
+
+          // We iterate the event path up and check for a possible component.
+          // Our maximum index to search, is the list item root.
+          var maxPath = event.path.indexOf($element.children()[0]);
+
+          for (var i = 0; i < maxPath; i++) {
+            if (forbiddenControls.indexOf(event.path[i].tagName.toLowerCase()) !== -1) {
+              return true;
+            }
+          }
+        }
+
         var clickChildKeypressListener = function(e) {
           if (e.target.nodeName != 'INPUT' && e.target.nodeName != 'TEXTAREA' && !e.target.isContentEditable) {
             var keyCode = e.which || e.keyCode;
@@ -12349,6 +12468,10 @@ function mdListItemDirective($mdAria, $mdConstant, $mdUtil, $timeout) {
 
         if (proxies.length == 1 && clickChild) {
           $element.children().eq(0).on('click', function(e) {
+            // When the event is coming from an control and it should not trigger the proxied element
+            // then we are skipping.
+            if (isEventFromControl(e)) return;
+
             var parentButton = $mdUtil.getClosest(e.target, 'BUTTON');
             if (!parentButton && clickChild.contains(e.target)) {
               angular.forEach(proxies, function(proxy) {
@@ -12633,28 +12756,26 @@ MdNavBarController.prototype._initTabs = function() {
  * @private
  */
 MdNavBarController.prototype._updateTabs = function(newValue, oldValue) {
+  var self = this;
   var tabs = this._getTabs();
+  var oldIndex = -1;
+  var newIndex = -1;
+  var newTab = this._getTabByName(newValue);
+  var oldTab = this._getTabByName(oldValue);
 
-  var oldIndex;
-  if (oldValue) {
-    var oldTab = this._getTabByName(oldValue);
-    if (oldTab) {
-      oldTab.setSelected(false);
-      oldIndex = tabs.indexOf(oldTab);
-    }
+  if (oldTab) {
+    oldTab.setSelected(false);
+    oldIndex = tabs.indexOf(oldTab);
   }
 
-  if (newValue) {
-    var tab = this._getTabByName(newValue);
-    if (tab) {
-      tab.setSelected(true);
-      var newIndex = tabs.indexOf(tab);
-      var self = this;
-      this._$timeout(function() {
-        self._updateInkBarStyles(tab, newIndex, oldIndex);
-      });
-    }
+  if (newTab) {
+    newTab.setSelected(true);
+    newIndex = tabs.indexOf(newTab);
   }
+
+  this._$timeout(function() {
+    self._updateInkBarStyles(newTab, newIndex, oldIndex);
+  });
 };
 
 /**
@@ -12662,12 +12783,17 @@ MdNavBarController.prototype._updateTabs = function(newValue, oldValue) {
  * @private
  */
 MdNavBarController.prototype._updateInkBarStyles = function(tab, newIndex, oldIndex) {
-  var tabEl = tab.getButtonEl();
-  var left = tabEl.offsetLeft;
-
   this._inkbar.toggleClass('_md-left', newIndex < oldIndex)
       .toggleClass('_md-right', newIndex > oldIndex);
-  this._inkbar.css({left: left + 'px', width: tabEl.offsetWidth + 'px'});
+
+  this._inkbar.css({display: newIndex < 0 ? 'none' : ''});
+
+  if(tab){
+    var tabEl = tab.getButtonEl();
+    var left = tabEl.offsetLeft;
+
+    this._inkbar.css({left: left + 'px', width: tabEl.offsetWidth + 'px'});
+  }
 };
 
 /**
@@ -15418,15 +15544,16 @@ function MdProgressLinearDirective($mdTheming, $mdUtil, $log) {
 
       attr.$observe('disabled', function(value) {
         if (value === true || value === false) {
-          isDisabled = value;
+          isDisabled = !!value;
         } else {
           isDisabled = angular.isDefined(value);
         }
 
-        element.toggleClass(DISABLED_CLASS, !!isDisabled);
+        element.toggleClass(DISABLED_CLASS, isDisabled);
+        container.toggleClass(lastMode, !isDisabled);
       });
 
-      attr.$observe('mdMode',function(mode){
+      attr.$observe('mdMode', function(mode) {
         if (lastMode) container.removeClass( lastMode );
 
         switch( mode ) {
@@ -15454,7 +15581,7 @@ function MdProgressLinearDirective($mdTheming, $mdUtil, $log) {
 
         //$log.debug( $mdUtil.supplant(info, [mode]) );
 
-        element.attr("md-mode",mode);
+        element.attr("md-mode", mode);
         attr.mdMode = mode;
       }
     }
@@ -16560,7 +16687,9 @@ function SelectMenuDirective($parse, $mdUtil, $mdTheming) {
 
       // Setup a more robust version of isEmpty to ensure value is a valid option
       self.ngModel.$isEmpty = function($viewValue) {
-        return !self.options[$viewValue];
+        // We have to transform the viewValue into the hashKey, because otherwise the
+        // OptionCtrl may not exist. Developers may have specified a trackBy function.
+        return !self.options[self.hashGetter($viewValue)];
       };
 
       // Allow users to provide `ng-model="foo" ng-model-options="{trackBy: 'foo.id'}"` so
@@ -16638,11 +16767,21 @@ function SelectMenuDirective($parse, $mdUtil, $mdTheming) {
         throw new Error('Duplicate md-option values are not allowed in a select. ' +
           'Duplicate value "' + optionCtrl.value + '" found.');
       }
+
       self.options[hashKey] = optionCtrl;
 
       // If this option's value was already in our ngModel, go ahead and select it.
       if (angular.isDefined(self.selected[hashKey])) {
         self.select(hashKey, optionCtrl.value);
+
+        // When the current $modelValue of the ngModel Controller is using the same hash as
+        // the current option, which will be added, then we can be sure, that the validation
+        // of the option has occurred before the option was added properly.
+        // This means, that we have to manually trigger a new validation of the current option.
+        if (self.ngModel.$modelValue && self.hashGetter(self.ngModel.$modelValue) === hashKey) {
+          self.ngModel.$validate();
+        }
+
         self.refreshViewValue();
       }
     };
@@ -17569,6 +17708,11 @@ angular
  * // Sync check to whether given sidenav is locked open
  * // If this is true, the sidenav will be open regardless of close()
  * $mdSidenav(componentId).isLockedOpen();
+ * // On close callback to handle close, backdrop click or escape key pressed
+ * // Callback happens BEFORE the close action occurs.
+ * $mdSidenav(componentId).onClose(function () {
+ *   $log.debug('closing');
+ * });
  * </hljs>
  */
 function SidenavService($mdComponentRegistry, $mdUtil, $q, $log) {
@@ -17611,6 +17755,7 @@ function SidenavService($mdComponentRegistry, $mdUtil, $q, $log) {
         toggle       : rejectFn,
         open         : rejectFn,
         close        : rejectFn,
+        onClose      : angular.noop,
         then : function(callback) {
           return waitForInstance(handle)
             .then(callback || angular.noop);
@@ -17931,6 +18076,8 @@ function SidenavDirective($mdMedia, $mdUtil, $mdConstant, $mdTheming, $animate, 
         return $q.when(true);
 
       } else {
+        if (scope.isOpen && sidenavCtrl.onCloseCb) sidenavCtrl.onCloseCb();
+
         return $q(function(resolve){
           // Toggle value to force an async `updateIsOpen()` to run
           scope.isOpen = isOpen;
@@ -17994,6 +18141,12 @@ function SidenavController($scope, $element, $attrs, $mdComponentRegistry, $q) {
   // Synchronous getters
   self.isOpen = function() { return !!$scope.isOpen; };
   self.isLockedOpen = function() { return !!$scope.isLockedOpen; };
+
+  // Synchronous setters
+  self.onClose = function (callback) {
+    self.onCloseCb = callback;
+    return self;
+  };
 
   // Async actions
   self.open   = function() { return self.$toggleOpen( true );  };
@@ -19732,8 +19885,9 @@ function MdToastProvider($$interimElementProvider) {
             }
           }
 
-
-          return templateRoot.outerHTML;
+          // We have to return the innerHTMl, because we do not want to have the `md-template` element to be
+          // the root element of our interimElement.
+          return templateRoot.innerHTML;
         }
 
         return template || '';
@@ -21549,7 +21703,7 @@ function MdAutocompleteCtrl ($scope, $element, $mdUtil, $mdConstant, $mdTheming,
    * Initialize the controller, setup watchers, gather elements
    */
   function init () {
-    $mdUtil.initOptionalProperties($scope, $attrs, { searchText: null, selectedItem: null });
+    $mdUtil.initOptionalProperties($scope, $attrs, { searchText: '', selectedItem: null });
     $mdTheming($element);
     configureWatchers();
     $mdUtil.nextTick(function () {
@@ -21778,7 +21932,7 @@ function MdAutocompleteCtrl ($scope, $element, $mdUtil, $mdConstant, $mdTheming,
    * When the user's mouse leaves the menu, blur events may hide the menu again.
    */
   function onListLeave () {
-    if (!hasFocus) elements.input.focus();
+    if (!hasFocus && !ctrl.hidden) elements.input.focus();
     noBlur = false;
     ctrl.hidden = shouldHide();
   }
@@ -21952,12 +22106,22 @@ function MdAutocompleteCtrl ($scope, $element, $mdUtil, $mdConstant, $mdTheming,
         select(ctrl.index);
         break;
       case $mdConstant.KEY_CODE.ESCAPE:
+        if (!shouldProcessEscape()) return;
         event.stopPropagation();
         event.preventDefault();
-        if ($scope.searchText) clearValue();
 
-        // Force the component to blur if they hit escape
-        doBlur(true);
+        clearSelectedItem();
+        if ($scope.searchText && hasEscapeOption('clear')) {
+          clearSearchText();
+        }
+
+        if (hasEscapeOption('blur')) {
+          // Force the component to blur if they hit escape
+          doBlur(true);
+        } else {
+          // Manually hide (needed for mdNotFound support)
+          ctrl.hidden = true;
+        }
 
         break;
       default:
@@ -22035,6 +22199,22 @@ function MdAutocompleteCtrl ($scope, $element, $mdUtil, $mdConstant, $mdTheming,
     else if (hasSelection()) return true;           // Hide if there is already a selection
     else if (!hasFocus) return true;                // Hide if the input does not have focus
     else return !shouldShow();                      // Defer to standard show logic
+  }
+
+  /**
+   * Determines if the escape keydown should be processed
+   * @returns {boolean}
+   */
+  function shouldProcessEscape() {
+    return hasEscapeOption('blur') || !ctrl.hidden || ctrl.loading || hasEscapeOption('clear') && $scope.searchText;
+  }
+
+  /**
+   * Determines if an escape option is set
+   * @returns {boolean}
+   */
+  function hasEscapeOption(option) {
+    return !$scope.escapeOptions || $scope.escapeOptions.toLowerCase().indexOf(option) !== -1;
   }
 
   /**
@@ -22125,15 +22305,29 @@ function MdAutocompleteCtrl ($scope, $element, $mdUtil, $mdConstant, $mdTheming,
   /**
    * Clears the searchText value and selected item.
    */
-  function clearValue ($event) {
+  function clearValue () {
+    clearSelectedItem();
+    clearSearchText();
+  }
+
+  /**
+   * Clears the selected item
+   */
+  function clearSelectedItem () {
+    // Reset our variables
+    ctrl.index = 0;
+    ctrl.matches = [];
+  }
+
+  /**
+   * Clears the searchText value
+   */
+  function clearSearchText () {
     // Set the loading to true so we don't see flashes of content.
     // The flashing will only occur when an async request is running.
     // So the loading process will stop when the results had been retrieved.
     setLoading(true);
 
-    // Reset our variables
-    ctrl.index = 0;
-    ctrl.matches = [];
     $scope.searchText = '';
 
     // Per http://www.w3schools.com/jsref/event_oninput.asp
@@ -22370,6 +22564,8 @@ angular
  *     the item if the search text is an exact match
  * @param {boolean=} md-match-case-insensitive When set and using `md-select-on-match`, autocomplete
  *     will select on case-insensitive match
+ * @param {string=} md-escape-options Override escape key logic. Default is `blur clear`.
+ *     Options: `blur|clear`, `none`
  *
  * @usage
  * ### Basic Example
@@ -22451,7 +22647,8 @@ function MdAutocomplete ($$mdSvgRegistry) {
       floatingLabel:    '@?mdFloatingLabel',
       autoselect:       '=?mdAutoselect',
       menuClass:        '@?mdMenuClass',
-      inputId:          '@?mdInputId'
+      inputId:          '@?mdInputId',
+      escapeOptions:    '@?mdEscapeOptions'
     },
     link: function(scope, element, attrs, controller) {
       // Retrieve the state of using a md-not-found template by using our attribute, which will
@@ -23240,7 +23437,6 @@ function MdChipsCtrl ($scope, $mdConstant, $log, $element, $timeout, $mdUtil) {
    * after selecting a chip from the list.
    * @type {boolean}
    */
-  this.useOnSelect = false;
 }
 MdChipsCtrl.$inject = ["$scope", "$mdConstant", "$log", "$element", "$timeout", "$mdUtil"];
 
@@ -23259,10 +23455,19 @@ MdChipsCtrl.prototype.inputKeydown = function(event) {
   }
 
   if (event.keyCode === this.$mdConstant.KEY_CODE.BACKSPACE) {
-    if (chipBuffer) return;
+    // Only select and focus the previous chip, if the current caret position of the
+    // input element is at the beginning.
+    if (getCursorPosition(event.target) !== 0) {
+      return;
+    }
+
     event.preventDefault();
     event.stopPropagation();
-    if (this.items.length) this.selectAndFocusChipSafe(this.items.length - 1);
+
+    if (this.items.length) {
+      this.selectAndFocusChipSafe(this.items.length - 1);
+    }
+
     return;
   }
 
@@ -23284,6 +23489,19 @@ MdChipsCtrl.prototype.inputKeydown = function(event) {
   }
 };
 
+/**
+ * Returns the cursor position of the specified input element.
+ * If no selection is present it returns -1.
+ * @param element HTMLInputElement
+ * @returns {Number} Cursor Position of the input.
+ */
+function getCursorPosition(element) {
+  if (element.selectionStart === element.selectionEnd) {
+    return element.selectionStart;
+  }
+  return -1;
+}
+
 
 /**
  * Updates the content of the chip at given index
@@ -23302,10 +23520,15 @@ MdChipsCtrl.prototype.updateChipContents = function(chipIndex, chipContents){
  * Returns true if a chip is currently being edited. False otherwise.
  * @return {boolean}
  */
-MdChipsCtrl.prototype.isEditingChip = function(){
+MdChipsCtrl.prototype.isEditingChip = function() {
   return !!this.$element[0].getElementsByClassName('_md-chip-editing').length;
 };
 
+
+MdChipsCtrl.prototype.isRemovable = function() {
+  return this.readonly ? this.removable :
+         angular.isDefined(this.removable) ? this.removable : true;
+};
 
 /**
  * Handles the keydown event on the chip elements: backspace removes the selected chip, arrow
@@ -23321,6 +23544,8 @@ MdChipsCtrl.prototype.chipKeydown = function (event) {
     case this.$mdConstant.KEY_CODE.DELETE:
       if (this.selectedChip < 0) return;
       event.preventDefault();
+      // Cancel the delete action only after the event cancel. Otherwise the page will go back.
+      if (!this.isRemovable()) return;
       this.removeAndSelectAdjacentChip(this.selectedChip);
       break;
     case this.$mdConstant.KEY_CODE.LEFT_ARROW:
@@ -23733,18 +23958,42 @@ MdChipsCtrl.prototype.hasFocus = function () {
    *   </ul>
    * </ul>
    *
-   *  <span style="font-size:.8em;text-align:center">
-   *    Warning: This component is a WORK IN PROGRESS. If you use it now,
-   *    it will probably break on you in the future.
-   *  </span>
+   * <span style="font-size:.8em;text-align:center">
+   *   Warning: This component is a WORK IN PROGRESS. If you use it now,
+   *   it will probably break on you in the future.
+   * </span>
+   *
+   * Sometimes developers want to limit the amount of possible chips.<br/>
+   * You can specify the maximum amount of chips by using the following markup.
+   *
+   * <hljs lang="html">
+   *   <md-chips
+   *       ng-model="myItems"
+   *       placeholder="Add an item"
+   *       md-max-chips="5">
+   *   </md-chips>
+   * </hljs>
+   *
+   * In some cases, you have an autocomplete inside of the `md-chips`.<br/>
+   * When the maximum amount of chips has been reached, you can also disable the autocomplete selection.<br/>
+   * Here is an example markup.
+   *
+   * <hljs lang="html">
+   *   <md-chips ng-model="myItems" md-max-chips="5">
+   *     <md-autocomplete ng-hide="myItems.length > 5" ...></md-autocomplete>
+   *   </md-chips>
+   * </hljs>
    *
    * @param {string=|object=} ng-model A model to bind the list of items to
    * @param {string=} placeholder Placeholder text that will be forwarded to the input.
    * @param {string=} secondary-placeholder Placeholder text that will be forwarded to the input,
    *    displayed when there is at least one item in the list
+   * @param {boolean=} md-removable Enables or disables the deletion of chips through the
+   *    removal icon or the Delete/Backspace key. Defaults to true.
    * @param {boolean=} readonly Disables list manipulation (deleting or adding list items), hiding
    *    the input and delete buttons. If no `ng-model` is provided, the chips will automatically be
-   *    marked as readonly.
+   *    marked as readonly.<br/><br/>
+   *    When `md-removable` is not defined, the `md-remove` behavior will be overwritten and disabled.
    * @param {string=} md-enable-chip-edit Set this to "true" to enable editing of chip contents. The user can 
    *    go into edit mode with pressing "space", "enter", or double clicking on the chip. Chip edit is only
    *    supported for chips with basic template.
@@ -23801,7 +24050,9 @@ MdChipsCtrl.prototype.hasFocus = function () {
   var MD_CHIPS_TEMPLATE = '\
       <md-chips-wrap\
           ng-keydown="$mdChipsCtrl.chipKeydown($event)"\
-          ng-class="{ \'md-focused\': $mdChipsCtrl.hasFocus(), \'md-readonly\': !$mdChipsCtrl.ngModelCtrl || $mdChipsCtrl.readonly}"\
+          ng-class="{ \'md-focused\': $mdChipsCtrl.hasFocus(), \
+                      \'md-readonly\': !$mdChipsCtrl.ngModelCtrl || $mdChipsCtrl.readonly,\
+                      \'md-removable\': $mdChipsCtrl.isRemovable() }"\
           class="md-chips">\
         <md-chip ng-repeat="$chip in $mdChipsCtrl.items"\
             index="{{$index}}"\
@@ -23812,7 +24063,7 @@ MdChipsCtrl.prototype.hasFocus = function () {
               ng-click="!$mdChipsCtrl.readonly && $mdChipsCtrl.focusChip($index)"\
               ng-focus="!$mdChipsCtrl.readonly && $mdChipsCtrl.selectChip($index)"\
               md-chip-transclude="$mdChipsCtrl.chipContentsTemplate"></div>\
-          <div ng-if="!$mdChipsCtrl.readonly"\
+          <div ng-if="$mdChipsCtrl.isRemovable()"\
                class="_md-chip-remove-container"\
                md-chip-transclude="$mdChipsCtrl.chipRemoveTemplate"></div>\
         </md-chip>\
@@ -23831,7 +24082,6 @@ MdChipsCtrl.prototype.hasFocus = function () {
             ng-model="$mdChipsCtrl.chipBuffer"\
             ng-focus="$mdChipsCtrl.onInputFocus()"\
             ng-blur="$mdChipsCtrl.onInputBlur()"\
-            ng-trim="false"\
             ng-keydown="$mdChipsCtrl.inputKeydown($event)">';
 
   var CHIP_DEFAULT_TEMPLATE = '\
@@ -23840,7 +24090,7 @@ MdChipsCtrl.prototype.hasFocus = function () {
   var CHIP_REMOVE_TEMPLATE = '\
       <button\
           class="_md-chip-remove"\
-          ng-if="!$mdChipsCtrl.readonly"\
+          ng-if="$mdChipsCtrl.isRemovable()"\
           ng-click="$mdChipsCtrl.removeChipAndFocusInput($$replacedScope.$index)"\
           type="button"\
           aria-hidden="true"\
@@ -23875,6 +24125,7 @@ MdChipsCtrl.prototype.hasFocus = function () {
       compile: compile,
       scope: {
         readonly: '=readonly',
+        removable: '=mdRemovable',
         placeholder: '@',
         mdEnableChipEdit: '@',
         secondaryPlaceholder: '@',
@@ -26279,7 +26530,6 @@ MdContactChips.$inject = ["$mdTheming", "$mdUtil"];
   // TODO(jelbourn): something better for mobile (calendar panel takes up entire screen?)
   // TODO(jelbourn): input behavior (masking? auto-complete?)
   // TODO(jelbourn): UTC mode
-  // TODO(jelbourn): RTL
 
 
   angular.module('material.components.datepicker')
@@ -26989,9 +27239,7 @@ MdContactChips.$inject = ["$mdTheming", "$mdUtil"];
    */
   DatePickerCtrl.prototype.handleBodyClick = function(event) {
     if (this.isCalendarOpen) {
-      // TODO(jelbourn): way want to also include the md-datepicker itself in this check.
-      var closest = this.$mdUtil.getClosest;
-      var isInCalendar = closest(event.target, 'md-calendar-year') || closest(event.target, 'md-calendar-month');
+      var isInCalendar = this.$mdUtil.getClosest(event.target, 'md-calendar');
 
       if (!isInCalendar) {
         this.closeCalendarPane();
@@ -27648,7 +27896,7 @@ MdIconProvider.prototype = {
     return this;
   },
 
-  $get: ['$templateRequest', '$q', '$log', '$templateCache', '$mdUtil', '$sce', function($templateRequest, $q, $log, $templateCache, $mdUtil, $sce) {
+  $get: ['$templateRequest', '$q', '$log', '$mdUtil', '$sce', function($templateRequest, $q, $log, $mdUtil, $sce) {
     return MdIconService(config, $templateRequest, $q, $log, $mdUtil, $sce);
   }]
 };
@@ -27679,7 +27927,7 @@ function ConfigurationItem(url, viewBoxSize) {
  *
  * @returns {angular.$q.Promise} A promise that gets resolved to a clone of the initial SVG DOM element; which was
  * created from the SVG markup in the SVG data file. If an error occurs (e.g. the icon cannot be found) the promise
- * will get rejected. 
+ * will get rejected.
  *
  * @usage
  * <hljs lang="js">
@@ -27708,6 +27956,7 @@ function ConfigurationItem(url, viewBoxSize) {
 /* @ngInject */
 function MdIconService(config, $templateRequest, $q, $log, $mdUtil, $sce) {
   var iconCache = {};
+  var svgCache = {};
   var urlRegex = /[-\w@:%\+.~#?&//=]{2,}\.[a-z]{2,4}\b(\/[-\w@:%\+.~#?&//=]*)?/i;
   var dataUrlRegex = /^data:image\/svg\+xml[\s*;\w\-\=]*?(base64)?,(.*)$/i;
 
@@ -27819,7 +28068,7 @@ function MdIconService(config, $templateRequest, $q, $log, $mdUtil, $sce) {
     function extractFromSet(set) {
       var iconName = id.slice(id.lastIndexOf(':') + 1);
       var icon = set.querySelector('#' + iconName);
-      return !icon ? announceIdNotFound(id) : new Icon(icon, iconSetConfig);
+      return icon ? new Icon(icon, iconSetConfig) : announceIdNotFound(id);
     }
 
     function announceIdNotFound(id) {
@@ -27854,8 +28103,10 @@ function MdIconService(config, $templateRequest, $q, $log, $mdUtil, $sce) {
             reject(err);
           },
           extractSvg = function(response) {
-            var svg = angular.element('<div>').append(response).find('svg')[0];
-            resolve(svg);
+            if (!svgCache[url]) {
+              svgCache[url] = angular.element('<div>').append(response)[0].querySelector('svg');
+            }
+            resolve(svgCache[url]);
           };
 
         $templateRequest(url, true).then(extractSvg, announceAndReject);
@@ -27879,7 +28130,7 @@ function MdIconService(config, $templateRequest, $q, $log, $mdUtil, $sce) {
    */
   function Icon(el, config) {
     if (el && el.tagName != 'svg') {
-      el = angular.element('<svg xmlns="http://www.w3.org/2000/svg">').append(el)[0];
+      el = angular.element('<svg xmlns="http://www.w3.org/2000/svg">').append(el.cloneNode(true))[0];
     }
 
     // Inject the namespace if not available...
@@ -27951,7 +28202,7 @@ function MenuController($mdMenu, $attrs, $element, $scope, $mdUtil, $timeout, $r
   this.init = function init(setMenuContainer, opts) {
     opts = opts || {};
     menuContainer = setMenuContainer;
-    
+
     // Default element for ARIA attributes has the ngClick or ngMouseenter expression
     triggerElement = $element[0].querySelector(prefixer.buildSelector(['ng-click', 'ng-mouseenter']));
     triggerElement.setAttribute('aria-expanded', 'false');
@@ -27972,7 +28223,11 @@ function MenuController($mdMenu, $attrs, $element, $scope, $mdUtil, $timeout, $r
       'aria-haspopup': 'true'
     });
 
-    $scope.$on('$destroy', this.disableHoverListener);
+    $scope.$on('$destroy', angular.bind(this, function() {
+      this.disableHoverListener();
+      $mdMenu.destroy();
+    }));
+
     menuContainer.on('$destroy', function() {
       $mdMenu.destroy();
     });
@@ -28483,7 +28738,7 @@ function MenuProvider($$interimElementProvider) {
      * and backdrop
      */
     function onRemove(scope, element, opts) {
-      opts.cleanupInteraction();
+      opts.cleanupInteraction && opts.cleanupInteraction();
       opts.cleanupResizing();
       opts.hideBackdrop();
 
@@ -28846,7 +29101,7 @@ function MenuProvider($$interimElementProvider) {
       }
 
       var rtl = ($mdUtil.bidi() == 'rtl');
-      
+
       switch (positionMode.left) {
         case 'target':
           position.left = existingOffsets.left + originNodeRect.left - alignTargetRect.left;
@@ -31227,7 +31482,15 @@ function MdTabsDummyWrapper ($mdUtil) {
         ctrl.updatePagination();
         ctrl.updateInkBarStyles();
       });
-      var config = { childList: true, subtree: true };
+
+      var config = {
+        childList: true,
+        subtree: true,
+        // Per https://bugzilla.mozilla.org/show_bug.cgi?id=1138368, browsers will not fire
+        // the childList mutation, once a <span> element's innerText changes.
+        // The characterData of the <span> element will change.
+        characterData: true
+      };
 
       observer.observe(element[0], config);
 
@@ -31293,4 +31556,4 @@ angular.module("material.core").constant("$MD_THEME_CSS", "/*  Only used with Th
 })();
 
 
-})(window, window.angular);;window.ngMaterial={version:{full: "1.1.0-rc.5-master-d6996b7"}};
+})(window, window.angular);;window.ngMaterial={version:{full: "1.1.0-rc.5-master-15da974"}};

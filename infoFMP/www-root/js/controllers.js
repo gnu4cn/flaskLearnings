@@ -1,13 +1,9 @@
 'use strict';
 
-var infoFMPControllers = angular.module('infoFMPControllers', []);
+var Controllers = angular.module('Controllers', []);
 
-infoFMPControllers.controller('ProfileCtrl', ['$scope', 'getToken',
-    'languageService', 'checkCreds', 'UserService', 'getLocale',
-    'beforeAuthorizedOps',
-    function ProfileCtrl($scope, getToken, languageService, checkCreds,
-        UserService, getLocale, beforeAuthorizedOps) {
-
+Controllers.controller('ProfileCtrl', ['$scope',
+    function ProfileCtrl($scope) {
         $scope.currentMenu = {
             about: '',
             news: '',
@@ -16,32 +12,9 @@ infoFMPControllers.controller('ProfileCtrl', ['$scope', 'getToken',
             login: '',
             register: ''
         };
-        $scope.lang = languageService();
-        var userLocale = getLocale();
-        var userCred = getToken();
-
-        ////检查登录凭据是否过期
-        beforeAuthorizedOps();
-        
-        //这里再度检查登录凭据，耗时一下午，尽然不需要business service的返回值，这么简单
-        //就实现了。
-        if (checkCreds()) {
-            // 功能性代码开始
-            //获取user_table数据
-            UserService.GetByCred(userLocale, userCred).then(
-                function (res) {
-                    if (res.success) {
-                        //console.log(res.user);
-                        $scope.user = res.user;
-                        $scope.user.created_at = new Date(res.user.created_at);
-                    } else {
-                    }
-                });
-        }
-
     }]);
 
-infoFMPControllers.controller('CredInvalidModalInstanceCtrl', ['$scope',
+Controllers.controller('CredInvalidModalInstanceCtrl', ['$scope',
     '$uibModalInstance', 'lang', 'message', '$sce',
     function ($scope, $uibModalInstance, lang, message, $sce) {
         //console.log(JSON.stringify(lang));
@@ -55,7 +28,7 @@ infoFMPControllers.controller('CredInvalidModalInstanceCtrl', ['$scope',
         };
     }]);
 
-infoFMPControllers.controller('LogoutConfirmModalInstanceCtrl', ['$scope',
+Controllers.controller('LogoutConfirmModalInstanceCtrl', ['$scope',
     '$uibModalInstance', 'lang', '$sce',
     function ($scope, $uibModalInstance, lang, $sce) {
         $scope.logoutTips = $sce.trustAsHtml(lang.logoutTips);
@@ -68,7 +41,7 @@ infoFMPControllers.controller('LogoutConfirmModalInstanceCtrl', ['$scope',
         };
     }]);
 
-infoFMPControllers.controller('LoginCtrl', ['$scope', '$location',
+Controllers.controller('LoginCtrl', ['$scope', '$location',
     'languageService', 'UserService', '$timeout', '$q', 'getLocale', 'setCreds',
     function LoginCtrl($scope, $location, languageService, UserService,
         $timeout, $q, getLocale, setCreds) {
@@ -98,6 +71,7 @@ infoFMPControllers.controller('LoginCtrl', ['$scope', '$location',
 
         $scope.submitLogin = function () {
             var data = $scope.user;
+            //console.log(JSON.stringify(data));
             UserService.Login(data)
                 .then(function (res) {
                     //发送请求成功
@@ -121,7 +95,7 @@ infoFMPControllers.controller('LoginCtrl', ['$scope', '$location',
         };
     }]);
 
-infoFMPControllers.controller('RegisterStepOneCtrl', ['$scope', '$location',
+Controllers.controller('RegisterStepOneCtrl', ['$scope', '$location',
     'languageService', 'PersonCategoryList', 'getLocale', 'setPersonCategory',
     function RegisterStepOneCtrl($scope, $location, languageService,
         PersonCategoryList, getLocale, setPersonCategory) {
@@ -163,11 +137,149 @@ infoFMPControllers.controller('RegisterStepOneCtrl', ['$scope', '$location',
         };
     }]);
 
-infoFMPControllers.controller('NewForeignUserCtrl', ['$scope',
+Controllers.controller('UpdateBasicProfileModalInstanceCtrl', ['$scope',
+    '$uibModalInstance', 'lang', 'user', 'getToken', 'getLocale', 'UserService', '$location',
+    'deleteCreds', '$q', '$timeout', 'GenderList', 'CountryList',
+    function ($scope, $uibModalInstance, lang, user, getToken, getLocale,
+        UserService, $location, deleteCreds, $q, $timeout, GenderList,
+        CountryList) {
+        $scope.lang = lang;
+        //$scope.profile = user.profile;
+        $scope.profile = {};
+
+        //姓名及中文名字
+        $scope.profile.firstName = user.profile.f_name;
+        $scope.profile.lastName = user.profile.l_name;
+        var userType = $scope.userType = parseInt(user.type, 10);
+        
+        if(userType<5){
+            $scope.profile.idNumber = user.profile.id_number;
+        }
+
+        if (userType === 5) {
+            $scope.profile.xingming = user.profile.xingming;
+            //生日
+            //http://stackoverflow.com/questions/17987647/moment-js-transform-to-date-object
+            $scope.profile.birthday = user.profile.birthday.toDate();
+            var today = new moment();
+            $scope.minBirthday = today.subtract(60, 'years').toDate();
+
+            //国内电话（外籍学员）
+            $scope.zoneNumber = user.profile.country.zoneprefix;
+            $scope.profile.home_number = user.profile.home_number;
+
+            //家庭地址（外籍学员）
+            $scope.profile.home_address = user.profile.home_address;
+            $scope.country = user.profile.country.en_simp;
+        }
+
+        if (userType >= 5) {
+            //性别
+            var userLocale = getLocale();
+            GenderList.get(
+                {locale: userLocale},
+                function success(response) {
+                    $scope.Genders = response;
+                    //下面的代码用于预置select选项
+                    for (var i = 0; i < response.length; i++) {
+                        if (response[i].id === user.profile.gender.id) {
+                            $scope.profile.gender = response[i];
+                            break;
+                        }
+                    }
+                },
+                function error(errorResponse) {
+                    console.log(JSON.stringify(errorResponse));
+                }
+            );
+
+            //国籍（参照性别）
+            CountryList.get(
+                {},
+                function successs(response) {
+                    $scope.countries = response;
+                    for (var i = 0; i < response.length; i++) {
+                        if (response[i].id === user.profile.country_id) {
+                            $scope.countrySelected = response[i];
+                            break;
+                        }
+                    }
+                },
+                function error(errorResponse) {
+                    console.log(JSON.stringify(errorResponse));
+                });
+
+            //护照号码
+            $scope.profile.passportNumber = user.profile.passport_number;
+        }
+    }]);
+
+Controllers.controller('UpdatePasswordModalInstanceCtrl', ['$scope',
+    '$uibModalInstance', 'lang', 'getToken', 'getLocale', 'UserService', '$location',
+    'deleteCreds', '$q', '$timeout',
+    function ($scope, $uibModalInstance, lang, getToken, getLocale,
+        UserService, $location, deleteCreds, $q, $timeout) {
+        $scope.lang = lang;
+        $scope.ok = function () {
+            $scope.data.cred = getToken();
+            $scope.data.locale = getLocale();
+
+            UserService.UpdatePassword($scope.data)
+                .then(function (res) {
+                    //发送请求成功
+                    if (res.success) {
+                        $scope.serverFault = false;
+                        $scope.responseMsg = res.message;
+                        if (res.updated) {
+                            $scope.updatedSuccess = true;
+                            $scope.oldPasswordIncorrect = false;
+                            deleteCreds();
+                            var defer = $q.defer();
+                            $timeout(function () {
+                                $location.path('/user/login');
+                                $uibModalInstance.close(true);
+                            }, 3000);
+                            return defer.promise;
+                        } else {
+                            $scope.oldPasswordIncorrect = true;
+                            $scope.updatedSuccess = false;
+                            $scope.data.oldPassword = '';
+                        }
+                    }
+                    //发送请求失败
+                    else {
+                        $scope.responseMsg = res.message;
+                        $scope.serverFault = true;
+                    }
+                });
+            //console.log(JSON.stringify($scope.data));
+
+            //$uibModalInstance.close(true);
+        };
+        $scope.cancel = function () {
+            $uibModalInstance.dismiss(false);
+        };
+    }]);
+
+Controllers.controller('ProfileExistedModalInstanceCtrl', ['$scope',
+    '$uibModalInstance', 'lang', 'username',
+    function ($scope, $uibModalInstance, lang, username) {
+        //console.log(JSON.stringify(lang));
+        $scope.username = username;
+        $scope.lang = lang;
+        $scope.ok = function () {
+            $uibModalInstance.close(true);
+        };
+        $scope.cancel = function () {
+            $uibModalInstance.dismiss(false);
+        };
+    }]);
+
+Controllers.controller('NewForeignUserCtrl', ['$scope',
     'languageService', 'getLocale', 'getPersonCategory', 'UserService', '$q',
-    '$timeout', '$location', 'GenderList',
+    '$timeout', '$location', 'GenderList', 'CountryList',
     function ($scope, languageService, getLocale, getPersonCategory, UserService,
-        $q, $timeout, $location, GenderList) {
+        $q, $timeout, $location, GenderList, CountryList) {
         $scope.currentMenu = {
             about: '',
             news: '',
@@ -178,6 +290,14 @@ infoFMPControllers.controller('NewForeignUserCtrl', ['$scope',
         };
 
         $scope.lang = languageService();
+        CountryList.get(
+            {},
+            function successs(response) {
+                $scope.countries = response;
+            },
+            function error(errorResponse) {
+                console.log(JSON.stringify(errorResponse));
+            });
 
         $scope.user = {};
         var userLocale = $scope.user.locale = getLocale();
@@ -195,8 +315,9 @@ infoFMPControllers.controller('NewForeignUserCtrl', ['$scope',
         $scope.user.category = getPersonCategory();
 
         $scope.submitRegistration = function () {
+            $scope.user.countryId = $scope.countrySelected.id;
             var data = $scope.user;
-
+            console.log(JSON.stringify(data));
             UserService.Create(data)
                 .then(function (res) {
                     //发送请求成功
@@ -221,7 +342,7 @@ infoFMPControllers.controller('NewForeignUserCtrl', ['$scope',
         };
     }]);
 
-infoFMPControllers.controller('NewChineseUserCtrl', ['$scope', 'languageService',
+Controllers.controller('NewChineseUserCtrl', ['$scope', 'languageService',
     'getLocale', 'getPersonCategory', 'UserService', '$q', '$timeout', '$location',
     function ($scope, languageService, getLocale, getPersonCategory,
         UserService, $q, $timeout, $location) {
@@ -267,7 +388,7 @@ infoFMPControllers.controller('NewChineseUserCtrl', ['$scope', 'languageService'
         };
     }]);
 
-infoFMPControllers.controller('MainCtrl', ['$scope', 'languageService', 'checkCreds',
+Controllers.controller('MainCtrl', ['$scope', 'languageService',
     function MainCtrl($scope, languageService) {
         $scope.currentMenu = {
             about: 'active',

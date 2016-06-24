@@ -64,10 +64,10 @@
                     {{ lang.menuRegister}}</a></li>
         </ul>
 
-        <form role="form" class="navbar-form navbar-right form-inline" 
-              ng-click="changeLocale(model.selectedLocale)">
+        <form role="form" class="navbar-form navbar-right form-inline">
             <div class="form-group">
                 <select id="language-select" class="form-control"
+                        ng-change="changeLocale(model.selectedLocale)"
                         ng-model="model.selectedLocale" ng-options="key as value for (key, value) in availableLocales">
                 </select>
             </div>

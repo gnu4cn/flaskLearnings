@@ -2,25 +2,20 @@
 
 var infoFMP = angular.module('infoFMP', [
     'ngRoute',
-    'infoFMPControllers',
+    'Controllers',
     'services',
     'formTypesDirectives',
     'pagePartsDirectives',
     'ui.bootstrap',
     'textAngular',
     'angularFileUpload',
-    'bussinessServices',
+    'bServices',
     'ui.bootstrap.showErrors',
     'angularMoment',
     'languageService',
     'ngMaterial',
     'tmh.dynamicLocale'
 ]);
-
-//infoFMP.run(['getLocale', 'amMoment',
-//    function(getLocale, amMoment){
-//        amMoment.changeLocale(getLocale());
-//    }]);
 
 infoFMP.config(['$routeProvider', '$locationProvider', '$provide', 'showErrorsConfigProvider', 
     'tmhDynamicLocaleProvider',

@@ -1,9 +1,29 @@
 # -*- coding: utf-8 -*-
 class lang(object):
     data = {
+        'PasswordUpdateSuccessfully': {
+            'zh-cn': '成功! 需要用新密码登入, 现在前往登录页面......',
+            'en-us': 'Successful! now moving to the login page...'
+        },
+        'OldPasswordNotCorrect': {
+            'zh-cn': '原密码不正确，请输入正确的原密码。',
+            'en-us': 'The old password is incorrect!',
+        },
+        'createProfileFailed': {
+            'zh-cn': '建立个人资料失败。',
+            'en-us': 'Create profile failed.'
+        },
+        'makeRelationshipFailed': {
+            'zh-cn': '建立关系失败。',
+            'en-us': 'Make relationship failed.'
+        },
+        'fetchChineseProfileFailed': {
+            'zh-cn': '获取用户资料失败。',
+            'en-us': 'Fetch profile failed.'
+        },
         'UsernameNotExistorPasswordNotCorrect': {
             'zh-cn': '用户名不存在或密码不正确, 请重新输入用户名密码。',
-            'en-us': 'Username not exist, or password not correct, please input again. '
+            'en-us': 'Username not exist, or password not correct! '
         },
         'LoginedSuccessful': {
             'zh-cn': '登入成功，前往首页......',
@@ -13,13 +33,9 @@ class lang(object):
             'zh-cn': "成功创建用户，前往登入页面......",
             'en-us': "User created successfully, moving to the login page... "
         },
-        'ProfileInsertionError': {
-            'en-us': 'Error occured when insert the Profile instance into database. ',
-            'zh-cn': '在将 Profile 实例存入数据库时出错。',
-        },
-        'UserInsertionError': {
-            'en-us': 'Error occured when insert the User instance into database. ',
-            'zh-cn': '在 User 实例存入数据库时出错。',
+        'ErrorOccuredWhenWriteDB': {
+            'en-us': 'Error occured when write the data into database. ',
+            'zh-cn': '在将数据存入数据库时出错。',
         },
         'makeUserInstanceError': {
             'zh-cn': '服务器错误：实例化 User 对象出错。',
@@ -41,13 +57,9 @@ class lang(object):
             'zh-cn': '成功获取到用户帐号信息。',
             'en-us': 'Get user account infomation successfully. '
         },
-        'CredentialExpired': {
-            'zh-cn': '用户凭据已过期，请重新登入。',
-            'en-us': 'User credential expired, please login again. '
-        },
-        'IncorrectCredential': {
-            'zh-cn': '凭据错误，请重新登入。',
-            'en-us': 'Incorrect user credential, please login again. '
+        'CredentialIncorrectOrExpired': {
+            'zh-cn': '用户凭据不正确或已过期，请重新登入。',
+            'en-us': 'User credential incorrect or expired, please login again. '
         },
         'usernameAlreadyExist': {
             'zh-cn': '用户名已存在。',

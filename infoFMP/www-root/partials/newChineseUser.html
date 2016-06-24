@@ -1,5 +1,5 @@
 <div class="container">
-    <div public-menu lang="{{ lang}}" active-menu="{{ currentMenu}}"></div>
+    <div public-menu active-menu="{{ currentMenu}}"></div>
 
     <div class="row under-menu">
         <div class="col-sm-7 left-column">
@@ -11,7 +11,7 @@
                 <!--不显示的 user.category 字段，用于向服务器提供用户类别。-->
                 <input type="text" ng-model="user.category" style="display: none;"/>
                 <div class="row">
-                    <div class="col-xs-6 cell">
+                    <div class="col-xs-5 cell">
                         <div class="form-group has-feedback has-feedback-right" show-errors>
                             <label class="control-label">{{lang.IDNumber}}</label>
                             <input type="text" class="form-control" required 
@@ -33,19 +33,25 @@
                             <i class="fa fa-check form-control-feedback" ng-show='register.username.$valid'></i>
                             -->
                         </div>
-                        
+
                     </div>
                     <div class="col-xs-12">
                         <div role="alert" style="margin-bottom: 10px;">
                             <span class="label label-warning" ng-show="register.id_number.$error.required">
                                 {{ lang.Required}}</span>
                             <span class="label label-danger" ng-show="register.id_number.$error.format">
-                                {{ lang.IdNumberNotQualified}}
+                                {{ lang.IdNumberNotQualified}}                                
+                            </span>
+                            <span class="label label-danger" ng-show="register.id_number.$pending.isExisted">
+                                {{ lang.CheckingifThisIDNumberisAvailable}}
+                            </span>
+                            <span class="label label-danger" ng-show="register.id_number.$error.isExisted">
+                                {{ lang.ThisIDNumberAlreadyTaken}}
                             </span>
                         </div>
                     </div>
                 </div>
-                <div register-form-common-parts lang="{{lang}}"></div>
+                <div register-form-common-parts></div>
                 <div class="row">
                     <div class="col-xs-9">
                         <button class="btn btn-success pull-right" 

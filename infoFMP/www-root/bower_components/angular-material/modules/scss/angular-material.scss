@@ -538,13 +538,13 @@ input {
 }
 
 .md-ripple {
+  $sizeDuration: 0.45s * 2;
   position: absolute;
   transform: translate(-50%, -50%) scale(0);
   transform-origin: 50% 50%;
   opacity: 0;
   border-radius: 50%;
   &.md-ripple-placed {
-    $sizeDuration: 0.45s * 2;
     transition: margin $sizeDuration $swift-ease-out-timing-function,
                 border $sizeDuration $swift-ease-out-timing-function,
                 width $sizeDuration $swift-ease-out-timing-function,
@@ -558,6 +558,15 @@ input {
   &.md-ripple-active, &.md-ripple-full, &.md-ripple-visible {
     opacity: 0.20;
   }
+  &.md-ripple-remove {
+    animation: md-remove-ripple $sizeDuration $swift-ease-out-timing-function;
+  }
+}
+
+// Fix issue causing ripple disappear suddenly in Chrome version 51, opacity .15 is close to the opacity when a normal click mouseup
+@keyframes md-remove-ripple {
+  0% { opacity: .15; }
+  100% { opacity: 0; }
 }
 
 .md-padding {
@@ -1916,7 +1925,7 @@ md-card {
   }
 
   > img,
-  > :not(md-card-content) img {
+  > md-card-header img {
     box-sizing: border-box;
     display: flex;
     flex: 0 0 auto;
@@ -2214,14 +2223,18 @@ $contact-chip-name-width: rem(12) !default;
 
   &:not(.md-readonly) {
     cursor: text;
+  }
 
-    md-chip:not(.md-readonly) {
+  &.md-removable {
+
+    md-chip {
       @include rtl-prop(padding-right, padding-left, $chip-remove-padding-right);
 
       ._md-chip-content {
         @include rtl-prop(padding-right, padding-left, rem(0.4));
       }
     }
+
   }
 
   md-chip {
@@ -2559,9 +2572,6 @@ $md-datepicker-open-animation-duration: 0.2s !default;
 $md-datepicker-triangle-button-width: 36px !default;
 $md-datepicker-input-mask-height: 40px !default;
 
-// The datepickers triangle icon uses the default button margin.
-// We need to use the margin to align the label inside of an input container properly.
-$icon-button-margin: rem(0.600) !default;
 
 md-datepicker {
   // Don't let linebreaks happen between the open icon-button and the input.
@@ -2591,7 +2601,7 @@ md-datepicker {
 }
 
 // The input into which the user can type the date.
-.md-datepicker-input, label:not(.md-no-float):not(._md-container-ignore) {
+.md-datepicker-input {
   @include md-flat-input();
   min-width: 120px;
   max-width: $md-calendar-width - $md-datepicker-button-gap;
@@ -2600,10 +2610,11 @@ md-datepicker {
 // If the datepicker is inside of a md-input-container
 ._md-datepicker-floating-label {
   > label:not(.md-no-float):not(._md-container-ignore) {
-    $offset: $md-datepicker-triangle-button-width * 2 + $md-datepicker-button-gap + $icon-button-margin + $baseline-grid;
-    @include rtl(right, $icon-button-margin, auto);
-    @include rtl(left, auto, $icon-button-margin);
-    width: calc(100% - #{$offset});
+    $width-offset: $md-datepicker-triangle-button-width * 2 + $md-datepicker-button-gap;
+    $offset: $md-datepicker-triangle-button-width / 2;
+    @include rtl(right, $offset, auto);
+    @include rtl(left, auto, $offset);
+    width: calc(100% - #{$width-offset});
   }
 
   > md-datepicker {
@@ -2654,10 +2665,9 @@ md-datepicker {
   // overflowing it's parent, however IE and Edge seem to disregard it.
   // The `left: -100%` pulls the element back in order to ensure that
   // it doesn't cause an overflow.
-  left: -100%;
   position: absolute;
   top: 0;
-  left: 0;
+  left: -100%;
   z-index: $z-index-calendar-pane;
   border-width: 1px;
   border-style: solid;

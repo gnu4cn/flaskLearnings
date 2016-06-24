@@ -44,9 +44,45 @@
 
 var services = angular.module('services', ['ngResource']);
 
+services.factory('ProfileService', ['$http', 'languageService',
+    function ($http, languageService) {
+        var lang = JSON.parse(languageService());
+        var service = {};
+
+        service.CheckIDNumber = CheckIDNumber;
+
+        return service;
+
+        function CheckIDNumber(data) {
+            return $http({
+                method: 'POST',
+                url: '/api/profile/exists',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                data: data
+            }).then(
+                handleSuccess,
+                handleError(lang.serviceRequestFault)
+                );
+        }
+
+        function handleSuccess(res) {
+            //在请求成功后，直接返回响应数据
+            return res.data;
+        }
+
+        function handleError(error) {
+            return function () {
+                //在请求失败后，构造出响应json
+                return {success: false, message: error};
+            };
+        }
+    }]);
+
 services.factory('UserService', ['$http', 'languageService',
     function UserService($http, languageService) {
-        var lang = languageService();
+        var lang = JSON.parse(languageService());
         var service = {};
 
         service.GetAll = GetAll;
@@ -59,8 +95,23 @@ services.factory('UserService', ['$http', 'languageService',
         service.Login = Login;
         service.GetByCred = GetByCred;
         service.CheckCredValid = CheckCredValid;
+        service.UpdatePassword = UpdatePassword;
 
         return service;
+
+        function UpdatePassword(data) {
+            return $http({
+                method: 'POST',
+                url: '/api/user/password',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                data: data
+            }).then(
+                handleSuccess,
+                handleError(lang.serviceRequestFault)
+                );
+        }
 
         function GetAll() {
             return $http.get('/api/users')
@@ -77,17 +128,17 @@ services.factory('UserService', ['$http', 'languageService',
                     handleError(lang.serviceRequestFault)
                     );
         }
-        
-        function GetByCred(locale, cred){
-            return $http.get('/api/user/'+locale+'/'+ cred)
+
+        function GetByCred(locale, cred) {
+            return $http.get('/api/user/' + locale + '/' + cred)
                 .then(
                     handleSuccess,
                     handleError(lang.serviceRequestFault)
-                    );            
+                    );
         }
-        
-        function CheckCredValid(locale, cred){
-            return $http.get('/api/user/checkcredentialvalid/'+locale+'/'+ cred)
+
+        function CheckCredValid(locale, cred) {
+            return $http.get('/api/user/checkcredentialvalid/' + locale + '/' + cred)
                 .then(
                     handleSuccess,
                     handleError(lang.serviceRequestFault)
@@ -355,7 +406,7 @@ services.factory('Country', ['$resource',
 
 services.factory('CountryList', ['$resource',
     function CountryList($resource) {
-        return $resource('/api/country/all',
+        return $resource('/api/countries',
             {},
             {
                 get: {method: 'GET', cache: false, isArray: true}
