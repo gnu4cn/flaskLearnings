@@ -1,6 +1,30 @@
 # -*- coding: utf-8 -*-
 class lang(object):
     data = {
+        'PassportVISACreateFailed': {
+            'zh-cn': '建立护照签证数据失败。',
+            'en-us': 'Create PassportVISA data failed.'
+        },
+        'PassportVISACreateSuccess': {
+            'zh-cn': '建立护照签证数据成功！',
+            'en-us': 'Create Passport VISA data success.'
+        },
+        'PassportVISAUpdateFailed': {
+            'zh-cn': '护照签证数据更新失败。',
+            'en-us': 'Update Passport VISA data failed.'
+        },
+        'PassportVISAUpdateSuccess': {
+            'zh-cn': '护照签证数据更新成功。',
+            'en-us': 'Update Passport VISA data success.'
+        },
+        'BasicProfileUpdatedSuccessfully': {
+            'zh-cn': '更新基础资料成功。',
+            'en-us': 'Basic profile updated.'
+        },
+        'ErrorOccuredWhenUpdatetheBasicProfile': {
+            'zh-cn': '更新基础资料时发生错误。',
+            'en-us': 'Error occured during update the basic profile.'
+        },
         'PasswordUpdateSuccessfully': {
             'zh-cn': '成功! 需要用新密码登入, 现在前往登录页面......',
             'en-us': 'Successful! now moving to the login page...'

@@ -7,6 +7,7 @@ ROLE_USER = 0
 ROLE_ADMIN = 1
 TOKEN_EXPIRE = 3600
 
+
 class ConstantBase(object):
 
     data = NotImplemented
@@ -30,6 +31,7 @@ class ConstantBase(object):
         r['id'] = id
 
         return r
+
 
 class ARTICLE_CAT(ConstantBase):
     data = {
@@ -174,74 +176,74 @@ class POSITION(ConstantBase):
             'zh-cn': '管理处人员',
             'en-us': 'Personnel of Ad. Office',
         },
-    '13': {
-        'zh-cn': '司机',
-        'en-us': 'Driver',
-    },
-    '20': {
-        'zh-cn': '学员队队长',
-        'en-us': 'Head of Trainee\'s Affairs Office',
-    },
-    '21': {
-        'zh-cn': '学员队助理',
-        'en-us': 'Aissistant of Trainee\'s Affairs Office',
-    },
-    '30': {
-        'zh-cn': '客房部服务员主管',
-        'en-us': 'Head of Housekeeping Service',
-    },
-    '31': {
-        'zh-cn': '客房部服务员',
-        'en-us': 'Housekeeping Service',
-    },
-    '40': {
-        'zh-cn': '餐厅服务员主管',
-        'en-us': 'Head of Food Service',
-    },
-    '41': {
-        'zh-cn': '餐厅服务员',
-        'en-us': 'Food Service',
-    },
-    '50': {
-        'zh-cn': '工程部主管',
-        'en-us': 'Head of Engineering Department',
-    },
-    '51': {
-        'zh-cn': '工程部工作人员',
-        'en-us': 'Engineering Service',
-    },
-    '60': {
-        'zh-cn': '保安主管',
-        'en-us': 'Head of Security Service',
-    },
-    '61': {
-        'zh-cn': '保安',
-        'en-us': 'Security Service'
-    },
-    '70': {
-        'zh-cn': '教研室主任',
-        'en-us': 'Head of Teaching and Research Office',
-    },
-    '71': {
-        'zh-cn': '教研室副主任',
-        'en-us': 'Excutive Head of T. R. Office',
-    },
-    '72': {
-        'zh-cn': '教员',
-        'en-us': 'Instructor',
-    },
-    '80': {
-        'zh-cn': '厨房负责人',
-        'en-us': 'Head of Cooking Service',
-    },
-    '81': {
-        'zh-cn': '厨师',
-        'en-us': 'Chef',
-    },
-    '82': {
-        'zh-cn': '帮厨',
-        'en-us': 'Kitchen workers',
-    },
+        '13': {
+            'zh-cn': '司机',
+            'en-us': 'Driver',
+        },
+        '20': {
+            'zh-cn': '学员队队长',
+            'en-us': 'Head of Trainee\'s Affairs Office',
+        },
+        '21': {
+            'zh-cn': '学员队助理',
+            'en-us': 'Aissistant of Trainee\'s Affairs Office',
+        },
+        '30': {
+            'zh-cn': '客房部服务员主管',
+            'en-us': 'Head of Housekeeping Service',
+        },
+        '31': {
+            'zh-cn': '客房部服务员',
+            'en-us': 'Housekeeping Service',
+        },
+        '40': {
+            'zh-cn': '餐厅服务员主管',
+            'en-us': 'Head of Food Service',
+        },
+        '41': {
+            'zh-cn': '餐厅服务员',
+            'en-us': 'Food Service',
+        },
+        '50': {
+            'zh-cn': '工程部主管',
+            'en-us': 'Head of Engineering Department',
+        },
+        '51': {
+            'zh-cn': '工程部工作人员',
+            'en-us': 'Engineering Service',
+        },
+        '60': {
+            'zh-cn': '保安主管',
+            'en-us': 'Head of Security Service',
+        },
+        '61': {
+            'zh-cn': '保安',
+            'en-us': 'Security Service'
+        },
+        '70': {
+            'zh-cn': '教研室主任',
+            'en-us': 'Head of Teaching and Research Office',
+        },
+        '71': {
+            'zh-cn': '教研室副主任',
+            'en-us': 'Excutive Head of T. R. Office',
+        },
+        '72': {
+            'zh-cn': '教员',
+            'en-us': 'Instructor',
+        },
+        '80': {
+            'zh-cn': '厨房负责人',
+            'en-us': 'Head of Cooking Service',
+        },
+        '81': {
+            'zh-cn': '厨师',
+            'en-us': 'Chef',
+        },
+        '82': {
+            'zh-cn': '帮厨',
+            'en-us': 'Kitchen workers',
+        },
     }
 
     @classmethod
@@ -398,7 +400,7 @@ class SERVICE(ConstantBase):
 
 class TRNEE_RANK(ConstantBase):
     data = {
-        ##陆军
+        # 陆军
         '0000': {
             'en-us': 'General of the Army(GA)',
             'zh-cn': '元帅',
@@ -451,393 +453,393 @@ class TRNEE_RANK(ConstantBase):
             'en-us': 'Chief Warrant Officer 5(CW5)',
             'zh-cn': '五级准尉',
         },
-    '000D': {
-        'en-us': 'Chief Warrant Officer 4(CW4)',
-        'zh-cn': '四级准尉',
-    },
-    '000E': {
-        'en-us': 'Chief Warrant Officer 3(CW3)',
-        'zh-cn': '三级准尉',
-    },
-    '000F': {
-        'en-us': 'Chief Warrant Officer 2(CW2)',
-        'zh-cn': '二级准尉',
-    },
-    '0010': {
-        'en-us': 'Warrant Officer(WO1)',
-        'zh-cn': '一级准尉',
-    },
-    '0011': {
-        'en-us': 'Sergeant Major of the Army(SMA)',
-        'zh-cn': '陆军总军士长',
-    },
-    '0012': {
-        'en-us': 'Command Sergeant Major(CSM)',
-        'zh-cn': '军士长',
-    },
-    '0013': {
-        'en-us': 'Sergeant Major(SGM)',
-        'zh-cn': '军士长',
-    },
-    '0014': {
-        'en-us': 'First Sergeant(1SG)',
-        'zh-cn': '军士长',
-    },
-    '0015': {
-        'en-us': 'Master Sergeant(MSG)',
-        'zh-cn': '军士长',
-    },
-    '0016': {
-        'en-us': 'Sergeant First Class(SFC)',
-        'zh-cn': '军士长',
-    },
-    '0017': {
-        'en-us': 'Staff Sergeant(SSG)',
-        'zh-cn': '上士',
-    },
-    '0018': {
-        'en-us': 'Sergeant(SGT)',
-        'zh-cn': '中士',
-    },
-    '0019': {
-        'en-us': 'Corporal(CPL)',
-        'zh-cn': '下士',
-    },
-    '001A': {
-        'en-us': 'Specialist(SPC)',
-        'zh-cn': '专业军士',
-    },
-    '001B': {
-        'en-us': 'Private First Class(PFC)',
-        'zh-cn': '一等兵',
-    },
-    '001C': {
-        'en-us': 'Private 2(PV2)',
-        'zh-cn': '二等兵',
-    },
-    '001D': {
-        'en-us': 'Private(PV1)',
-        'zh-cn': '新兵',
-    },
-    '00FF': {
-        'en-us': 'Civilian Service',
-        'zh-cn': '文职人员',
-    },
-    ##海军陆战队
-    '0101': {
-        'en-us': 'General(Gen)',
-        'zh-cn': '上将',
-    },
-    '0102': {
-        'en-us': 'Lieutenant General(LtGen)',
-        'zh-cn': '中将',
-    },
-    '0103': {
-        'en-us': 'Major-general(MajGen)',
-        'zh-cn': '少将',
-    },
-    '0104': {
-        'en-us': 'Brigadier General(BGen)',
-        'zh-cn': '准将',
-    },
-    '0105': {
-        'en-us': 'Senior Colonel(S. Col)',
-        'zh-cn': '大校',
-    },
-    '0106': {
-        'en-us': 'Colonel(Col)',
-        'zh-cn': '上校',
-    },
-    '0107': {
-        'en-us': 'Lieutenant Colonel(LtCol)',
-        'zh-cn': '中校',
-    },
-    '0108': {
-        'en-us': 'Major(Maj)',
-        'zh-cn': '少校',
-    },
-    '0109': {
-        'en-us': 'Captain(Capt)',
-        'zh-cn': '上尉',
-    },
-    '010A': {
-        'en-us': 'First Lieutenant(1stLt)',
-        'zh-cn': '中尉',
-    },
-    '010B': {
-        'en-us': 'Second Lieutenant(2ndLt)',
-        'zh-cn': '少尉',
-    },
-    '010C': {
-        'en-us': 'Chief Warrant Officer 5(CWO5)',
-        'zh-cn': '五级准尉',
-    },
-    '010D': {
-        'en-us': 'Chief Warrant Officer 4(CWO4)',
-        'zh-cn': '四级准尉',
-    },
-    '010E': {
-        'en-us': 'Chief Warrant Officer 3(CWO3)',
-        'zh-cn': '三级准尉',
-    },
-    '010F': {
-        'en-us': 'Chief Warrant Officer 2(CWO2)',
-        'zh-cn': '二级准尉',
-    },
-    '0110': {
-        'en-us': 'Warrant Officer(WO1)',
-        'zh-cn': '一级准尉',
-    },
-    '0111': {
-        'en-us': 'Sergeant Major of the Marine Corps(SgtMajMC)',
-        'zh-cn': '军士长',
-    },
-    '0112': {
-        'en-us': 'Master Gunnery Sergeant(MGySgt)',
-        'zh-cn': '军士长',
-    },
-    '0113': {
-        'en-us': 'First Sergeant(1stSgt)',
-        'zh-cn': '军士长',
-    },
-    '0114': {
-        'en-us': 'Master Sergeant(MSgt)',
-        'zh-cn': '军士长',
-    },
-    '0115': {
-        'en-us': 'Gunnery Sergeant(GySgt)',
-        'zh-cn': '军士长',
-    },
-    '0116': {
-        'en-us': 'Staff Sergeant(SSgt)',
-        'zh-cn': '上士',
-    },
-    '0117': {
-        'en-us': 'Sergeant(Sgt)',
-        'zh-cn': '中士',
-    },
-    '0118': {
-        'en-us': 'Corporal(Cpl)',
-        'zh-cn': '下士',
-    },
-    '0119': {
-        'en-us': 'Lance Corporal(LCpL)',
-        'zh-cn': '准下士',
-    },
-    '011A': {
-        'en-us': 'Private First Class(PFC)',
-        'zh-cn': '一等兵',
-    },
-    '011B': {
-        'en-us': 'Private(Pvt)',
-        'zh-cn': '列兵',
-    },
-    '01FF': {
-        'en-us': 'Civilian Service',
-        'zh-cn': '文职人员',
-    },
-    ##空军
-    '0200': {
-        'en-us': 'General of the Air Force(GAF)',
-        'zh-cn': '五星上将',
-    },
-    '0201': {
-        'en-us': 'General(Gen)',
-        'zh-cn': '上将',
-    },
-    '0202': {
-        'en-us': 'Lieutenant General(Lt Ge)',
-        'zh-cn': '中将',
-    },
-    '0203': {
-        'en-us': 'Major General(Maj G)',
-        'zh-cn': '少将',
-    },
-    '0204': {
-        'en-us': 'Brigadier General(Brig)',
-        'zh-cn': '准将',
-    },
-    '0206': {
-        'en-us': 'Colonel(Col)',
-        'zh-cn': '上校',
-    },
-    '0207': {
-        'en-us': 'Lieutenant Colonel(Lt Co)',
-        'zh-cn': '中校',
-    },
-    '0208': {
-        'en-us': 'Major(Maj)',
-        'zh-cn': '少校',
-    },
-    '0209': {
-        'en-us': 'Captain(Capt)',
-        'zh-cn': '上尉',
-    },
-    '020A': {
-        'en-us': 'First Lieutenant(1st L)',
-        'zh-cn': '中尉',
-    },
-    '020B': {
-        'en-us': 'Second Lieutenant(2d Lt)',
-        'zh-cn': '少尉',
-    },
-    '020C': {
-        'en-us': 'Cadet',
-        'zh-cn': '军校生',
-    },
-    '020D': {
-        'en-us': 'Chief Master Sergeant of the Air Force(CMSAF)',
-        'zh-cn': '空军总军士长',
-    },
-    '020E': {
-        'en-us': 'Command Chief Master Sergeant(CCM)',
-        'zh-cn': '指挥军士长',
-    },
-    '020F': {
-        'en-us': 'Chief Master Sergeant(CMSgt)',
-        'zh-cn': '一级军士长',
-    },
-    '0210': {
-        'en-us': 'Senior Master Sergeant(SMSgt)',
-        'zh-cn': '二级军士长',
-    },
-    '0211': {
-        'en-us': 'Master Sergeant(MSgt)',
-        'zh-cn': '三级军士长',
-    },
-    '0212': {
-        'en-us': 'Technical Sergeant(Tsgt)',
-        'zh-cn': '上士',
-    },
-    '0213': {
-        'en-us': 'Staff Sergeant(SSgt)',
-        'zh-cn': '中士',
-    },
-    '0214': {
-        'en-us': 'Senior Airman(SrA)',
-        'zh-cn': '下士',
-    },
-    '0215': {
-        'en-us': 'Airman First Class(A1C)',
-        'zh-cn': '一等兵',
-    },
-    '0216': {
-        'en-us': 'Airman(Amn)',
-        'zh-cn': '二等兵',
-    },
-    '0217': {
-        'en-us': 'Airman Basic(AB)',
-        'zh-cn': '三等兵',
-    },
-    '02FF': {
-        'en-us': 'Civilian Service',
-        'zh-cn': '文职人员',
-    },
-    ##海军
-    '0300': {
-        'en-us': 'Fleet Admiral(FADM)',
-        'zh-cn': '五星上将',
-    },
-    '0301': {
-        'en-us': 'Admiral(ADM)',
-        'zh-cn': '上将',
-    },
-    '0302': {
-        'en-us': 'Vice Admiral(VADM)',
-        'zh-cn': '中奖',
-    },
-    '0303': {
-        'en-us': 'Rear Admiral(Uper Half, RADM)',
-        'zh-cn': '少将',
-    },
-    '0304': {
-        'en-us': 'Rear Admiral(Lower Half, RADL)',
-        'zh-cn': '准将',
-    },
-    '0305': {
-        'en-us': 'Captain(CAPT)',
-        'zh-cn': '上校',
-    },
-    '0306': {
-        'en-us': 'Commander(CDR)',
-        'zh-cn': '中校',
-    },
-    '0307': {
-        'en-us': 'Lieutenant Commander(LCDR)',
-        'zh-cn': '少校',
-    },
-    '0308': {
-        'en-us': 'Lieutenant(LT)',
-        'zh-cn': '上尉',
-    },
-    '0309': {
-        'en-us': 'Lieutenant Junior Grade(LTJG)',
-        'zh-cn': '中尉',
-    },
-    '030A': {
-        'en-us': 'Ensign(ENS)',
-        'zh-cn': '少尉',
-    },
-    '030B': {
-        'en-us': 'Chief Warrant Officer(CWO5)',
-        'zh-cn': '五级准尉',
-    },
-    '030C': {
-        'en-us': 'Chief Warrant Officer(CWO4)',
-        'zh-cn': '四级准尉',
-    },
-    '030D': {
-        'en-us': 'Chief Warrant Officer(CWO3)',
-        'zh-cn': '三级准尉',
-    },
-    '030E': {
-        'en-us': 'Chief Warrant Officer(CWO2)',
-        'zh-cn': '二级准尉',
-    },
-    '030F': {
-        'en-us': 'Fleet/Commander Master Chief Petty Officer',
-        'zh-cn': '总军士长',
-    },
-    '0310': {
-        'en-us': 'Master Chief Petty Officer(MCPO)',
-        'zh-cn': '副总军士长',
-    },
-    '0311': {
-        'en-us': 'Second Chief Petty Officer(SCPO)',
-        'zh-cn': '高级军士',
-    },
-    '0312': {
-        'en-us': 'Chief Petty Officer(CPO)',
-        'zh-cn': '上士',
-    },
-    '0313': {
-        'en-us': 'Petty Officer 1st Class(PO1)',
-        'zh-cn': '一等士官',
-    },
-    '0314': {
-        'en-us': 'Petty Officer 2nd Class(PO2)',
-        'zh-cn': '二等士官',
-    },
-    '0315': {
-        'en-us': 'Petty Officer 3rd Class(PO3)',
-        'zh-cn': '三等士官',
-    },
-    '0316': {
-        'en-us': 'Seaman(SN)',
-        'zh-cn': '水手'
-    },
-    '0317': {
-        'en-us': 'Seaman Apprentice(SA)',
-        'zh-cn': '见习水手',
-    },
-    '0318': {
-        'en-us': 'Seaman Recruit(SR)',
-        'zh-cn': '新水手',
-    },
-    '03FF': {
-        'en-us': 'Civilian Service',
-        'zh-cn': '文职人员',
-    },
+        '000D': {
+            'en-us': 'Chief Warrant Officer 4(CW4)',
+            'zh-cn': '四级准尉',
+        },
+        '000E': {
+            'en-us': 'Chief Warrant Officer 3(CW3)',
+            'zh-cn': '三级准尉',
+        },
+        '000F': {
+            'en-us': 'Chief Warrant Officer 2(CW2)',
+            'zh-cn': '二级准尉',
+        },
+        '0010': {
+            'en-us': 'Warrant Officer(WO1)',
+            'zh-cn': '一级准尉',
+        },
+        '0011': {
+            'en-us': 'Sergeant Major of the Army(SMA)',
+            'zh-cn': '陆军总军士长',
+        },
+        '0012': {
+            'en-us': 'Command Sergeant Major(CSM)',
+            'zh-cn': '军士长',
+        },
+        '0013': {
+            'en-us': 'Sergeant Major(SGM)',
+            'zh-cn': '军士长',
+        },
+        '0014': {
+            'en-us': 'First Sergeant(1SG)',
+            'zh-cn': '军士长',
+        },
+        '0015': {
+            'en-us': 'Master Sergeant(MSG)',
+            'zh-cn': '军士长',
+        },
+        '0016': {
+            'en-us': 'Sergeant First Class(SFC)',
+            'zh-cn': '军士长',
+        },
+        '0017': {
+            'en-us': 'Staff Sergeant(SSG)',
+            'zh-cn': '上士',
+        },
+        '0018': {
+            'en-us': 'Sergeant(SGT)',
+            'zh-cn': '中士',
+        },
+        '0019': {
+            'en-us': 'Corporal(CPL)',
+            'zh-cn': '下士',
+        },
+        '001A': {
+            'en-us': 'Specialist(SPC)',
+            'zh-cn': '专业军士',
+        },
+        '001B': {
+            'en-us': 'Private First Class(PFC)',
+            'zh-cn': '一等兵',
+        },
+        '001C': {
+            'en-us': 'Private 2(PV2)',
+            'zh-cn': '二等兵',
+        },
+        '001D': {
+            'en-us': 'Private(PV1)',
+            'zh-cn': '新兵',
+        },
+        '00FF': {
+            'en-us': 'Civilian Service',
+            'zh-cn': '文职人员',
+        },
+        # 海军陆战队
+        '0101': {
+            'en-us': 'General(Gen)',
+            'zh-cn': '上将',
+        },
+        '0102': {
+            'en-us': 'Lieutenant General(LtGen)',
+            'zh-cn': '中将',
+        },
+        '0103': {
+            'en-us': 'Major-general(MajGen)',
+            'zh-cn': '少将',
+        },
+        '0104': {
+            'en-us': 'Brigadier General(BGen)',
+            'zh-cn': '准将',
+        },
+        '0105': {
+            'en-us': 'Senior Colonel(S. Col)',
+            'zh-cn': '大校',
+        },
+        '0106': {
+            'en-us': 'Colonel(Col)',
+            'zh-cn': '上校',
+        },
+        '0107': {
+            'en-us': 'Lieutenant Colonel(LtCol)',
+            'zh-cn': '中校',
+        },
+        '0108': {
+            'en-us': 'Major(Maj)',
+            'zh-cn': '少校',
+        },
+        '0109': {
+            'en-us': 'Captain(Capt)',
+            'zh-cn': '上尉',
+        },
+        '010A': {
+            'en-us': 'First Lieutenant(1stLt)',
+            'zh-cn': '中尉',
+        },
+        '010B': {
+            'en-us': 'Second Lieutenant(2ndLt)',
+            'zh-cn': '少尉',
+        },
+        '010C': {
+            'en-us': 'Chief Warrant Officer 5(CWO5)',
+            'zh-cn': '五级准尉',
+        },
+        '010D': {
+            'en-us': 'Chief Warrant Officer 4(CWO4)',
+            'zh-cn': '四级准尉',
+        },
+        '010E': {
+            'en-us': 'Chief Warrant Officer 3(CWO3)',
+            'zh-cn': '三级准尉',
+        },
+        '010F': {
+            'en-us': 'Chief Warrant Officer 2(CWO2)',
+            'zh-cn': '二级准尉',
+        },
+        '0110': {
+            'en-us': 'Warrant Officer(WO1)',
+            'zh-cn': '一级准尉',
+        },
+        '0111': {
+            'en-us': 'Sergeant Major of the Marine Corps(SgtMajMC)',
+            'zh-cn': '军士长',
+        },
+        '0112': {
+            'en-us': 'Master Gunnery Sergeant(MGySgt)',
+            'zh-cn': '军士长',
+        },
+        '0113': {
+            'en-us': 'First Sergeant(1stSgt)',
+            'zh-cn': '军士长',
+        },
+        '0114': {
+            'en-us': 'Master Sergeant(MSgt)',
+            'zh-cn': '军士长',
+        },
+        '0115': {
+            'en-us': 'Gunnery Sergeant(GySgt)',
+            'zh-cn': '军士长',
+        },
+        '0116': {
+            'en-us': 'Staff Sergeant(SSgt)',
+            'zh-cn': '上士',
+        },
+        '0117': {
+            'en-us': 'Sergeant(Sgt)',
+            'zh-cn': '中士',
+        },
+        '0118': {
+            'en-us': 'Corporal(Cpl)',
+            'zh-cn': '下士',
+        },
+        '0119': {
+            'en-us': 'Lance Corporal(LCpL)',
+            'zh-cn': '准下士',
+        },
+        '011A': {
+            'en-us': 'Private First Class(PFC)',
+            'zh-cn': '一等兵',
+        },
+        '011B': {
+            'en-us': 'Private(Pvt)',
+            'zh-cn': '列兵',
+        },
+        '01FF': {
+            'en-us': 'Civilian Service',
+            'zh-cn': '文职人员',
+        },
+        # 空军
+        '0200': {
+            'en-us': 'General of the Air Force(GAF)',
+            'zh-cn': '五星上将',
+        },
+        '0201': {
+            'en-us': 'General(Gen)',
+            'zh-cn': '上将',
+        },
+        '0202': {
+            'en-us': 'Lieutenant General(Lt Ge)',
+            'zh-cn': '中将',
+        },
+        '0203': {
+            'en-us': 'Major General(Maj G)',
+            'zh-cn': '少将',
+        },
+        '0204': {
+            'en-us': 'Brigadier General(Brig)',
+            'zh-cn': '准将',
+        },
+        '0206': {
+            'en-us': 'Colonel(Col)',
+            'zh-cn': '上校',
+        },
+        '0207': {
+            'en-us': 'Lieutenant Colonel(Lt Co)',
+            'zh-cn': '中校',
+        },
+        '0208': {
+            'en-us': 'Major(Maj)',
+            'zh-cn': '少校',
+        },
+        '0209': {
+            'en-us': 'Captain(Capt)',
+            'zh-cn': '上尉',
+        },
+        '020A': {
+            'en-us': 'First Lieutenant(1st L)',
+            'zh-cn': '中尉',
+        },
+        '020B': {
+            'en-us': 'Second Lieutenant(2d Lt)',
+            'zh-cn': '少尉',
+        },
+        '020C': {
+            'en-us': 'Cadet',
+            'zh-cn': '军校生',
+        },
+        '020D': {
+            'en-us': 'Chief Master Sergeant of the Air Force(CMSAF)',
+            'zh-cn': '空军总军士长',
+        },
+        '020E': {
+            'en-us': 'Command Chief Master Sergeant(CCM)',
+            'zh-cn': '指挥军士长',
+        },
+        '020F': {
+            'en-us': 'Chief Master Sergeant(CMSgt)',
+            'zh-cn': '一级军士长',
+        },
+        '0210': {
+            'en-us': 'Senior Master Sergeant(SMSgt)',
+            'zh-cn': '二级军士长',
+        },
+        '0211': {
+            'en-us': 'Master Sergeant(MSgt)',
+            'zh-cn': '三级军士长',
+        },
+        '0212': {
+            'en-us': 'Technical Sergeant(Tsgt)',
+            'zh-cn': '上士',
+        },
+        '0213': {
+            'en-us': 'Staff Sergeant(SSgt)',
+            'zh-cn': '中士',
+        },
+        '0214': {
+            'en-us': 'Senior Airman(SrA)',
+            'zh-cn': '下士',
+        },
+        '0215': {
+            'en-us': 'Airman First Class(A1C)',
+            'zh-cn': '一等兵',
+        },
+        '0216': {
+            'en-us': 'Airman(Amn)',
+            'zh-cn': '二等兵',
+        },
+        '0217': {
+            'en-us': 'Airman Basic(AB)',
+            'zh-cn': '三等兵',
+        },
+        '02FF': {
+            'en-us': 'Civilian Service',
+            'zh-cn': '文职人员',
+        },
+        # 海军
+        '0300': {
+            'en-us': 'Fleet Admiral(FADM)',
+            'zh-cn': '五星上将',
+        },
+        '0301': {
+            'en-us': 'Admiral(ADM)',
+            'zh-cn': '上将',
+        },
+        '0302': {
+            'en-us': 'Vice Admiral(VADM)',
+            'zh-cn': '中奖',
+        },
+        '0303': {
+            'en-us': 'Rear Admiral(Uper Half, RADM)',
+            'zh-cn': '少将',
+        },
+        '0304': {
+            'en-us': 'Rear Admiral(Lower Half, RADL)',
+            'zh-cn': '准将',
+        },
+        '0305': {
+            'en-us': 'Captain(CAPT)',
+            'zh-cn': '上校',
+        },
+        '0306': {
+            'en-us': 'Commander(CDR)',
+            'zh-cn': '中校',
+        },
+        '0307': {
+            'en-us': 'Lieutenant Commander(LCDR)',
+            'zh-cn': '少校',
+        },
+        '0308': {
+            'en-us': 'Lieutenant(LT)',
+            'zh-cn': '上尉',
+        },
+        '0309': {
+            'en-us': 'Lieutenant Junior Grade(LTJG)',
+            'zh-cn': '中尉',
+        },
+        '030A': {
+            'en-us': 'Ensign(ENS)',
+            'zh-cn': '少尉',
+        },
+        '030B': {
+            'en-us': 'Chief Warrant Officer(CWO5)',
+            'zh-cn': '五级准尉',
+        },
+        '030C': {
+            'en-us': 'Chief Warrant Officer(CWO4)',
+            'zh-cn': '四级准尉',
+        },
+        '030D': {
+            'en-us': 'Chief Warrant Officer(CWO3)',
+            'zh-cn': '三级准尉',
+        },
+        '030E': {
+            'en-us': 'Chief Warrant Officer(CWO2)',
+            'zh-cn': '二级准尉',
+        },
+        '030F': {
+            'en-us': 'Fleet/Commander Master Chief Petty Officer',
+            'zh-cn': '总军士长',
+        },
+        '0310': {
+            'en-us': 'Master Chief Petty Officer(MCPO)',
+            'zh-cn': '副总军士长',
+        },
+        '0311': {
+            'en-us': 'Second Chief Petty Officer(SCPO)',
+            'zh-cn': '高级军士',
+        },
+        '0312': {
+            'en-us': 'Chief Petty Officer(CPO)',
+            'zh-cn': '上士',
+        },
+        '0313': {
+            'en-us': 'Petty Officer 1st Class(PO1)',
+            'zh-cn': '一等士官',
+        },
+        '0314': {
+            'en-us': 'Petty Officer 2nd Class(PO2)',
+            'zh-cn': '二等士官',
+        },
+        '0315': {
+            'en-us': 'Petty Officer 3rd Class(PO3)',
+            'zh-cn': '三等士官',
+        },
+        '0316': {
+            'en-us': 'Seaman(SN)',
+            'zh-cn': '水手'
+        },
+        '0317': {
+            'en-us': 'Seaman Apprentice(SA)',
+            'zh-cn': '见习水手',
+        },
+        '0318': {
+            'en-us': 'Seaman Recruit(SR)',
+            'zh-cn': '新水手',
+        },
+        '03FF': {
+            'en-us': 'Civilian Service',
+            'zh-cn': '文职人员',
+        },
     }
 
     @classmethod
@@ -871,15 +873,15 @@ class RELATION(ConstantBase):
             'en-us': 'Wife',
             'zh-cn': '妻子',
         },
-        '3': {
+        '7': {
             'en-us': 'Husband',
             'zh-cn': '丈夫',
         },
-        '4': {
+        '9': {
             'en-us': 'Son',
             'zh-cn': '儿子',
         },
-        '5': {
+        '8': {
             'en-us': 'Daughter',
             'zh-cn': '女儿',
         },
@@ -887,15 +889,15 @@ class RELATION(ConstantBase):
             'en-us': 'Elder sister',
             'zh-cn': '姐姐',
         },
-        '7': {
+        '3': {
             'en-us': 'Younger sister',
             'zh-cn': '妹妹',
         },
-        '8': {
+        '4': {
             'en-us': 'Elder brother',
             'zh-cn': '哥哥',
         },
-        '9': {
+        '5': {
             'en-us': 'Younger brother',
             'zh-cn': '弟弟',
         },

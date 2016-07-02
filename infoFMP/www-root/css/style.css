@@ -10,6 +10,18 @@ html, body {
     color: green;
 }
 
+
+/* Specify styling for tooltip contents */
+.tooltip.customClass .tooltip-inner {
+    color: #880000;
+    background-color: #ffff66;
+    box-shadow: 0 6px 12px rgba(0,0,0,.175);
+}
+/* Hide arrow */
+.tooltip.customClass .tooltip-arrow {
+    display: none;
+}
+
 /*
 Angular Material DatePicker Calendar Shows Behind Angular Modal
 http://stackoverflow.com/questions/36627500/angular-material-datepicker-calendar-shows-behind-angular-modal
@@ -33,12 +45,10 @@ http://stackoverflow.com/questions/36627500/angular-material-datepicker-calendar
 }
 
 div.cell {
-    padding-left: 5px;
     padding-right: 5px;
 }
 
 .under-menu {
-    background-color: #f4f4f4;
     margin: 60px 0 0 0px;
 }
 
@@ -48,7 +58,6 @@ th.row-head{
 
 @media (min-width: 768px){
     .left-column{
-        border-right: solid #555555 1px;
     }
     .right-column{
         margin-left: 10px;
@@ -69,7 +78,6 @@ th.row-head{
 
 @media (max-width: 767px){
     .left-column{
-        border-bottom: solid #555555 1px;
         padding-bottom: 10px;
     }    
     .right-column{

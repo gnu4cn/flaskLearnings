@@ -44,20 +44,48 @@
 
 var services = angular.module('services', ['ngResource']);
 
-services.factory('ProfileService', ['$http', 'languageService',
-    function ($http, languageService) {
+services.factory('ProfileService', ['$http', 'languageService', 'getToken',
+    function ($http, languageService, getToken) {
         var lang = JSON.parse(languageService());
         var service = {};
 
-        service.CheckIDNumber = CheckIDNumber;
+        service.CheckProfile = CheckProfile;
+        service.AppendFamily = AppendFamily;
 
         return service;
 
-        function CheckIDNumber(data) {
+        function CheckProfile(data) {
             return $http({
                 method: 'POST',
                 url: '/api/profile/exists',
                 headers: {
+                    'Content-Type': 'application/json'
+                },
+                data: data
+            }).then(
+                handleSuccess,
+                handleError(lang.serviceRequestFault)
+                );
+        }
+        
+        function AppendFamily(data) {
+            // 
+            // 这里有angularjs $http基础认证的用法。
+            // 
+            // 这里不能直接用
+            // $http.defaults.headers.common['Authorization'] = 'Basic ' + getToken();
+            // 这是通过使用 curl -v 调查请求头部的Athorization字段后，发现Basic
+            // 后面跟的是一个token, 该token是在username_or_token:password基础上
+            // 经Base64编码后生成的
+            // 
+            // btoa函数仅支持IE 10以上的版本，但对其它浏览器支持都很好，因此不存在
+            // 兼容性问题。
+            //
+            return $http({
+                method: 'POST',
+                url: '/api/family/append',
+                headers: {
+                    'Authorization': 'Basic ' + btoa(getToken()),
                     'Content-Type': 'application/json'
                 },
                 data: data
@@ -96,8 +124,38 @@ services.factory('UserService', ['$http', 'languageService',
         service.GetByCred = GetByCred;
         service.CheckCredValid = CheckCredValid;
         service.UpdatePassword = UpdatePassword;
+        service.UpdateBasicProfile = UpdateBasicProfile;
+        service.PassportVISAOperation = PassportVISAOperation;
 
         return service;
+        
+        function PassportVISAOperation(data){
+            return $http({
+                method: 'POST',
+                url: '/api/user/profile/passportvisa',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                data: data
+            }).then(
+                handleSuccess,
+                handleError(lang.serviceRequestFault)
+                );
+        }
+        
+        function UpdateBasicProfile(data){
+            return $http({
+                method: 'POST',
+                url: '/api/user/profile/basic',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                data: data
+            }).then(
+                handleSuccess,
+                handleError(lang.serviceRequestFault)
+                );
+        }
 
         function UpdatePassword(data) {
             return $http({
@@ -260,14 +318,6 @@ services.factory('EduList', ['$resource',
             });
     }]);
 
-services.factory('CertType', ['$resource',
-    function CertType($resource) {
-        return $resource('/api/cert_type/:locale/:c_id',
-            {},
-            {get: {method: 'GET', cache: false, isArray: false}}
-        );
-    }]);
-
 services.factory('CertTypeList', ['$resource',
     function CertTypeList($resource) {
         return $resource('/api/cert_types/:locale',
@@ -275,14 +325,6 @@ services.factory('CertTypeList', ['$resource',
             {
                 get: {method: 'GET', cache: false, isArray: true}
             });
-    }]);
-
-services.factory('PassportType', ['$resource',
-    function PassportType($resource) {
-        return $resource('/api/pp_type/:locale/:p_id',
-            {},
-            {get: {method: 'GET', cache: false, isArray: false}}
-        );
     }]);
 
 services.factory('PassportTypeList', ['$resource',
@@ -430,23 +472,6 @@ services.factory('LanguageList', ['$resource',
             });
     }]);
 
-services.factory('CustomPort', ['$resource',
-    function CustomPort($resource) {
-        return $resource('/api/customport/:p_id',
-            {},
-            {get: {method: 'GET', cache: false, isArray: false}}
-        );
-    }]);
-
-services.factory('CustomPortList', ['$resource',
-    function CustomPortList($resource) {
-        return $resource('/api/customport/all',
-            {},
-            {
-                get: {method: 'GET', cache: false, isArray: true}
-            });
-    }]);
-
 services.factory('Province', ['$resource',
     function Province($resource) {
         return $resource('/api/province/:p_id',
@@ -484,14 +509,6 @@ services.factory('City', ['$resource',
 services.factory('Position', ['$resource',
     function Position($resource) {
         return $resource('/api/position/:locale/:p_id',
-            {},
-            {get: {method: 'GET', cache: false, isArray: false}}
-        );
-    }]);
-
-services.factory('Department', ['$resource',
-    function Department($resource) {
-        return $resource('/api/department/:locale/:d_id',
             {},
             {get: {method: 'GET', cache: false, isArray: false}}
         );

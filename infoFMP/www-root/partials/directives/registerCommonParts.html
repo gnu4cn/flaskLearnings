@@ -1,15 +1,16 @@
 <div class="row">
-    <div class="col-xs-5 cell">
+    <div class="col-sm-5 col-xs-8">
         <div class="form-group has-feedback has-feedback-right" show-errors>
             <label class="control-label">{{lang.firstName}}</label>
             <input type="text" class="form-control" required 
                    name="firstname"
-                   ng-model-options="{debounce: 500}"
                    placeholder="{{ lang.PleaseInputaFirstname}}" 
                    ng-model="user.firstName" autocomplete="off" 
                    uib-tooltip="{{lang.firstNameHelp}}"
-                   tooltip-placement="bottom-left"
+                   tooltip-placement="top"
+                   tooltip-class="customClass"
                    tooltip-trigger="focus"
+                                   tooltip-append-to-body="true"
                    type-firstname />
 
             <span class="glyphicon glyphicon-ok form-control-feedback"
@@ -26,17 +27,18 @@
             </p>
         </div>
     </div>
-    <div class="col-xs-7 cell">
+    <div class="col-sm-6 col-xs-10">
         <div class="form-group has-feedback has-feedback-right" show-errors>
             <label class="control-label">{{lang.lastName}}</label>
             <input type="text" class="form-control" required 
                    name="lastname"
-                   ng-model-options="{debounce: 500}"
                    placeholder="{{ lang.PleaseInputaLastname}}" 
                    ng-model="user.lastName" autocomplete="off" 
                    uib-tooltip="{{lang.lastNameHelp}}"
-                   tooltip-placement="bottom-left"
+                   tooltip-placement="top"
+                   tooltip-class="customClass"
                    tooltip-trigger="focus"
+                                   tooltip-append-to-body="true"
                    type-lastname />
 
             <span class="glyphicon glyphicon-ok form-control-feedback"
@@ -56,7 +58,7 @@
 </div>
 
 <div class="row">
-    <div class="col-xs-8 col-sm-6 cell">
+    <div class="col-sm-5 col-xs-8">
         <div class="form-group has-feedback has-feedback-right" show-errors>
             <label class="control-label">{{ lang.Username}}</label>
             <input type="text" class="form-control" required 
@@ -65,8 +67,10 @@
                    placeholder="{{ lang.PleaseInputaUsername}}" 
                    ng-model="user.username" autocomplete="off" 
                    uib-tooltip="{{lang.UsernameHelp}}"
-                   tooltip-placement="bottom-left"
+                   tooltip-placement="top"
+                   tooltip-class="customClass"
                    tooltip-trigger="focus"
+                                   tooltip-append-to-body="true"
                    type-username />
 
             <span class="glyphicon glyphicon-user form-control-feedback"
@@ -93,7 +97,7 @@
             </span>
         </div>
     </div>
-    <div class="col-xs-8 col-sm-6 cell">
+    <div class="col-sm-5 col-xs-8">
         <div class="form-group has-feedback has-feedback-right" show-errors>
             <label class="control-label">{{ lang.Password}}</label>
             <input ng-init="showPassord = false"
@@ -103,8 +107,10 @@
                    placeholder="{{lang.PleaseSetAPassword}}" ng-minlength='8'
                    ng-model="user.password"
                    uib-tooltip="{{lang.PasswordHelp}}"
-                   tooltip-placement="bottom-left"
+                   tooltip-placement="top"
+                   tooltip-class="customClass"
                    tooltip-trigger="focus"
+                                   tooltip-append-to-body="true"
                    type-password />
             <span class="glyphicon glyphicon-lock form-control-feedback"
                   ng-show="!register.password.$valid"></span>

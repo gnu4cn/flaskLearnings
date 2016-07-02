@@ -10,14 +10,12 @@
                 <div class="form-group" show-errors>
                     <label for ="username" >{{ lang.Username}}</label>
                     <div class="row">
-                        <div class="col-xs-8">
+                        <div class="col-sm-6 col-xs-8">
                             <input type="text" required class='form-control'
                                    name="username" autocomplete="off"
                                    id="username" ng-model-options="{debounce: 500}"
                                    placeholder="{{ lang.PleaseInputaUsername}}" 
                                    ng-model="user.username" />
-                        </div>
-                        <div class="col-xs-2">
                         </div>
                     </div>
                     <p class="help-block">{{ lang.UsernameHelpLogin}}</p>
@@ -30,15 +28,12 @@
                 <div class="form-group" show-errors>
                     <label for="password" >{{ lang.Password}}</label>                    
                     <div class="row">
-                        <div class="col-xs-8">
+                        <div class="col-sm-6 col-xs-8">
                             <input ng-init="showPassord = false"
                                    type="{{ showPassword ? 'text': 'password'}}" 
                                    class="form-control" name="password" required
                                    id="password"
                                    ng-model="user.password" />
-                        </div>
-                        <div class="col-xs-2">
-
                         </div>
                     </div>
                     <p class="help-block">{{ lang.PasswordHelpLogin}}</p>

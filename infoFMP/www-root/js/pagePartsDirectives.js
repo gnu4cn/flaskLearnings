@@ -3,40 +3,210 @@ var pagePartsDirectives = angular.module('pagePartsDirectives', []);
 pagePartsDirectives.directive('profileFields', ['languageService',
     'beforeAuthorizedOps', 'checkCreds', 'UserService', 'getLocale', 'getToken',
     'accountProfilePostProcess', '$uibModal', 'setActiveTab', 'getActiveTab',
+    '$route',
     function profileFields(languageService, beforeAuthorizedOps, checkCreds,
         UserService, getLocale, getToken, accountProfilePostProcess, $uibModal,
-        setActiveTab, getActiveTab) {
+        setActiveTab, getActiveTab, $route) {
         return {
             restrict: 'A',
             templateUrl: 'partials/directives/profileFields.html',
             link: function (scope, el, attrs) {
                 scope.lang = JSON.parse(languageService());
-                
-                scope.setTabActive = function(index){
+
+                scope.setTabActive = function (index) {
                     setActiveTab(index);
                 };
                 //这里明明返回的是整数，却还要一个parseInt!! 搞了半天
                 scope.active = parseInt(getActiveTab(), 10);
-                
-                scope.updateBasicProfile = function(){
-                    var updateBasicProfileModalInstance = $uibModal.open({
+
+                scope.updateBasicProfileStaff = function () {
+                    var uibModalInstance = $uibModal.open({
                         animation: true,
-                        templateUrl: 'partials/modals/updateBasicProfileModal.html',
-                        controller: 'UpdateBasicProfileModalInstanceCtrl',
+                        templateUrl: 'partials/modals/basicProfileStaffModal.html',
+                        controller: 'BasicProfileStaffModalInstanceCtrl',
                         size: 'md',
                         resolve: {
                             lang: function () {
                                 return scope.lang;
                             },
+                            user: function () {
+                                return scope.user;
+                            }
+                        }
+                    });
+
+                    uibModalInstance.result.then(
+                        function () {
+                            $route.reload();
+                        },
+                        function () {
+                            //nothing to do
+                        });
+                };
+
+                scope.updateBasicProfileStaffFamily = function () {
+                    var uibModalInstance = $uibModal.open({
+                        animation: true,
+                        templateUrl: 'partials/modals/basicProfileStaffFamilyModal.html',
+                        controller: 'BasicProfileStaffFamilyModalInstanceCtrl',
+                        size: 'md',
+                        resolve: {
+                            lang: function () {
+                                return scope.lang;
+                            },
+                            user: function () {
+                                return scope.user;
+                            }
+                        }
+                    });
+
+                    uibModalInstance.result.then(
+                        function () {
+                            $route.reload();
+                        },
+                        function () {
+                            //nothing to do
+                        });
+                };
+
+                scope.updateBasicProfileTrainee = function () {
+                    var uibModalInstance = $uibModal.open({
+                        animation: true,
+                        templateUrl: 'partials/modals/basicProfileTraineeModal.html',
+                        controller: 'BasicProfileTraineeModalInstanceCtrl',
+                        size: 'md',
+                        resolve: {
+                            lang: function () {
+                                return scope.lang;
+                            },
+                            user: function () {
+                                return scope.user;
+                            }
+                        }
+                    });
+
+                    uibModalInstance.result.then(
+                        function () {
+                            $route.reload();
+                        },
+                        function () {
+                            //nothing to do
+                        });
+                };
+
+                scope.updateBasicProfileTraineeFamily = function () {
+                    var uibModalInstance = $uibModal.open({
+                        animation: true,
+                        templateUrl: 'partials/modals/basicProfileTraineeFamilyModal.html',
+                        controller: 'BasicProfileTraineeFamilyModalInstanceCtrl',
+                        size: 'md',
+                        resolve: {
+                            lang: function () {
+                                return scope.lang;
+                            },
+                            user: function () {
+                                return scope.user;
+                            }
+                        }
+                    });
+
+                    uibModalInstance.result.then(
+                        function () {
+                            $route.reload();
+                        },
+                        function () {
+                            //nothing to do
+                        });
+                };
+
+                scope.updatePassportVISATrainee = function () {
+                    var uibModalInstance = $uibModal.open({
+                        animation: true,
+                        templateUrl: 'partials/modals/PassportVISATraineeModal.html',
+                        controller: 'PassportVISATraineeModalInstanceCtrl',
+                        size: 'md',
+                        resolve: {
+                            lang: function () {
+                                return scope.lang;
+                            },
+                            user: function () {
+                                return scope.user;
+                            }
+                        }
+                    });
+
+                    uibModalInstance.result.then(
+                        function () {
+                            $route.reload();
+                        },
+                        function () {
+                            //nothing to do
+                        });
+                };
+
+                scope.updatePassportVISATraineeFamily = function () {
+                    var uibModalInstance = $uibModal.open({
+                        animation: true,
+                        templateUrl: 'partials/modals/PassportVISATraineeFamilyModal.html',
+                        controller: 'PassportVISATraineeFamilyModalInstanceCtrl',
+                        size: 'md',
+                        resolve: {
+                            lang: function () {
+                                return scope.lang;
+                            },
+                            user: function () {
+                                return scope.user;
+                            }
+                        }
+                    });
+
+                    uibModalInstance.result.then(
+                        function () {
+                            $route.reload();
+                        },
+                        function () {
+                            //nothing to do
+                        });
+                };
+                
+                scope.addStaffFamily = function(){
+                    var uibModalInstance = $uibModal.open({
+                        animation: true,
+                        templateUrl: 'partials/modals/StaffFamilyModal.html',
+                        controller: 'StaffFamilyModalInstanceCtrl',
+                        size: 'md',
+                        resolve: {
                             user: function(){
                                 return scope.user;
                             }
                         }
                     });
 
-                    updateBasicProfileModalInstance.result.then(
+                    uibModalInstance.result.then(
+                        function () {
+                            $route.reload();
+                        },
                         function () {
                             //nothing to do
+                        });
+                };
+                
+                scope.addTraineeFamily = function(){
+                    var uibModalInstance = $uibModal.open({
+                        animation: true,
+                        templateUrl: 'partials/modals/TraineeFamilyModal.html',
+                        controller: 'TraineeFamilyModalInstanceCtrl',
+                        size: 'md',
+                        resolve: {
+                            user: function(){
+                                return scope.user;
+                            }
+                        }
+                    });
+
+                    uibModalInstance.result.then(
+                        function () {
+                            $route.reload();
                         },
                         function () {
                             //nothing to do
@@ -44,11 +214,11 @@ pagePartsDirectives.directive('profileFields', ['languageService',
                 };
 
                 scope.changePassword = function () {
-                    var updatePasswordModalInstance = $uibModal.open({
+                    var uibModalInstance = $uibModal.open({
                         animation: true,
-                        templateUrl: 'partials/modals/updatePasswordModal.html',
-                        controller: 'UpdatePasswordModalInstanceCtrl',
-                        size: 'md',
+                        templateUrl: 'partials/modals/PasswordModal.html',
+                        controller: 'PasswordModalInstanceCtrl',
+                        size: 'sm',
                         resolve: {
                             lang: function () {
                                 return scope.lang;
@@ -56,7 +226,7 @@ pagePartsDirectives.directive('profileFields', ['languageService',
                         }
                     });
 
-                    updatePasswordModalInstance.result.then(
+                    uibModalInstance.result.then(
                         function () {
                             //nothing to do
                         },
@@ -78,6 +248,7 @@ pagePartsDirectives.directive('profileFields', ['languageService',
                             if (res.success) {
                                 scope.user = res.user;
                                 scope.user.profile = res.profile;
+                                //console.log(JSON.stringify(scope.user));
                                 accountProfilePostProcess(scope, res);
                             } else {
                             }
@@ -99,12 +270,24 @@ pagePartsDirectives.directive('registerFormCommonParts', ['languageService',
         };
     }]);
 
+pagePartsDirectives.directive('addFamilyFormCommonParts', ['languageService',
+    function(languageService){
+        return {
+            restrict: 'A',
+            templateUrl: 'partials/directives/addFamilyFormCommonParts.html',
+            link: function (scope, el, attrs){
+                scope.lang = JSON.parse(languageService());
+            }
+        };
+    }]);
+
 pagePartsDirectives.directive('publicMenu', ['getLocale', '$route',
     'checkCreds', 'deleteCreds', '$uibModal', '$rootScope',
     'tmhDynamicLocale', '$locale', 'getLocale', 'setLocale', 'languageService',
+    'setActiveTab', 'forgetVISANumber',
     function (getLocale, $route, checkCreds, deleteCreds, $uibModal,
         $rootScope, tmhDynamicLocale, $locale, getLocale, setLocale,
-        languageService) {
+        languageService, setActiveTab, forgetVISANumber) {
         return {
             restrict: 'A',
             templateUrl: 'partials/directives/menu.html',
@@ -116,21 +299,6 @@ pagePartsDirectives.directive('publicMenu', ['getLocale', '$route',
                 //这里有个坑！！！ JSON.parse is safer than eval, DO NOT USE eval()
                 //scope.lang = eval(attrs.lang);
                 scope.lang = JSON.parse(languageService());
-
-                scope.languageList = [
-                    {
-                        'name': 'en-US, English',
-                        'url': 'images/cn.png'
-                    },
-                    {
-                        'name': 'en-US, English',
-                        'url': 'images/us.png'
-                    },
-                    {
-                        'name': 'fr-FR, français',
-                        'url': 'images/fr.png'
-                    },
-                ];
 
                 //设置cookie中语言的代码
                 //也是作为指令模板中方法的原型演示
@@ -151,7 +319,9 @@ pagePartsDirectives.directive('publicMenu', ['getLocale', '$route',
 
                     logoutConfirmModalInstance.result.then(
                         function () {
+                            setActiveTab(0);
                             deleteCreds();
+                            forgetVISANumber();
                             $route.reload();
                         },
                         function () {

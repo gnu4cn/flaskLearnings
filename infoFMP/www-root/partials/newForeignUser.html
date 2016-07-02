@@ -6,24 +6,23 @@
             <form role="form" name="register" novalidate
                   ng-submit="register.$valid && submitRegistration()">
                 <!-- 用户名部分 -->
-                <!--不显示的 user.locale 字段，用于向服务器提供用户locale。-->
-                <input type="text" ng-model="user.locale" style="display: none;"/>
-                <!--不显示的 user.category 字段，用于向服务器提供用户类别。-->
-                <input type="text" ng-model="user.category" style="display: none;"/>
                 <div class="row">
-                    <div class="col-xs-4 cell">
+                    <div class="col-xs-4">
                         <div class="form-group has-feedback has-feedback-right" show-errors>
                             <label class="control-label">{{lang.passportNumber}}</label>
                             <input type="text" class="form-control" required 
-                                   name="passport_number" 
+                                   name="passport_number"
+                                   ng-blur="getProfile()"
                                    ng-model-options="{debounce: 1000}"
                                    placeholder="{{lang.YourPassportNumber}}" 
                                    ng-model="user.passportNumber" 
                                    autocomplete="off"
                                    uib-tooltip="{{lang.PassportNumberHelp}}"
-                                   tooltip-placement="bottom-left"
+                                   tooltip-placement="top"
+                                   tooltip-class="customClass"
                                    tooltip-trigger="focus"
-                                   type-passport-number />
+                                   tooltip-append-to-body="true"
+                                   type-passport-number-register />
 
                             <span class="glyphicon glyphicon-ok form-control-feedback"
                                   ng-show='register.passport_number.$valid'></span>
@@ -37,7 +36,7 @@
                             <span class="label label-danger" ng-show="register.passport_number.$error.format">
                                 {{ lang.PassportNumberNotQualified}}
                             </span>
-                            <span class="label label-danger" ng-show="register.passport_number.$pending.isExisted">
+                            <span class="label label-info" ng-show="register.passport_number.$pending.isExisted">
                                 {{ lang.CheckingifThisPassportNumberisAvailable}}
                             </span>
                             <span class="label label-danger" ng-show="register.passport_number.$error.isExisted">
@@ -45,12 +44,12 @@
                             </span>
                         </div>
                     </div>
-                    <div class="col-md-4 col-sm-6 col-xs-5 cell">
+                    <div class="col-md-5 col-sm-6 col-xs-5">
                         <div class="form-group">
                             <label class="control-label">{{lang.Gender}}</label>
                             <select class="form-control" required id="gender" 
-                                    ng-model="user.gender"
-                                    ng-options="g.id as g.data for g in Genders| orderBy:'id' track by g.id">
+                                    ng-model="genderSelected"
+                                    ng-options="g as g.data for g in Genders| orderBy:'id' track by g.id">
                                 <option value="">-- {{lang.selectGender}} --</option>
                                 <!-- <option ng-repeat="p_c in pCategories| orderBy: 'id'" 
                                         value="{{p_c.id}}">{{p_c.data}}</option>-->
@@ -59,18 +58,18 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-md-8 col-sm-9 col-xs-10 cell">
+                    <div class="col-md-8 col-sm-9 col-xs-10">
                         <div class="form-group">
                             <label class="control-label">{{lang.Nationality}}</label>
                             <script type="text/ng-template" id="customCountrySelect.html">
                                 <a>
-                                    <!-- 注意，这里是用的match.model -->
-                                    <span class="flag-icon flag-icon-{{match.model.alpha_2.toLowerCase()}}"></span>
-                                    <span ng-bind-html="match.model.en_full | uibTypeaheadHighlight:query"></span>
+                                <!-- 注意，这里是用的match.model -->
+                                <span class="flag-icon flag-icon-{{match.model.alpha_2.toLowerCase()}}"></span>
+                                <span ng-bind-html="match.model.en_full | uibTypeaheadHighlight:query"></span>
                                 </a>
                             </script>
                             <input required class="form-control" type="text" ng-model="countrySelected"
-                                   style="background-image: url(bower_components/flag-icon-css/flags/4x3/{{countrySelected.alpha_2.toLowerCase()!==undefined? countrySelected.alpha_2.toLowerCase(): 'un'}}.svg); 
+                                   style="background-image: url(bower_components/flag-icon-css/flags/4x3/{{countrySelected.alpha_2.toLowerCase() !== undefined ? countrySelected.alpha_2.toLowerCase() : 'un'}}.svg); 
                                    background-size: 20px auto; background-repeat: no-repeat;
                                    background-color: #FFF; padding-left: 30px;
                                    background-position: left 5px center;"
@@ -103,7 +102,13 @@
                             {{responseMsg}}</span>
                         <span class="label label-warning" ng-init="serverFault = false"
                               ng-show="serverFault">
-                            {{responseMsg}}</span>
+                            {{responseMsg}}</span>                        
+                        <span class="label label-info" ng-init="checkingIfProfileExists = false"
+                              ng-show="checkingIfProfileExists">
+                            {{ lang.checkingIfProfileExists}}</span>
+                        <span class="label label-info" ng-init="profileFound = false"
+                              ng-show="profileFound">
+                            {{ lang.profileFoundTips}}</span>
                     </div>
                 </div>
             </form>

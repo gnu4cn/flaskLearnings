@@ -2,29 +2,154 @@
 
 var bServices = angular.module('bServices', ['ngCookies']);
 
+bServices.factory('updatePassportVISA', ['UserService', '$q',
+    '$timeout',
+    function (UserService, $q, $timeout) {
+        return function (scope, uibModalInstance) {
+            UserService.PassportVISAOperation(scope.data).then(
+                function (res) {
+                    scope.responseMsg = res.message;
+                    if (res.success) {
+                        scope.serverFault = false;
+                        if (res.updated || res.created) {
+                            scope.updatedFailed = false;
+                            scope.updatedSuccess = true;
+                            var defer = $q.defer();
+                            $timeout(function () {
+                                uibModalInstance.close(true);
+                            }, 3000);
+                            return defer.promise;
+                        } else {
+                            scope.updatedSuccess = false;
+                            scope.updatedFailed = true;
+                        }
+                    } else {
+                        scope.updatedSuccess = false;
+                        scope.updatedFailed = false;
+                        scope.serverFault = true;
+                    }
+                }
+            );
+        };
+    }]);
+
+bServices.factory('updateBasicProfile', ['UserService', '$q',
+    '$timeout',
+    function (UserService, $q, $timeout) {
+        return function (scope, uibModalInstance) {
+            UserService.UpdateBasicProfile(scope.profile).then(
+                function (res) {
+                    scope.responseMsg = res.message;
+                    if (res.success) {
+                        scope.serverFault = false;
+                        if (res.updated) {
+                            scope.updatedFailed = false;
+                            scope.updatedSuccess = true;
+                            var defer = $q.defer();
+                            $timeout(function () {
+                                uibModalInstance.close(true);
+                            }, 3000);
+                            return defer.promise;
+                        } else {
+                            scope.updatedSuccess = false;
+                            scope.updatedFailed = true;
+                        }
+                    } else {
+                        scope.updatedSuccess = false;
+                        scope.updatedFailed = false;
+                        scope.serverFault = true;
+                    }
+                }
+            );
+        };
+    }]);
 
 bServices.factory('accountProfilePostProcess', [function () {
         return function (scope, res) {
-            scope.user.type = parseInt(scope.user.category.id, 10);
+            scope.user.type = scope.userType = parseInt(scope.user.category.id, 10);
+            var is_passport_visa_exists = scope.is_passport_visa_exists = res.profile.passport_visa !== undefined;
+            var is_physical_exists = scope.is_physical_exists = res.profile.physical !== undefined;
+            scope.is_socialedu_exists = res.profile.socialedu !== undefined;
+            var is_career_exists = scope.is_career_exists = res.profile.career !== undefined;
+            scope.is_toStaff_exists = res.profile.staff !== undefined;
+            scope.is_toTrainee_exists = res.profile.trainee !== undefined;
             //console.log($scope.cred);
-            if (scope.user.type >= 5) {
-                var today = scope.today = moment();
-                scope.fourYearsAgo = today.subtract(4, "years");
-                scope.minBirthYear = today.subtract(80, "years");
-                scope.oneWeekLater = today.add(7, "days");
-                if (res.passport_visa !== undefined) {
-                    scope.user.profile.passport_visa.visa_valid_date = new moment(res.profile.passport_visa.visa_valid_date);
-                    scope.user.profile.passport_visa.entrance_date = new moment(res.profile.passport_visa.entrance_date);
-                    scope.user.profile.passport_visa.exit_date = new moment(res.profile.passport_visa.exit_date);
-                }
+            //不能在today上生成新的日期，会破坏today。
+            var today = new moment();
 
-                if (scope.user.type === 5) {
-                    scope.user.profile.birthday = new moment(res.profile.birthday);
-                    if (res.profile.career !== undefined) {
-                        scope.user.profile.career.position_date = new moment(res.profile.career.position_date);
-                    }
-                    //console.log($scope.user.profile.birthday.getTime()<$scope.sixtyFiveYearsAgo.getTime());
+            if (scope.userType === 0) {
+                scope.is_family_exists = res.profile.families.length > 0;
+            }
+
+            //生日（外籍学员）
+            if (scope.userType === 5) {
+                scope.is_contacts_exists = res.profile.contacts.length > 0;
+                scope.is_working_exists = res.profile.workings.length > 0;
+                scope.is_training_exists = res.profile.trainings.length > 0;
+                scope.is_relative_exists = res.profile.relatives.length > 0;
+                scope.is_study_abroad_exists = res.profile.studys_abroad.length > 0;
+                scope.is_family_exists = res.profile.families.length > 0;
+
+                //生日的判断
+                var minBirthYear = moment().subtract(65, "years");
+                scope.birthday = scope.user.profile.birthday = new moment(res.profile.birthday);
+                scope.birthday_invalid = scope.birthday.isAfter(today);
+                scope.birthday_warning = scope.birthday.isBefore(minBirthYear);
+            }
+
+            //护照签证涉及的日期后处理
+            if (is_passport_visa_exists) {
+                var oneWeekLater = moment().add(7, "days");
+                scope.visa_valid_date = scope.user.profile.visa_valid_date = new moment(res.profile.passport_visa.visa_valid_date);
+                scope.visa_expired = scope.visa_valid_date.isBefore(today);
+                scope.visa_expired_soon = scope.visa_valid_date.isBefore(oneWeekLater);
+                //console.log(scope.user.profile.passport_visa.visa_valid_date.format("YYYY-MM-DD"));
+                if (scope.userType === 5) {
+                    var fourYearsAgo = moment().subtract(4, "years");
+                    scope.entrance_date = scope.user.profile.passport_visa.entrance_date = new moment(res.profile.passport_visa.entrance_date);
+                    scope.exit_date = scope.user.profile.passport_visa.exit_date = new moment(res.profile.passport_visa.exit_date);
+                    scope.entrance_date_warning = scope.entrance_date.isBefore(fourYearsAgo);
+                    scope.exit_date_invalid = scope.exit_date.isBefore(today);
+                    scope.exit_date_warning = scope.exit_date.isBefore(oneWeekLater);
                 }
+            }
+
+            //岗位日期的后处理（外籍学员）
+            if (is_career_exists) {
+                scope.user.profile.position_date = new moment(res.profile.career.position_date);
+                scope.postion_date_invalid = scope.position_date.isAfter(today);
+            }
+
+            if (is_physical_exists) {
+                scope.height_invalid = res.profile.physical.height < 140 && res.profile.physical.height > 300;
+                scope.weight_invalid = res.profile.physical.weight < 30 && res.profile.physical.weight > 150;
+                scope.shoesize_invalid = res.profile.physical.shoesize < 18 && res.profile.physical.shoesize > 55;
+            }
+        };
+    }]);
+
+bServices.factory('rememberVISANumber', ['$cookies',
+    function ($cookies) {
+        return function (number) {
+            $cookies.put('visa_number', number);
+        };
+    }]);
+
+bServices.factory('forgetVISANumber', ['$cookies',
+    function ($cookies) {
+        return function () {
+            $cookies.remove('visa_number');
+        };
+    }]);
+
+bServices.factory('getVISANumber', ['$cookies',
+    function ($cookies) {
+        return function () {
+            var number = $cookies.get('visa_number');
+            if (number !== undefined) {
+                return number;
+            } else {
+                return '';
             }
         };
     }]);
@@ -40,7 +165,7 @@ bServices.factory('getActiveTab', ['$cookies',
     function ($cookies) {
         return function () {
             var active = $cookies.get('active_tab');
-            if (active!==undefined) {
+            if (active !== undefined) {
                 return active;
             } else {
                 return 0;
@@ -174,7 +299,7 @@ bServices.factory('getPersonCategory', ['$cookies',
 
 // 这里创造性地将身份证号检查做成了业务逻辑服务！
 bServices.factory('checkIDCardNumber',
-    function checkIDCardNumber() {
+    function () {
         return function (ID_Number) {
             var vcity = {
                 11: "北京",

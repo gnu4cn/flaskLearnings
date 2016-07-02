@@ -2,6 +2,40 @@
 
 var formTypesDirectives = angular.module('formTypesDirectives', []);
 
+var TRAINEE_FAMILY_CAT = '6';
+var STAFF_FAMILY_CAT = '1';
+
+formTypesDirectives.directive('typeVisaNumber', [
+    function () {
+        var VISA_REGEX = /^([0HIJGC])[0-9]{7,}$/;
+        var NULL_REGEX = /^(\u65E0\/Null)$/;
+        var RESIDENT_CERT_REGEX_JS = /^(JS)(\()([1-2])[0-9](\))[0-9]{2,}$/;
+        return {
+            restrict: 'A',
+            require: 'ngModel',
+            link: function (scope, elm, attrs, ctrl) {
+                ctrl.$validators.format = function (modelValue, viewValue) {
+                    return ctrl.$isEmpty(modelValue) || VISA_REGEX.test(viewValue) || NULL_REGEX.test(viewValue) || RESIDENT_CERT_REGEX_JS.test(viewValue);
+                };
+            }
+        };
+    }]);
+
+formTypesDirectives.directive('typeFlightNumber', [
+    function () {
+        //http://academe.co.uk/2014/01/validating-flight-codes/
+        var FLIGHT_NUMBER_REGEX = /^([a-z][a-z]|[a-z][0-9]|[0-9][a-z])[a-z]?[0-9]{1,4}[a-z]?$/i;
+        return {
+            restrict: 'A',
+            require: 'ngModel',
+            link: function (scope, elm, attrs, ctrl) {
+                ctrl.$validators.format = function (modelValue, viewValue) {
+                    return ctrl.$isEmpty(modelValue) || FLIGHT_NUMBER_REGEX.test(viewValue);
+                };
+            }
+        };
+    }]);
+
 formTypesDirectives.directive('typeChineseName', [
     function typeFirstname() {
         var NAME_REGEX = /^([\u4e00-\u9fa5])[\u4e00-\u9fa5]{1,3}$/;
@@ -14,7 +48,6 @@ formTypesDirectives.directive('typeChineseName', [
                 };
             }
         };
-
     }]);
 
 formTypesDirectives.directive('typeFirstname', [
@@ -47,9 +80,10 @@ formTypesDirectives.directive('typeLastname', [
 
     }]);
 
-// 身份证好验证代码(不再检查是否已存在)
-formTypesDirectives.directive('typeIdNumberUpdate', ['checkIDCardNumber',
-    function (checkIDCardNumber) {
+// 身份证号码验证 -- 添加校内家属时
+formTypesDirectives.directive('typeIdNumberFamily', ['checkIDCardNumber',
+    'ProfileService', 'getToken', '$parse', '$q', '$timeout',
+    function (checkIDCardNumber, ProfileService, getToken, $parse, $q, $timeout) {
         return {
             restrict: 'A',
             require: 'ngModel',
@@ -57,16 +91,44 @@ formTypesDirectives.directive('typeIdNumberUpdate', ['checkIDCardNumber',
                 ctrl.$validators.format = function (modelValue, viewValue) {
                     return ctrl.$isEmpty(modelValue) || checkIDCardNumber(viewValue);
                 };
+                //这里使用了$asyncValidators，就需要一个promise
+                ctrl.$asyncValidators.isExisted = function (modelValue, viewValue) {
+                    var data = {};
+                    data.idNumber = modelValue || viewValue;
+                    data.category = STAFF_FAMILY_CAT;
+                    data.cred = getToken();
+
+                    //console.log(JSON.stringify(data));
+                    // 异步验证器是需要返回promise的。
+                    var deferred = $q.defer();
+                    //这里加入一个等待，目的是现实pending消息。
+                    $timeout(function () {
+                        ProfileService.CheckProfile(data)
+                            .then(function (res) {
+                                if (res.success) {
+                                    if (res.appended) {
+                                        ctrl.$setValidity('isExisted', false);
+                                    } else {
+                                        ctrl.$setValidity('isExisted', true);
+                                        $parse(attrs.ngModel).assign(scope, ctrl.$viewValue);
+                                    }
+                                } else {
+                                    alert(res.message);
+                                }
+                            });
+                    }, 1000);
+                    return deferred.promise;
+                };
             }
         };
     }]);
 
-// 身份证好验证代码
-formTypesDirectives.directive('typeIdNumber', ['checkIDCardNumber', 'ProfileService',
-    'getPersonCategory', '$uibModal', '$location', '$parse', '$q', '$timeout',
-    'languageService',
-    function (checkIDCardNumber, ProfileService, getPersonCategory, $uibModal,
-        $location, $parse, $q, $timeout, languageService) {
+// 身份证号码验证， 这个是很复杂的了
+formTypesDirectives.directive('typeIdNumberRegister', ['checkIDCardNumber',
+    'ProfileService', '$parse', '$uibModal', '$location', '$q', 'getPersonCategory',
+    '$timeout',
+    function (checkIDCardNumber, ProfileService, $parse, $uibModal, $location,
+        $q, getPersonCategory, $timeout) {
         return {
             restrict: 'A',
             require: 'ngModel',
@@ -78,55 +140,48 @@ formTypesDirectives.directive('typeIdNumber', ['checkIDCardNumber', 'ProfileServ
                     var data = {};
                     data.idNumber = modelValue || viewValue;
                     data.category = getPersonCategory();
-                    var lang = languageService();
-                    return ProfileService.CheckIDNumber(data)
-                        .then(function (res) {
-                            if (res.success) {
-                                if (!res.existed) {
-                                    //不存在时， 设置该表单字段有效
-                                    var defer = $q.defer();
-                                    $timeout(
-                                        function () {
-                                            ctrl.$setValidity('isExisted', !res.existed);
-                                            $parse(attrs.ngModel).assign(scope, ctrl.$viewValue);
-                                            //$parse(attrs.ngModel).assign(scope, ctrl.$viewValue.split(','));
-                                        }, 1000);
-                                    return defer.promise;
-                                } else {
-                                    //存在时，设置该表单字段无效，并弹出一个提示对话框
-                                    var defer = $q.defer();
-                                    $timeout(
-                                        function () {
-                                            ctrl.$setValidity('isExisted', !res.existed);
-                                            var ProfileExistedModalInstance = $uibModal.open({
-                                                animation: true,
-                                                templateUrl: '/partials/modals/profileexistedIDNumber.html',
-                                                controller: 'ProfileExistedModalInstanceCtrl',
-                                                size: 'md',
-                                                resolve: {
-                                                    lang: function () {
-                                                        return JSON.parse(lang);
-                                                    },
-                                                    username: function () {
-                                                        return res.username;
-                                                    }
+
+                    //console.log(JSON.stringify(data));
+
+                    // 异步验证器是需要返回promise的。
+                    var deferred = $q.defer();
+                    //加入$timeout, 已显示pending消息。
+                    $timeout(function () {
+                        ProfileService.CheckProfile(data)
+                            .then(function (res) {
+                                if (res.success) {
+                                    if (res.registered) {
+                                        ctrl.$setValidity('isExisted', false);
+                                        //弹出一个对话框
+                                        var ModalInstance = $uibModal.open({
+                                            animation: true,
+                                            templateUrl: '/partials/modals/profileexistedIDNumber.html',
+                                            controller: 'ProfileExistedModalInstanceCtrl',
+                                            size: 'md',
+                                            resolve: {
+                                                username: function () {
+                                                    return res.username;
                                                 }
+                                            }
+                                        });
+
+                                        ModalInstance.result.then(
+                                            function () {
+                                                $location.path('/user/login');
+                                            },
+                                            function () {
+
                                             });
-
-                                            ProfileExistedModalInstance.result.then(
-                                                function () {
-                                                    $location.path('/user/login');
-                                                },
-                                                function () {
-
-                                                });
-                                        }, 50);
-                                    return defer = $q.defer();
+                                    } else {
+                                        ctrl.$setValidity('isExisted', true);
+                                        $parse(attrs.ngModel).assign(scope, ctrl.$viewValue);
+                                    }
+                                } else {
+                                    alert(res.message);
                                 }
-                            } else {
-                                alert(res.message);
-                            }
-                        });
+                            });
+                    }, 1000);
+                    return deferred.promise;
                 };
             }
         };
@@ -164,7 +219,7 @@ formTypesDirectives.directive('typeHomeAddress', [function () {
             require: 'ngModel',
             link: function (scope, elm, attrs, ctrl) {
                 ctrl.$validators.format = function (modelValue, viewValue) {
-                    var HOME_ADDRESS_REGEX = /^([ÆÐƎƏƐƔĲŊŒẞÞǷȜæðǝəɛɣĳŋœĸſßþƿȝĄƁÇĐƊĘĦĮƘŁØƠŞȘŢȚŦŲƯY̨Ƴąɓçđɗęħįƙłøơşșţțŧųưy̨ƴÁÀÂÄǍĂĀÃÅǺĄÆǼǢƁĆĊĈČÇĎḌĐƊÐÉÈĖÊËĚĔĒĘẸƎƏƐĠĜǦĞĢƔáàâäǎăāãåǻąæǽǣɓćċĉčçďḍđɗðéèėêëěĕēęẹǝəɛġĝǧğģɣĤḤĦIÍÌİÎÏǏĬĪĨĮỊĲĴĶƘĹĻŁĽĿʼNŃN̈ŇÑŅŊÓÒÔÖǑŎŌÕŐỌØǾƠŒĥḥħıíìiîïǐĭīĩįịĳĵķƙĸĺļłľŀŉńn̈ňñņŋóòôöǒŏōõőọøǿơœŔŘŖŚŜŠŞȘṢẞŤŢṬŦÞÚÙÛÜǓŬŪŨŰŮŲỤƯẂẀŴẄǷÝỲŶŸȲỸƳŹŻŽẒŕřŗſśŝšşșṣßťţṭŧþúùûüǔŭūũűůųụưẃẁŵẅƿýỳŷÿȳỹƴźżžẓA-Za-z\u4e00-\u9fa5])[ÆÐƎƏƐƔĲŊŒẞÞǷȜæðǝəɛɣĳŋœĸſßþƿȝĄƁÇĐƊĘĦĮƘŁØƠŞȘŢȚŦŲƯY̨Ƴąɓçđɗęħįƙłøơşșţțŧųưy̨ƴÁÀÂÄǍĂĀÃÅǺĄÆǼǢƁĆĊĈČÇĎḌĐƊÐÉÈĖÊËĚĔĒĘẸƎƏƐĠĜǦĞĢƔáàâäǎăāãåǻąæǽǣɓćċĉčçďḍđɗðéèėêëěĕēęẹǝəɛġĝǧğģɣĤḤĦIÍÌİÎÏǏĬĪĨĮỊĲĴĶƘĹĻŁĽĿʼNŃN̈ŇÑŅŊÓÒÔÖǑŎŌÕŐỌØǾƠŒĥḥħıíìiîïǐĭīĩįịĳĵķƙĸĺļłľŀŉńn̈ňñņŋóòôöǒŏōõőọøǿơœŔŘŖŚŜŠŞȘṢẞŤŢṬŦÞÚÙÛÜǓŬŪŨŰŮŲỤƯẂẀŴẄǷÝỲŶŸȲỸƳŹŻŽẒŕřŗſśŝšşșṣßťţṭŧþúùûüǔŭūũűůųụưẃẁŵẅƿýỳŷÿȳỹƴźżžẓa-zA-Z #,.\u4e00-\u9fa5]{10,}$/;
+                    var HOME_ADDRESS_REGEX = /^([#ÆÐƎƏƐƔĲŊŒẞÞǷȜæðǝəɛɣĳŋœĸſßþƿȝĄƁÇĐƊĘĦĮƘŁØƠŞȘŢȚŦŲƯY̨Ƴąɓçđɗęħįƙłøơşșţțŧųưy̨ƴÁÀÂÄǍĂĀÃÅǺĄÆǼǢƁĆĊĈČÇĎḌĐƊÐÉÈĖÊËĚĔĒĘẸƎƏƐĠĜǦĞĢƔáàâäǎăāãåǻąæǽǣɓćċĉčçďḍđɗðéèėêëěĕēęẹǝəɛġĝǧğģɣĤḤĦIÍÌİÎÏǏĬĪĨĮỊĲĴĶƘĹĻŁĽĿʼNŃN̈ŇÑŅŊÓÒÔÖǑŎŌÕŐỌØǾƠŒĥḥħıíìiîïǐĭīĩįịĳĵķƙĸĺļłľŀŉńn̈ňñņŋóòôöǒŏōõőọøǿơœŔŘŖŚŜŠŞȘṢẞŤŢṬŦÞÚÙÛÜǓŬŪŨŰŮŲỤƯẂẀŴẄǷÝỲŶŸȲỸƳŹŻŽẒŕřŗſśŝšşșṣßťţṭŧþúùûüǔŭūũűůųụưẃẁŵẅƿýỳŷÿȳỹƴźżžẓA-Za-z\u4e00-\u9fa5])[,.，。0-9ÆÐƎƏƐƔĲŊŒẞÞǷȜæðǝəɛɣĳŋœĸſßþƿȝĄƁÇĐƊĘĦĮƘŁØƠŞȘŢȚŦŲƯY̨Ƴąɓçđɗęħįƙłøơşșţțŧųưy̨ƴÁÀÂÄǍĂĀÃÅǺĄÆǼǢƁĆĊĈČÇĎḌĐƊÐÉÈĖÊËĚĔĒĘẸƎƏƐĠĜǦĞĢƔáàâäǎăāãåǻąæǽǣɓćċĉčçďḍđɗðéèėêëěĕēęẹǝəɛġĝǧğģɣĤḤĦIÍÌİÎÏǏĬĪĨĮỊĲĴĶƘĹĻŁĽĿʼNŃN̈ŇÑŅŊÓÒÔÖǑŎŌÕŐỌØǾƠŒĥḥħıíìiîïǐĭīĩįịĳĵķƙĸĺļłľŀŉńn̈ňñņŋóòôöǒŏōõőọøǿơœŔŘŖŚŜŠŞȘṢẞŤŢṬŦÞÚÙÛÜǓŬŪŨŰŮŲỤƯẂẀŴẄǷÝỲŶŸȲỸƳŹŻŽẒŕřŗſśŝšşșṣßťţṭŧþúùûüǔŭūũűůųụưẃẁŵẅƿýỳŷÿȳỹƴźżžẓa-zA-Z #,.\u4e00-\u9fa5]{8,}$/;
                     return ctrl.$isEmpty(modelValue) || HOME_ADDRESS_REGEX.test(viewValue);
                 };
             }
@@ -187,11 +242,54 @@ formTypesDirectives.directive('typePassportNumberUpdate', ['checkPassportNumber'
         };
     }]);
 
-formTypesDirectives.directive('typePassportNumber', ['checkPassportNumber',
+formTypesDirectives.directive('typePassportNumberFamily', ['checkPassportNumber',
+    'ProfileService', '$q', '$timeout', '$parse', 'getToken',
+    function (checkPassportNumber, ProfileService, $q, $timeout, $parse, getToken) {
+        return {
+            restrict: 'A',
+            require: 'ngModel',
+            link: function (scope, elm, attrs, ctrl) {
+                ctrl.$validators.format = function (modelValue, viewValue) {
+                    return ctrl.$isEmpty(modelValue) || checkPassportNumber(viewValue);
+                };
+                ctrl.$asyncValidators.isExisted = function (modelValue, viewValue) {
+                    var data = {};
+                    data.passportNumber = modelValue || viewValue;
+                    data.category = TRAINEE_FAMILY_CAT;
+                    data.cred = getToken();
+
+                    // 异步验证器是需要返回promise的。
+                    var deferred = $q.defer();
+                    //这里加入一个等待，目的是现实pending消息。
+                    $timeout(function () {
+                        console.log(JSON.stringify(data));
+                        ProfileService.CheckProfile(data)
+                            .then(function (res) {
+                                if (res.success) {
+                                    if (res.appended) {
+                                        //已被添加时，设置该表单字段无效
+                                        ctrl.$setValidity('isExisted', false);
+                                    } else {
+                                        //尚未被添加时， 设置该表单字段有效
+                                        ctrl.$setValidity('isExisted', true);
+                                        $parse(attrs.ngModel).assign(scope, ctrl.$viewValue);
+                                    }
+                                } else {
+                                    alert(res.message);
+                                }
+                            });
+                    }, 1000);
+                    return deferred.promise;
+                };
+            }
+        };
+    }]);
+
+formTypesDirectives.directive('typePassportNumberRegister', ['checkPassportNumber',
     'ProfileService', '$q', '$timeout', '$location', '$parse', '$uibModal',
-    'getPersonCategory', 'languageService',
+    'getPersonCategory',
     function (checkPassportNumber, ProfileService, $q, $timeout, $location,
-        $parse, $uibModal, getPersonCategory, languageService) {
+        $parse, $uibModal, getPersonCategory) {
         return {
             restrict: 'A',
             require: 'ngModel',
@@ -203,43 +301,30 @@ formTypesDirectives.directive('typePassportNumber', ['checkPassportNumber',
                     var data = {};
                     data.passportNumber = modelValue || viewValue;
                     data.category = getPersonCategory();
-                    var lang = languageService();
-                    return ProfileService.CheckIDNumber(data)
+
+                    // 异步验证器是需要返回promise的。
+                    var deferred = $q.defer();
+                    ProfileService.CheckProfile(data)
                         .then(function (res) {
                             if (res.success) {
-
-                                if (!res.existed) {
-                                    //不存在时， 设置该表单字段有效
-                                    var defer = $q.defer();
+                                if (res.registered) {
+                                    //已被注册时，设置该表单字段无效，并弹出一个提示对话框
                                     $timeout(
                                         function () {
-                                            ctrl.$setValidity('isExisted', !res.existed);
-                                            $parse(attrs.ngModel).assign(scope, ctrl.$viewValue);
-                                            //$parse(attrs.ngModel).assign(scope, ctrl.$viewValue.split(','));
-                                        }, 1000);
-                                    return defer.promise;
-                                } else {
-                                    //存在时，设置该表单字段无效，并弹出一个提示对话框
-                                    var defer = $q.defer();
-                                    $timeout(
-                                        function () {
-                                            ctrl.$setValidity('isExisted', !res.existed);
-                                            var ProfileExistedModalInstance = $uibModal.open({
+                                            ctrl.$setValidity('isExisted', false);
+                                            var ModalInstance = $uibModal.open({
                                                 animation: true,
                                                 templateUrl: '/partials/modals/profileexistedPassportNumber.html',
                                                 controller: 'ProfileExistedModalInstanceCtrl',
                                                 size: 'md',
                                                 resolve: {
-                                                    lang: function () {
-                                                        return JSON.parse(lang);
-                                                    },
                                                     username: function () {
                                                         return res.username;
                                                     }
                                                 }
                                             });
 
-                                            ProfileExistedModalInstance.result.then(
+                                            ModalInstance.result.then(
                                                 function () {
                                                     $location.path('/user/login');
                                                 },
@@ -247,12 +332,20 @@ formTypesDirectives.directive('typePassportNumber', ['checkPassportNumber',
 
                                                 });
                                         }, 50);
-                                    return defer = $q.defer();
+                                } else {
+                                    //尚未被注册时， 设置该表单字段有效
+                                    $timeout(
+                                        function () {
+                                            ctrl.$setValidity('isExisted', true);
+                                            $parse(attrs.ngModel).assign(scope, ctrl.$viewValue);
+                                            //$parse(attrs.ngModel).assign(scope, ctrl.$viewValue.split(','));
+                                        }, 1000);
                                 }
                             } else {
                                 alert(res.message);
                             }
                         });
+                    return deferred.promise;
                 };
             }
         };

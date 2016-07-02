@@ -10,12 +10,21 @@ from appdemo import db
 from passlib.apps import custom_app_context as pwd_context
 from sqlalchemy.orm import MapperExtension
 # from sqlalchemy.ext.declarative import declared_attr
-from constant import PRSN_CAT as p_c, POSITION as po, DEPARTMENT as de, \
-    SERVICE as se, TRNEE_RANK as t_r, RELATION as re, RELIGION as rel, \
-    GENDER as ge, MARRIAGE as ma, PPRT_TYPE as p_t, CERT_TYPE as c_t, \
-    EDU as edu
+from constant import PRSN_CAT as p_c, POSITION as po,\
+    TRNEE_RANK as t_r, RELATION as re, RELIGION as rel,\
+    GENDER as ge, MARRIAGE as ma, PPRT_TYPE as p_t, CERT_TYPE as c_t
+
 # 引入名词复数形式
 from inflect import engine as inflectEngine
+
+STAFF_CAT = '0'
+SFAMILY_CAT = '1'
+TRAINEE_CAT = '5'
+TFAMILY_CAT = '6'
+# 使用db实例中的app属性
+app = db.app
+
+dbSession = db.session
 
 
 # 这是为了last_updated
@@ -27,11 +36,6 @@ class MapperExtension(MapperExtension):
     def before_update(self, mapper, connection, instance):
         instance.created_at = instance.created_at
         instance.last_updated = datetime.now()
-
-# 使用db实例中的app属性
-app = db.app
-
-dbSession = db.session
 
 
 def get_u_id_from_cred(cred):
@@ -147,6 +151,39 @@ class BaseMixin(object):
         return jsonify(r)
 
 
+# 此表专门用于保存一卡通卡片数据, 保存了进行卡片操作的人的信息
+@foreign_key('account')
+class Card(BaseMixin, db.Model):
+    card_number = db.Column(db.String(12))
+    category = db.Column(db.String(1))
+
+    def _card_number(self, card_number, operator_id):
+        self.card_number = card_number
+        self.account_id = operator_id
+        dbSession.commit()
+
+    def __init__(self, accountId, cardNumber, category):
+        self.account_id = accountId
+        self.card_number = cardNumber
+        self.category = category
+
+    def _staff(self, staff):
+        self.staff = staff
+        dbSession.commit()
+
+    def _sfamily(self, sfamily):
+        self.sfamily = sfamily
+        dbSession.commit()
+
+    def _trainee(self, trainee):
+        self.trainee = trainee
+        dbSession.commit()
+
+    def _tfamily(self, tfamily):
+        self.tfamily = tfamily
+        dbSession.commit()
+
+
 # http://stackoverflow.com/questions/15534147/python-inheritance-in-sqlalchemy
 # the mixin must come first!!!
 class Account(BaseMixin, db.Model):
@@ -161,6 +198,15 @@ class Account(BaseMixin, db.Model):
     def generate_auth_token(self, expiration=TOKEN_EXPIRE):
         s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
         return s.dumps({'id': self.id})
+
+    # 仅用于http basic authentication
+    @classmethod
+    def verify_auth_token(self, token):
+        cred = token+':unused'
+        user_id = get_u_id_from_cred(cred)
+        if user_id is not None:
+            return self.query.get(user_id)
+        return None
 
     @classmethod
     def verify_auth_cred(self, cred):
@@ -193,13 +239,138 @@ class Account(BaseMixin, db.Model):
 
         if not user or not user.verify_password(password):
             r['success'] = False
-            r['message'] = lang.get_item('UsernameNotExistorPasswordNotCorrect',
-                                         locale)
+            r['message'] = lang.get_item(
+                'UsernameNotExistorPasswordNotCorrect', locale)
 
         else:
             r['success'] = True
             r['token'] = user.generate_auth_token()
             r['message'] = lang.get_item('LoginedSuccessful', locale)
+
+        return jsonify(r)
+
+    @classmethod
+    def passport_visa_operation(self, cred, passport_type, visa_type,
+                                VISANumber, visa_valid_date, arrive_date,
+                                return_date, arrive_flight, return_flight,
+                                locale):
+        r = {}
+        r['success'] = True
+
+        user = self.verify_auth_cred(cred)
+
+        if user is not None:
+            visa_valid_date = datetime.strptime(visa_valid_date,
+                                                "%Y-%m-%dT%H:%M:%S.%fZ").date()
+
+            if user.person_type == TRAINEE_CAT:
+                arrive_date = datetime.strptime(arrive_date,
+                                                "%Y-%m-%dT%H:%M:%S.%fZ").date()
+                return_date = datetime.strptime(return_date,
+                                                "%Y-%m-%dT%H:%M:%S.%fZ").date()
+
+            passport_visa = {
+                TRAINEE_CAT: lambda: user.trainee.tpassport_visa,
+                TFAMILY_CAT: lambda: user.tfamily.tfpassport_visa
+            }[user.person_type]()
+
+            if passport_visa is not None:
+                try:
+                    {
+                        TRAINEE_CAT: lambda: passport_visa.update(
+                            passport_type, visa_type, VISANumber,
+                            visa_valid_date, arrive_date, return_date,
+                            arrive_flight, return_flight),
+                        TFAMILY_CAT: lambda: passport_visa.update(
+                            passport_type, visa_type, VISANumber,
+                            visa_valid_date)
+                    }[user.person_type]()
+                    r['updated'] = True
+                    r['message'] = lang.get_item('PassportVISAUpdateSuccess',
+                                                 locale)
+
+                except:
+                    r['updated'] = False
+                    r['message'] = lang.get_item('PassportVISAUpdateFailed',
+                                                 locale)
+            else:
+                try:
+                    {
+                        TRAINEE_CAT: lambda: user.trainee._tpassport_visa(
+                            Tpassport_visa(entrance_date=arrive_date,
+                                           exit_date=return_date,
+                                           entrance_flight=arrive_flight,
+                                           exit_flight=return_flight,
+                                           passport_type=passport_type,
+                                           visa_type=visa_type,
+                                           visa_number=VISANumber,
+                                           visa_valid_date=visa_valid_date)),
+                        TFAMILY_CAT: lambda: user.tfamily._tfpassport_visa(
+                            TFpassport_visa(passport_type=passport_type,
+                                            visa_type=visa_type,
+                                            visa_number=VISANumber,
+                                            visa_valid_date=visa_valid_date))
+                    }[user.person_type]()
+
+                    r['created'] = True
+                    r['message'] = lang.get_item('PassportVISACreateSuccess',
+                                                 locale)
+
+                except:
+                    r['created'] = False
+                    r['message'] = lang.get_item('PassportVISACreateFailed',
+                                                 locale)
+
+        else:
+            r['updated'] = False
+            r['created'] = False
+            r['message'] = lang.get_item('CredentialIncorrectOrExpired',
+                                         locale)
+
+        return jsonify(r)
+
+    @classmethod
+    def update_basic_profile(self, cred, firstName, lastName, mobile, idNumber,
+                             position,  passportNumber, gender, country_id,
+                             xingming, birthday, home_number, home_address,
+                             category, locale):
+        r = {}
+        r['success'] = True
+        r['updated'] = False
+
+        user = self.verify_auth_cred(cred)
+
+        if user is not None:
+            if category == TRAINEE_CAT or category == TFAMILY_CAT:
+                birthday = datetime.strptime(
+                    birthday, "%Y-%m-%dT%H:%M:%S.%fZ").date()
+
+            try:
+                {
+                    STAFF_CAT: lambda: user.staff.update(
+                        firstName, lastName, idNumber, mobile, position),
+                    SFAMILY_CAT: lambda: user.sfamily.update(
+                        firstName, lastName, idNumber, mobile),
+                    TRAINEE_CAT: lambda: user.trainee.update(
+                        firstName, lastName, xingming, birthday, home_number,
+                        home_address, passportNumber, mobile, gender,
+                        country_id),
+                    TFAMILY_CAT: lambda: user.tfamily.update(
+                        firstName, lastName, passportNumber, mobile, gender,
+                        country_id)
+                }[category]()
+
+                r['updated'] = True
+                r['message'] = lang.get_item('BasicProfileUpdatedSuccessfully',
+                                             locale)
+            except:
+                r['updated'] = False
+                r['message'] = lang.get_item('ErrorOccuredWhenUpdatetheBasicProfile',
+                                             locale)
+        else:
+            r['updated'] = False
+            r['message'] = lang.get_item('CredentialIncorrectOrExpired',
+                                         locale)
 
         return jsonify(r)
 
@@ -246,10 +417,10 @@ class Account(BaseMixin, db.Model):
             r['user'] = user.to_dict()
             r['user']['category'] = p_c.get_by_id(user.person_type, locale)
             r['profile'] = {
-                '0': lambda: user.staff.get(locale),
-                '1': lambda: user.sfamily.get(locale),
-                '5': lambda: user.trainee.get(locale),
-                '6': lambda: user.tfamily.get(locale)
+                STAFF_CAT: lambda: user.staff.get(locale),
+                SFAMILY_CAT: lambda: user.sfamily.get(locale),
+                TRAINEE_CAT: lambda: user.trainee.get(locale),
+                TFAMILY_CAT: lambda: user.tfamily.get(locale)
             }[user.person_type]()
 
             r['success'] = True
@@ -266,29 +437,34 @@ class Account(BaseMixin, db.Model):
         self.password_hash = pwd_context.encrypt(password)
 
     @classmethod
-    def profile_existed(self, category, idNumber='', passportNumber=''):
+    def profile_existed(self, category, toSomeone_cred='', idNumber='',
+                        passportNumber=''):
         return {
-            '0': lambda: Staff.is_existed(idNumber),
-            '1': lambda: Sfamily.is_existed(idNumber),
-            '5': lambda: Trainee.is_existed(passportNumber),
-            '6': lambda: Tfamily.is_existed(passportNumber),
+            STAFF_CAT: lambda: Staff.is_existed(idNumber),
+            SFAMILY_CAT: lambda: Sfamily.is_existed(idNumber, toSomeone_cred),
+            TRAINEE_CAT: lambda: Trainee.is_existed(passportNumber),
+            TFAMILY_CAT: lambda: Tfamily.is_existed(passportNumber, toSomeone_cred),
         }[category]()
 
     def _staff(self, staff):
         self.staff = staff
+        dbSession.commit()
 
     def _sfamily(self, sfamily):
         self.sfamily = sfamily
+        dbSession.commit()
 
     def _trainee(self, trainee):
         self.trainee = trainee
+        dbSession.commit()
 
     def _tfamily(self, tfamily):
         self.tfamily = tfamily
+        dbSession.commit()
 
     @classmethod
-    def create(self, username, password, category, firstName, lastName,
-               idNumber, sexality, countryId, pNumber, locale):
+    def create(self, username, password, profile_id, category, firstName,
+               lastName, idNumber, sexality, countryId, pNumber, locale):
         '''
         这里要建立帐号、及初始化用户个人资料。
         '''
@@ -298,32 +474,50 @@ class Account(BaseMixin, db.Model):
         r = {}
         u = Account(username, password, category)
         dbSession.add(u)
-        {
-            '0': lambda: u._staff(Staff(id_number=idNumber,
-                                        f_name=firstName,
-                                        l_name=lastName)),
-            '1': lambda: u._sfamily(Sfamily(id_number=idNumber,
-                                            f_name=firstName,
-                                            l_name=lastName)),
-            '5': lambda: u._trainee(Trainee(country_id=countryId,
-                                            gender=sexality,
-                                            passport_number=pNumber,
-                                            f_name=firstName,
-                                            l_name=lastName)),
-            '6': lambda: u._tfamily(Tfamily(country_id=countryId,
-                                            gender=sexality,
-                                            passport_number=pNumber,
-                                            f_name=firstName,
-                                            l_name=lastName)),
-        }[category]()
 
-        try:
-            dbSession.commit()
-            r['success'] = True
-            r['message'] = lang.get_item('createUserSuccessfully', locale)
-        except:
-            r['success'] = False
-            r['message'] = lang.get_item('ErrorOccuredWhenWriteDB', locale)
+        if(profile_id > 0):
+            try:
+                {
+                    STAFF_CAT: lambda: u._staff(Staff.query.get(profile_id)),
+                    SFAMILY_CAT: lambda: u._sfamily(
+                        Sfamily.query.get(profile_id)),
+                    TRAINEE_CAT: lambda: u._trainee(
+                        Trainee.query.get(profile_id)),
+                    TFAMILY_CAT: lambda: u._tfamily(
+                        Tfamily.query.get(profile_id))
+                }[category]()
+
+                r['success'] = True
+                r['message'] = lang.get_item('createUserSuccessfully', locale)
+            except:
+                r['success'] = False
+                r['message'] = lang.get_item('ErrorOccuredWhenWriteDB', locale)
+        else:
+            try:
+                {
+                    STAFF_CAT: lambda: u._staff(Staff(id_number=idNumber,
+                                                f_name=firstName,
+                                                l_name=lastName)),
+                    SFAMILY_CAT: lambda: u._sfamily(Sfamily(id_number=idNumber,
+                                                    f_name=firstName,
+                                                    l_name=lastName)),
+                    TRAINEE_CAT: lambda: u._trainee(Trainee(country_id=countryId,
+                                                    gender=sexality,
+                                                    passport_number=pNumber,
+                                                    f_name=firstName,
+                                                    l_name=lastName)),
+                    TFAMILY_CAT: lambda: u._tfamily(Tfamily(country_id=countryId,
+                                                    gender=sexality,
+                                                    passport_number=pNumber,
+                                                    f_name=firstName,
+                                                    l_name=lastName)),
+                }[category]()
+
+                r['success'] = True
+                r['message'] = lang.get_item('createUserSuccessfully', locale)
+            except:
+                r['success'] = False
+                r['message'] = lang.get_item('ErrorOccuredWhenWriteDB', locale)
 
         return jsonify(r)
 
@@ -344,6 +538,22 @@ class Media(BaseMixin, db.Model):
     filesize = db.Column(db.Integer)
     uri = db.Column(db.String(255), nullable=False)
 
+    def _title(self, title):
+        self.title = title
+        dbSession.commit()
+
+    def _description(self, description):
+        self.description = description
+        dbSession.commit()
+
+    def _filesize(self, filesize):
+        self.filesize = filesize
+        dbSession.commit()
+
+    def _uri(self, uri):
+        self.uri = uri
+        dbSession.commit()
+
     def __init__(self, title='', description='', filesize=0, uri=0):
         self.title = title
         self.description = description
@@ -362,6 +572,14 @@ class Image(Media):
     width = db.Column(db.SmallInteger)
     height = db.Column(db.SmallInteger)
 
+    def _width(self, width):
+        self.width = width
+        dbSession.commit()
+
+    def _height(self, height):
+        self.height = height
+        dbSession.commit()
+
     def __init__(self, width=0, height=0, *args, **kwargs):
         super(Image, self).__init__(*args, **kwargs)
         self.width = width
@@ -377,6 +595,10 @@ class Audio(Media):
                    primary_key=True)
     duration = db.Column(db.DECIMAL('9,2'))
 
+    def _duration(self, duration):
+        self.duration = duration
+        dbSession.commit()
+
     def __init__(self, duration=0, *args, **kwargs):
         super(Audio, self).__init__(*args, **kwargs)
         self.duration = duration
@@ -390,6 +612,10 @@ class Video(Media):
     id = db.Column(db.Integer, db.ForeignKey(Media.id, ondelete='cascade'),
                    primary_key=True)
     duration = db.Column(db.DECIMAL('9,2'))
+
+    def _duration(self, duration):
+        self.duration = duration
+        dbSession.commit()
 
     def __init__(self, duration=0, *args, **kwargs):
         super(Video, self).__init__(*args, **kwargs)
@@ -464,9 +690,18 @@ class PersonMixin(BaseMixin):
     f_name = db.Column(db.String(64))
     l_name = db.Column(db.String(80))
 
+    def _mobile(self, mobile):
+        self.mobile = mobile
+        dbSession.commit()
 
-class IssuedCardPersonMixin(PersonMixin):
-    card_number = db.Column(db.String(12))
+    def _f_name(self, f_name):
+        self.f_name = f_name
+        dbSession.commit()
+
+    def _l_name(self, l_name):
+        self.l_name = l_name
+        dbSession.commit()
+
 
 ChinesePhoto = db.Table(
     'chinese_photo',
@@ -479,31 +714,21 @@ ChinesePhoto = db.Table(
 )
 
 
-class Chinese(IssuedCardPersonMixin, db.Model):
+class Chinese(PersonMixin, db.Model):
     id_number = db.Column(db.String(18))
     photo = db.relationship('Image', secondary=ChinesePhoto,
                             lazy='dynamic',
                             backref=db.backref('chinese', lazy='dynamic'))
 
-    @classmethod
-    def is_existed(self, idNumber):
-        r = {}
+    def _id_number(self, id_number):
+        self.id_number = id_number
+        dbSession.commit()
 
-        r['success'] = True
-        r['existed'] = False
+    def _photo(self, photo):
+        self.photo = photo
+        dbSession.commit()
 
-        entity = self.query.filter_by(id_number=idNumber).first()
-
-        if entity is not None:
-            r['existed'] = True
-            r['username'] = entity.account.username
-            return jsonify(r)
-
-        return jsonify(r)
-
-    def __init__(self, id_number='', card_number='', mobile='', f_name='',
-                 l_name=''):
-        self.card_number = card_number
+    def __init__(self, id_number='', mobile='', f_name='', l_name=''):
         self.id_number = id_number
         self.mobile = mobile
         self.f_name = f_name
@@ -515,6 +740,7 @@ class Chinese(IssuedCardPersonMixin, db.Model):
     }
 
 
+@foreign_key_one_to_one('card')
 @foreign_key_one_to_one('account')
 class Staff(Chinese):
     id = db.Column(db.Integer,
@@ -526,8 +752,42 @@ class Staff(Chinese):
                                lazy='dynamic',
                                backref=db.backref('staff', uselist=False))
 
+    def _position(self, position):
+        self.position = position
+        dbSession.commit()
+
+    @classmethod
+    def is_existed(self, idNumber):
+        r = {}
+
+        r['success'] = True
+        r['existed'] = False
+        r['registered'] = False
+
+        entity = self.query.filter_by(id_number=idNumber).first()
+
+        if entity is not None:
+            r['existed'] = True
+            r['profile'] = entity.to_dict()
+
+            account = entity.account
+            if account is not None:
+                r['registered'] = True
+                r['username'] = account.username
+
+        return jsonify(r)
+
     def _families(self, family):
         self.families.append(family)
+        dbSession.commit()
+
+    def update(self, firstName, lastName, idNumber, mobile, position):
+        self.f_name = firstName
+        self.l_name = lastName
+        self.id_number = idNumber
+        self.mobile = mobile
+        self.position = position
+        dbSession.commit()
 
     def get(self, locale):
         r = {}
@@ -561,6 +821,7 @@ Staff_Sfamily = db.Table(
 )
 
 
+@foreign_key_one_to_one('card')
 @foreign_key_one_to_one('account')
 class Sfamily(Chinese):
     id = db.Column(db.Integer,
@@ -570,8 +831,42 @@ class Sfamily(Chinese):
     toStaff = db.relationship('Staff', secondary=Staff_Sfamily,
                               backref=db.backref('sfamily'))
 
+    @classmethod
+    def is_existed(self, idNumber, cred):
+        r = {}
+
+        r['success'] = True
+        r['existed'] = False
+        r['registered'] = False
+        r['appended'] = False
+
+        entity = self.query.filter_by(id_number=idNumber).first()
+
+        if entity is not None:
+            r['existed'] = True
+            r['profile'] = entity.to_dict()
+
+            account = entity.account
+            if account is not None:
+                r['registered'] = True
+                r['username'] = account.username
+
+            if cred != '':
+                if entity.staff == Account.verify_auth_cred(cred).staff:
+                    r['appended'] = True
+
+        return jsonify(r)
+
+    def update(self, firstName, lastName, idNumber, mobile):
+        self.f_name = firstName
+        self.l_name = lastName
+        self.id_number = idNumber
+        self.mobile = mobile
+        dbSession.commit()
+
     def _staff(self, staff):
         self.staff = staff
+        dbSession.commit()
 
     def get(self, locale):
         r = {}
@@ -591,11 +886,16 @@ class Sfamily(Chinese):
         'polymorphic_identity': 'staff_family',
     }
 
+
 # 在此表登记来访国内人员
 class ExternalChinese(Chinese):
     id = db.Column(db.Integer, db.ForeignKey(Chinese.id, ondelete='cascade'),
                    primary_key=True)
     work_place = db.Column(db.String(255))
+
+    def _work_place(self, work_place):
+        self.work_place = work_place
+        dbSession.commit()
 
     def __init__(self, work_place='', *args, **kwargs):
         super(ExternalChinese, self).__init__(*args, **kwargs)
@@ -617,31 +917,27 @@ ForeignerPhoto = db.Table(
 
 
 @foreign_key('country')
-class Foreigner(IssuedCardPersonMixin, db.Model):
+class Foreigner(PersonMixin, db.Model):
     gender = db.Column(db.String(1))
     passport_number = db.Column(db.String(12))
     photo = db.relationship('Image', secondary=ForeignerPhoto,
                             lazy='dynamic',
                             backref=db.backref('foreigner', lazy='dynamic'))
 
-    @classmethod
-    def is_existed(self, passportNumber):
-        r = {}
+    def _gender(self, gender):
+        self.gender = gender
+        dbSession.commit()
 
-        r['success'] = True
-        r['existed'] = False
+    def _passport_number(self, passport_number):
+        self.passport_number = passport_number
+        dbSession.commit()
 
-        entity = self.query.filter_by(passport_number=passportNumber).first()
-
-        if entity is not None:
-            r['existed'] = True
-            r['username'] = entity.account.username
-            return jsonify(r)
-
-        return jsonify(r)
+    def _photo(self, photo):
+        self.photo = photo
+        dbSession.commit()
 
     def __init__(self, country_id=138, gender=MALE, passport_number='',
-                 card_number='', mobile='', f_name='', l_name=''):
+                 mobile='', f_name='', l_name=''):
         self.country_id = country_id
         self.gender = gender
         self.passport_number = passport_number
@@ -655,6 +951,7 @@ class Foreigner(IssuedCardPersonMixin, db.Model):
     }
 
 
+@foreign_key_one_to_one('card')
 @foreign_key_one_to_one('account')
 class Trainee(Foreigner):
     id = db.Column(db.Integer,
@@ -670,6 +967,61 @@ class Trainee(Foreigner):
                                secondary='trainee_tfamily', lazy='dynamic',
                                backref=db.backref('trainee', uselist=False))
 
+    def _birthday(self, birthday):
+        self.birthday = birthday
+        dbSession.commit()
+
+    def _student_id(self, student_id):
+        self.student_id = student_id
+        dbSession.commit()
+
+    def _xingming(self, xingming):
+        self.xingming = xingming
+        dbSession.commit()
+
+    def _home_phone(self, home_phone):
+        self.home_phone = home_phone
+        dbSession.commit()
+
+    def _home_address(self, home_address):
+        self.home_address = home_address
+        dbSession.commit()
+
+    @classmethod
+    def is_existed(self, passportNumber):
+        r = {}
+
+        r['success'] = True
+        r['existed'] = False
+        r['registered'] = False
+
+        entity = self.query.filter_by(passport_number=passportNumber).first()
+
+        if entity is not None:
+            r['existed'] = True
+            r['profile'] = entity.to_dict()
+
+            account = entity.account
+            if account is not None:
+                r['registered'] = True
+                r['username'] = account.username
+
+        return jsonify(r)
+
+    def update(self, firstName, lastName, xingming, birthday, home_number,
+               home_address, passportNumber, mobile, gender, country_id):
+        self.f_name = firstName
+        self.l_name = lastName
+        self.country_id = country_id
+        self.gender = gender
+        self.passport_number = passportNumber
+        self.xingming = xingming
+        self.mobile = mobile
+        self.birthday = birthday
+        self.home_phone = home_number
+        self.home_address = home_address
+        dbSession.commit()
+
     def __init__(self, country_id, birthday=date(1900, 1, 1),
                  student_id='', xingming='', home_phone='', home_address='',
                  *args, **kwargs):
@@ -683,33 +1035,43 @@ class Trainee(Foreigner):
 
     def _career(self, career):
         self.career = career
+        dbSession.commit()
 
     def _families(self, tfamily):
         self.families.append(tfamily)
+        dbSession.commit()
 
     def _social_edu(self, social_edu):
         self.social_edu = social_edu
+        dbSession.commit()
 
     def _physical(self, physical):
         self.physical = physical
+        dbSession.commit()
 
     def _tpassport_visa(self, tpassport_visa):
         self.tpassport_visa = tpassport_visa
+        dbSession.commit()
 
     def _relatives(self, relative):
         self.relatives.append(relative)
+        dbSession.commit()
 
     def _trainings(self, training):
         self.trainings.append(training)
+        dbSession.commit()
 
     def _workings(self, working):
         self.workings.append(working)
+        dbSession.commit()
 
     def _abroadstudies(self, abroadstudy):
         self.abroadstudies.append(abroadstudy)
+        dbSession.commit()
 
     def _contacts(self, contact):
         self.contacts.append(contact)
+        dbSession.commit()
 
     def get(self, locale):
         r = {}
@@ -787,6 +1149,26 @@ class Career(BaseMixin, db.Model):
     future_position = db.Column(db.String(255))
     rank = db.Column(db.String(4))
 
+    def _department(self, department):
+        self.department = department
+        dbSession.commit()
+
+    def _position(self, position):
+        self.position = position
+        dbSession.commit()
+
+    def _position_date(self, position_date):
+        self.position_date = position_date
+        dbSession.commit()
+
+    def _future_position(self, future_position):
+        self.future_position = future_position
+        dbSession.commit()
+
+    def _rank(self, rank):
+        self.rank = rank
+        dbSession.commit()
+
     def get(self, locale):
         r = {}
         r = self.to_dict()
@@ -826,6 +1208,26 @@ class SocialEdu(BaseMixin, db.Model):
     major = db.Column(db.String(255))
     college = db.Column(db.String(255))
 
+    def _marriage(self, marriage):
+        self.marriage = marriage
+        dbSession.commit()
+
+    def _religion(self, religion):
+        self.religion = religion
+        dbSession.commit()
+
+    def _education(self, education):
+        self.education = education
+        dbSession.commit()
+
+    def _major(self, major):
+        self.major = major
+        dbSession.commit()
+
+    def _college(self, college):
+        self.college = college
+        dbSession.commit()
+
     languages = db.relationship('Language', secondary=TraineeLanguage,
                                 backref=db.backref('socical_edu',
                                                    uselist=False))
@@ -844,7 +1246,7 @@ class SocialEdu(BaseMixin, db.Model):
 
         return r
 
-    def __init__(self, marriage='0', religion='00', education='3',
+    def __init__(self, marriage=STAFF_CAT, religion='00', education='3',
                  major='', college='', *args, **kwargs):
         self.marriage = marriage
         self.religion = religion
@@ -862,6 +1264,18 @@ class Physical(BaseMixin, db.Model):
     height = db.Column(db.DECIMAL(4, 1))
     weight = db.Column(db.DECIMAL(4, 1))
     shoesize = db.Column(db.SmallInteger)
+
+    def _height(self, height):
+        self.height = height
+        dbSession.commit()
+
+    def _weight(self, weight):
+        self.weight = weight
+        dbSession.commit()
+
+    def _shoesize(self, shoesize):
+        self.shoesize = shoesize
+        dbSession.commit()
 
     def get(self):
         r = {}
@@ -889,6 +1303,10 @@ class Physical(BaseMixin, db.Model):
 class Speciality(BaseMixin, db.Model):
     detail = db.Column(db.String(255))
 
+    def _detail(self, detail):
+        self.detail = detail
+        dbSession.commit()
+
     def __init__(self, speciality=''):
         self.speciality = speciality
 
@@ -905,6 +1323,22 @@ class PassportVISA(BaseMixin, db.Model):
     visa_type = db.Column(db.String(1))
     visa_valid_date = db.Column(db.Date)
 
+    def _passport_type(self, passport_type):
+        self.passport_type = passport_type
+        dbSession.commit()
+
+    def _visa_number(self, visa_number):
+        self.visa_number = visa_number
+        dbSession.commit()
+
+    def _visa_type(self, visa_type):
+        self.visa_type = visa_type
+        dbSession.commit()
+
+    def _visa_valid_date(self, visa_valid_date):
+        self.visa_valid_date = visa_valid_date
+        dbSession.commit()
+
     def get(self, locale):
         r = {}
         r = self.to_dict()
@@ -914,7 +1348,7 @@ class PassportVISA(BaseMixin, db.Model):
 
         return r
 
-    def __init__(self, passport_type='1', visa_number='', visa_type='2',
+    def __init__(self, passport_type=SFAMILY_CAT, visa_number='', visa_type='2',
                  visa_valid_date=date(1900, 1, 1)):
         self.passport_type = passport_type
         self.visa_number = visa_number
@@ -938,6 +1372,34 @@ class Tpassport_visa(PassportVISA):
     entrance_flight = db.Column(db.String(8))
     exit_flight = db.Column(db.String(8))
 
+    def _entrance_date(self, entrance_date):
+        self.entrance_date = entrance_date
+        dbSession.commit()
+
+    def _exit_date(self, exit_date):
+        self.exit_date = exit_date
+        dbSession.commit()
+
+    def _entrance_flight(self, entrance_flight):
+        self.entrance_flight = entrance_flight
+        dbSession.commit()
+
+    def _exit_flight(self, exit_flight):
+        self.exit_flight = exit_flight
+        dbSession.commit()
+
+    def update(self, passport_type, visa_type, VISANumber, visa_valid_date,
+               arrive_date, return_date, arrive_flight, return_flight):
+        self.passport_type = passport_type
+        self.visa_type = visa_type
+        self.visa_number = VISANumber
+        self.visa_valid_date = visa_valid_date
+        self.entrance_date = arrive_date
+        self.exit_date = return_date
+        self.entrance_flight = arrive_flight
+        self.exit_flight = return_flight
+        dbSession.commit()
+
     def __init__(self, entrance_date=date(1900, 1, 1),
                  exit_date=date(1900, 1, 1), entrance_flight='',
                  exit_flight='', *args, **kwargs):
@@ -957,6 +1419,10 @@ class Tpassport_visa(PassportVISA):
 class Relative(PersonMixin, db.Model):
     relation = db.Column(db.String(1))
 
+    def _relation(self, relation):
+        self.relation = relation
+        dbSession.commit()
+
     def get(self, locale):
         r = {}
         r = self.to_dict()
@@ -964,7 +1430,7 @@ class Relative(PersonMixin, db.Model):
 
         return r
 
-    def __init__(self, relation='0', mobile='', f_name='', l_name=''):
+    def __init__(self, relation=STAFF_CAT, mobile='', f_name='', l_name=''):
         self.relation = relation
         self.mobile = mobile
         self.f_name = f_name
@@ -979,6 +1445,18 @@ class Experience(BaseMixin, db.Model):
     start_date = db.Column(db.Date)
     end_date = db.Column(db.Date)
     detail = db.Column(db.String(1024))
+
+    def _start_date(self, start_date):
+        self.start_date = start_date
+        dbSession.commit()
+
+    def _end_date(self, end_date):
+        self.end_date = end_date
+        dbSession.commit()
+
+    def _detail(self, detail):
+        self.detail = detail
+        dbSession.commit()
 
     def __init__(self, start_date=date(1900, 1, 1), end_date=date(1900, 1, 1),
                  detail=''):
@@ -1013,6 +1491,14 @@ class Working(Experience):
                    primary_key=True)
     department = db.Column(db.String(255))
     job = db.Column(db.String(255))
+
+    def _department(self, department):
+        self.department = department
+        dbSession.commit()
+
+    def _job(self, job):
+        self.job = job
+        dbSession.commit()
 
     def __init__(self, department='', job='', *args, **kwargs):
         super(Working, self).__init__(*args, **kwargs)
@@ -1054,6 +1540,10 @@ class AbroadStudy(Experience):
 class Contact(PersonMixin, db.Model):
     address = db.Column(db.String(128))
 
+    def _address(self, address):
+        self.address = address
+        dbSession.commit()
+
     def __init__(self, city_id, address='', mobile='', f_name='', l_name=''):
         self.city_id = city_id
         self.address = address
@@ -1085,6 +1575,7 @@ Trainee_Tfamily = db.Table(
 )
 
 
+@foreign_key_one_to_one('card')
 @foreign_key_one_to_one('account')
 class Tfamily(Foreigner):
     id = db.Column(db.Integer,
@@ -1094,11 +1585,49 @@ class Tfamily(Foreigner):
     toTrainee = db.relationship('Trainee', secondary=Trainee_Tfamily,
                                 backref=db.backref('tfamily'))
 
+    @classmethod
+    def is_existed(self, passportNumber, cred):
+        r = {}
+
+        r['success'] = True
+        r['existed'] = False
+        r['registered'] = False
+        r['appended'] = False
+
+        entity = self.query.filter_by(passport_number=passportNumber).first()
+
+        if entity is not None:
+            r['existed'] = True
+            r['profile'] = entity.to_dict()
+
+            account = entity.account
+            if account is not None:
+                r['registered'] = True
+                r['username'] = account.username
+
+            if cred != '':
+                if entity.trainee == Account.verify_auth_cred(cred).trainee:
+                    r['appended'] = True
+
+        return jsonify(r)
+
+    def update(self, firstName, lastName, passportNumber, mobile, gender,
+               country_id):
+        self.f_name = firstName
+        self.l_name = lastName
+        self.passport_number = passportNumber
+        self.mobile = mobile
+        self.gender = gender
+        self.country_id = country_id
+        dbSession.commit()
+
     def _trainee(self, trainee):
         self.trainee = trainee
+        dbSession.commit()
 
     def _tfpassport_visa(self, passport_visa):
         self.tfpassport_visa = passport_visa
+        dbSession.commit()
 
     def get(self, locale):
         r = {}
@@ -1113,7 +1642,7 @@ class Tfamily(Foreigner):
 
         passport_visa = self.tfpassport_visa
         if passport_visa is not None:
-            r['PassportVISA'] = passport_visa.get(locale)
+            r['passport_visa'] = passport_visa.get(locale)
 
         return r
 
@@ -1131,6 +1660,13 @@ class TFpassport_visa(PassportVISA):
     id = db.Column(db.Integer,
                    db.ForeignKey(PassportVISA.id, ondelete='cascade'),
                    primary_key=True)
+
+    def update(self, passport_type, visa_type, VISANumber, visa_valid_date):
+        self.passport_type = passport_type
+        self.visa_type = visa_type
+        self.visa_number = VISANumber
+        self.visa_valid_date = visa_valid_date
+        dbSession.commit()
 
     def __init__(self, *args, **kwargs):
         super(TFpassport_visa, self).__init__(*args, **kwargs)
@@ -1163,6 +1699,10 @@ class Acategory(BaseMixin, db.Model):
     #
     name = db.Column(db.String(255))
 
+    def _name(self, name):
+        self.name = name
+        dbSession.commit()
+
     def __init__(self, name=''):
         self.name = name
 
@@ -1176,6 +1716,14 @@ class Acategory(BaseMixin, db.Model):
 class Article(BaseMixin, db.Model):
     abstract = db.Column(db.String(140))
     content = db.Column(db.Text)
+
+    def _abstract(self, abstract):
+        self.abstract = abstract
+        dbSession.commit()
+
+    def _content(self, content):
+        self.content = content
+        dbSession.commit()
 
     def __init__(self, acategory_id, abstract='', content=''):
         self.acategory_id = acategory_id
