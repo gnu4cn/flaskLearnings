@@ -9,3 +9,5 @@
 但是，pip 中PIL是叫做Pillow的，因此只需：
 
 `pip install Pillow`
+
+[http://blog.csdn.net/xiaoqi030611a/article/details/17845661](http://blog.csdn.net/xiaoqi030611a/article/details/17845661)
