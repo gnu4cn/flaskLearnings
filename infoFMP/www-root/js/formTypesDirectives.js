@@ -155,7 +155,7 @@ formTypesDirectives.directive('typeIdNumberRegister', ['checkIDCardNumber',
                                         //弹出一个对话框
                                         var ModalInstance = $uibModal.open({
                                             animation: true,
-                                            templateUrl: '/partials/modals/profileexistedIDNumber.html',
+                                            templateUrl: '/partials/modals/ProfileexistedIDNumber.html',
                                             controller: 'ProfileExistedModalInstanceCtrl',
                                             size: 'md',
                                             resolve: {
@@ -314,7 +314,7 @@ formTypesDirectives.directive('typePassportNumberRegister', ['checkPassportNumbe
                                             ctrl.$setValidity('isExisted', false);
                                             var ModalInstance = $uibModal.open({
                                                 animation: true,
-                                                templateUrl: '/partials/modals/profileexistedPassportNumber.html',
+                                                templateUrl: '/partials/modals/ProfileexistedPassportNumber.html',
                                                 controller: 'ProfileExistedModalInstanceCtrl',
                                                 size: 'md',
                                                 resolve: {

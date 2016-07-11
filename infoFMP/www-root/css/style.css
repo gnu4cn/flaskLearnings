@@ -10,6 +10,24 @@ html, body {
     color: green;
 }
 
+/*Profile thumbnails*/
+div.thumbnail-box{
+    position: relative;
+    height: 120px;
+    margin: 0px;
+    padding: 5px;
+}
+
+div.thumbnail-box .buttons{
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+}
+
+div.thumbnail-box .buttons button{
+    border: none;
+    background-color: #f0f0f0;
+}
 
 /* Specify styling for tooltip contents */
 .tooltip.customClass .tooltip-inner {
@@ -54,6 +72,21 @@ div.cell {
 
 th.row-head{
     text-align: right;
+}
+
+/*文件拖放的样式*/
+.my-drop-zone { border: dotted 3px lightgray; }
+.nv-file-over { border: dotted 3px red; } /* Default class applied to drop zones on over */
+
+/*上传预览*/
+canvas {
+    background-color: #f3f3f3;
+    -webkit-box-shadow: 3px 3px 3px 0 #e3e3e3;
+    -moz-box-shadow: 3px 3px 3px 0 #e3e3e3;
+    box-shadow: 3px 3px 3px 0 #e3e3e3;
+    border: 1px solid #c3c3c3;
+    height: 100px;
+    margin: 6px 0 0 6px;
 }
 
 @media (min-width: 768px){

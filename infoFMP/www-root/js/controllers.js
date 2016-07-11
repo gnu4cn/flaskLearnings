@@ -16,12 +16,134 @@ Controllers.controller('ProfileCtrl', ['$scope',
             register: ''
         };
     }]);
+
+Controllers.controller('SingleImageProfileModalInstanceCtrl', ['$scope', 'user',
+    'languageService', 'FileUploader', 'getToken', 'MediaService', '$uibModal',
+    'ProfileService', '$route', '$uibModalInstance',
+    function ($scope, user, languageService, FileUploader, getToken,
+        MediaService, $uibModal, ProfileService, $route, $uibModalInstance) {
+        $scope.lang = JSON.parse(languageService());
+        $scope.Buttons = [];
+
+        var uploader = $scope.uploader = new FileUploader({
+            //通过URL传入user_id, multipart/form-data是无法同时传输JSON数据的。
+            url: '/api/upload/image/' + user.id.toString(),
+            headers: {
+                //这样为angular-file-uploader加入认证
+                'Authorization': 'Basic ' + btoa(getToken())
+            }
+        });
+
+        // FILTERS
+        uploader.filters.push({
+            name: 'imageFilter',
+            fn: function (item /*{File|FileLikeObject}*/, options) {
+                var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+                return '|jpg|png|jpeg|bmp|gif|'.indexOf(type) !== -1;
+            }
+        });
+
+        uploader.onSuccessItem = function () {
+            //这里要前往前一个tab页，并刷新图片清单了。
+            //这里可以什么也不做，哈哈！！
+            $scope.uploadFailed = false;
+            $scope.uploadSuccess = true;
+        };
+
+        uploader.onAfterAddingFile = function (fileItem) {
+            $scope.uploadFailed = false;
+            $scope.uploadSuccess = false;
+        };
+
+        uploader.onErrorItem = function (fileItem, response, status, headers) {
+            $scope.uploadFailed = true;
+            $scope.FileUploading = fileItem._file.name;
+        };
+
+        $scope.selectImage = function (imageId) {
+            var uibModalInstance = $uibModal.open({
+                animation: true,
+                templateUrl: 'partials/modals/SetProfilePhotoModal.html',
+                controller: 'SetProfilePhotoModalInstanceCtrl',
+                size: 'md',
+                resolve: {
+                    imageId: function () {
+                        return imageId;
+                    }
+                }
+            });
+
+            uibModalInstance.result.then(
+                function () {
+                    //set the picture as profile photo
+                    var data = {};
+                    data.user_id = user.id;
+                    data.thumbnail_id = imageId;
+                    ProfileService.SetProfilePhoto(data).then(
+                        function (res) {
+                            if (res.set) {
+                                $scope.setProfilePhotoFailed = false;
+                                $scope.setProfilePhotoSuccess = true;
+                                $route.reload();
+                                $uibModalInstance.close(true);
+                            } else {
+                                $scope.setProfilePhotoFailed = true;
+                                $scope.setProfilePhotoSuccess = false;
+                            }
+                        });
+                },
+                function () {
+                    //nothing to do
+                });
+        };
+
+        $scope.imagePreview = function (imageId) {
+
+        };
+
+        $scope.deleteImage = function (imageId) {
+
+        };
+
+        $scope.thumbnailsRefresh = function () {
+            $scope.setProfilePhotoFailed = false;
+            $scope.setProfilePhotoSuccess = false;
+            $scope.uploadSuccess = false;
+            MediaService.GetThumbnails({'user_id': user.id}).then(
+                function (res) {
+                    if (res.success) {
+                        $scope.months = res.months;
+                    } else {
+
+                    }
+                });
+        };
+    }]);
+
+Controllers.controller('SetProfilePhotoModalInstanceCtrl', ['$scope', 'imageId',
+    'languageService', 'MediaService', '$uibModalInstance',
+    function ($scope, imageId, languageService, MediaService, $uibModalInstance) {
+        $scope.lang = JSON.parse(languageService());
+
+        MediaService.RetrieveOriginbyThumbnailId(imageId).then(
+            function (res) {
+                $scope.originSrc = res.uri;
+            });
+
+        $scope.ok = function () {
+            $uibModalInstance.close(true);
+        };
+        $scope.cancel = function () {
+            $uibModalInstance.dismiss(false);
+        };
+    }]);
+
 Controllers.controller('CredInvalidModalInstanceCtrl', ['$scope',
-    '$uibModalInstance', 'lang', 'message', '$sce',
-    function ($scope, $uibModalInstance, lang, message, $sce) {
+    '$uibModalInstance', 'message', '$sce', 'languageService',
+    function ($scope, $uibModalInstance, message, $sce, languageService) {
         //console.log(JSON.stringify(lang));
         $scope.message = $sce.trustAsHtml(message);
-        $scope.lang = lang;
+        $scope.lang = JSON.parse(languageService());
         $scope.ok = function () {
             $uibModalInstance.close(true);
         };
@@ -306,11 +428,11 @@ Controllers.controller('PassportVISATraineeFamilyModalInstanceCtrl', ['$scope', 
     }]);
 
 Controllers.controller('BasicProfileStaffModalInstanceCtrl', ['$scope',
-    '$uibModalInstance', 'lang', 'user', 'getToken', 'getLocale',
+    '$uibModalInstance', 'user', 'getToken', 'getLocale', 'languageService',
     'updateBasicProfile', 'DepartmentList', 'DepartmentPositions',
-    function ($scope, $uibModalInstance, lang, user, getToken, getLocale,
+    function ($scope, $uibModalInstance, user, getToken, getLocale, languageService,
         updateBasicProfile, DepartmentList, DepartmentPositions) {
-        $scope.lang = lang;
+        $scope.lang = JSON.parse(languageService());
         var userLocale = getLocale();
         //$scope.profile = user.profile;
         $scope.profile = {};
@@ -549,11 +671,13 @@ Controllers.controller('BasicProfileTraineeFamilyModalInstanceCtrl', ['$scope',
     }
 ]);
 Controllers.controller('PasswordModalInstanceCtrl', ['$scope',
-    '$uibModalInstance', 'lang', 'getToken', 'getLocale', 'UserService', '$location',
-    'deleteCreds', '$timeout',
-    function ($scope, $uibModalInstance, lang, getToken, getLocale,
-        UserService, $location, deleteCreds, $timeout) {
-        $scope.lang = lang;
+    '$uibModalInstance', 'getToken', 'getLocale', 'UserService', '$location',
+    'deleteCreds', '$timeout', 'languageService',
+    function ($scope, $uibModalInstance, getToken, getLocale,
+        UserService, $location, deleteCreds, $timeout, languageService) {
+
+        $scope.lang = JSON.parse(languageService());
+
         $scope.ok = function () {
             $scope.data.cred = getToken();
             $scope.data.locale = getLocale();
@@ -876,6 +1000,13 @@ Controllers.controller('NewForeignUserCtrl', ['$scope',
             {locale: userLocale},
             function success(response) {
                 $scope.Genders = response;
+                //设置国籍和性别字段
+                for (var i = 0; i < $scope.Genders.length; i++) {
+                    if ($scope.Genders[i].id === '1') {
+                        $scope.genderSelected = $scope.Genders[i];
+                        break;
+                    }
+                }
             },
             function error(errorResponse) {
                 console.log(JSON.stringify(errorResponse));

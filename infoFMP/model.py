@@ -132,6 +132,10 @@ class BaseMixin(object):
 
     created_at = db.Column(db.DateTime, default=datetime.now)
 
+    __mapper_args__ = {
+        'extension': MapperExtension(),
+    }
+
     def to_dict(self):
         return model_to_dict(self, self.__class__)
 
@@ -151,37 +155,62 @@ class BaseMixin(object):
         return jsonify(r)
 
 
-# 此表专门用于保存一卡通卡片数据, 保存了进行卡片操作的人的信息
-@foreign_key('account')
-class Card(BaseMixin, db.Model):
-    card_number = db.Column(db.String(12))
-    category = db.Column(db.String(1))
+class Province(BaseMixin, db.Model):
+    pinyin = db.Column(db.String(64))
+    hanzi = db.Column(db.String(64))
 
-    def _card_number(self, card_number, operator_id):
-        self.card_number = card_number
-        self.account_id = operator_id
-        dbSession.commit()
+    def __init__(self, pinyin, hanzi):
+        self.pinyin = pinyin
+        self.hanzi = hanzi
 
-    def __init__(self, accountId, cardNumber, category):
-        self.account_id = accountId
-        self.card_number = cardNumber
-        self.category = category
 
-    def _staff(self, staff):
-        self.staff = staff
-        dbSession.commit()
+@foreign_key('province')
+class City(BaseMixin, db.Model):
+    pinyin = db.Column(db.String(64))
+    hanzi = db.Column(db.String(64))
 
-    def _sfamily(self, sfamily):
-        self.sfamily = sfamily
-        dbSession.commit()
+    def get(self):
+        r = {}
+        r = self.to_dict()
+        r['province'] = self.province.to_dict()
 
-    def _trainee(self, trainee):
-        self.trainee = trainee
-        dbSession.commit()
+        return r
 
-    def _tfamily(self, tfamily):
-        self.tfamily = tfamily
-        dbSession.commit()
+
+class Language(BaseMixin, db.Model):
+    code = db.Column(db.String(3))
+    en_name = db.Column(db.String(256))
+    zh_name = db.Column(db.String(256))
+    native_name = db.Column(db.String(128))
+
+    # 建立一个到TraineeLanguage的父关系，以便对Trainee的语言情况进行统计
+    social_edu_records = db.relationship('SocialEdu',
+                                         secondary='trainee_language',
+                                         lazy='dynamic',
+                                         backref=db.backref('language',
+                                                            lazy='dynamic'))
+
+    def __init__(self, code='', en_name='', zh_name='', native_name=''):
+        self.code = code
+        self.en_name = en_name
+        self.zh_name = zh_name
+        self.native_name = native_name
+
+
+class Country(BaseMixin, db.Model):
+    '''
+    国家表（国歌都保存在Audio表中）。
+    '''
+    code = db.Column(db.String(3), unique=True)
+    en_simp = db.Column(db.String(256), unique=True)
+    en_full = db.Column(db.String(256), unique=True)
+    zh_simp = db.Column(db.String(256), unique=True)
+    zh_full = db.Column(db.String(256), unique=True)
+    native_name = db.Column(db.String(256), unique=True)
+    alpha_2 = db.Column(db.String(2), unique=True)
+    alpha_3 = db.Column(db.String(3), unique=True)
+    zoneprefix = db.Column(db.String(5))
+    nationalDay = db.Column(db.Date)
 
 
 # http://stackoverflow.com/questions/15534147/python-inheritance-in-sqlalchemy
@@ -194,6 +223,13 @@ class Account(BaseMixin, db.Model):
     password_hash = db.Column(db.String(128))
     role = db.Column(db.SmallInteger, default=ROLE_USER)
     person_type = db.Column(db.String(1))
+
+    images = db.relationship('Image', secondary='user_image',
+                             backref=db.backref('users'), lazy='dynamic')
+
+    def _images(self, image):
+        self.images.append(image)
+        dbSession.commit()
 
     def generate_auth_token(self, expiration=TOKEN_EXPIRE):
         s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
@@ -365,8 +401,8 @@ class Account(BaseMixin, db.Model):
                                              locale)
             except:
                 r['updated'] = False
-                r['message'] = lang.get_item('ErrorOccuredWhenUpdatetheBasicProfile',
-                                             locale)
+                r['message'] = lang.get_item(
+                    'ErrorOccuredWhenUpdatetheBasicProfile', locale)
         else:
             r['updated'] = False
             r['message'] = lang.get_item('CredentialIncorrectOrExpired',
@@ -443,7 +479,8 @@ class Account(BaseMixin, db.Model):
             STAFF_CAT: lambda: Staff.is_existed(idNumber),
             SFAMILY_CAT: lambda: Sfamily.is_existed(idNumber, toSomeone_cred),
             TRAINEE_CAT: lambda: Trainee.is_existed(passportNumber),
-            TFAMILY_CAT: lambda: Tfamily.is_existed(passportNumber, toSomeone_cred),
+            TFAMILY_CAT: lambda: Tfamily.is_existed(passportNumber,
+                                                    toSomeone_cred),
         }[category]()
 
     def _staff(self, staff):
@@ -501,16 +538,14 @@ class Account(BaseMixin, db.Model):
                     SFAMILY_CAT: lambda: u._sfamily(Sfamily(id_number=idNumber,
                                                     f_name=firstName,
                                                     l_name=lastName)),
-                    TRAINEE_CAT: lambda: u._trainee(Trainee(country_id=countryId,
-                                                    gender=sexality,
-                                                    passport_number=pNumber,
-                                                    f_name=firstName,
-                                                    l_name=lastName)),
-                    TFAMILY_CAT: lambda: u._tfamily(Tfamily(country_id=countryId,
-                                                    gender=sexality,
-                                                    passport_number=pNumber,
-                                                    f_name=firstName,
-                                                    l_name=lastName)),
+                    TRAINEE_CAT: lambda: u._trainee(
+                        Trainee(country_id=countryId, gender=sexality,
+                                passport_number=pNumber, f_name=firstName,
+                                l_name=lastName)),
+                    TFAMILY_CAT: lambda: u._tfamily(
+                        Tfamily(country_id=countryId, gender=sexality,
+                                passport_number=pNumber, f_name=firstName,
+                                l_name=lastName)),
                 }[category]()
 
                 r['success'] = True
@@ -526,17 +561,50 @@ class Account(BaseMixin, db.Model):
         self.hash_password(password)
         self.person_type = category
 
-    __mapper_args__ = {
-        'extension': MapperExtension(),
-    }
 
-
+# 此表专门用于保存一卡通卡片数据, 保存了进行卡片操作的人的信息
 @foreign_key('account')
+class Card(BaseMixin, db.Model):
+    card_number = db.Column(db.String(12))
+    category = db.Column(db.String(1))
+
+    def _card_number(self, card_number, operator_id):
+        self.card_number = card_number
+        self.account_id = operator_id
+        dbSession.commit()
+
+    def __init__(self, accountId, cardNumber, category):
+        self.account_id = accountId
+        self.card_number = cardNumber
+        self.category = category
+
+    def _staff(self, staff):
+        self.staff = staff
+        dbSession.commit()
+
+    def _sfamily(self, sfamily):
+        self.sfamily = sfamily
+        dbSession.commit()
+
+    def _trainee(self, trainee):
+        self.trainee = trainee
+        dbSession.commit()
+
+    def _tfamily(self, tfamily):
+        self.tfamily = tfamily
+        dbSession.commit()
+
+
 class Media(BaseMixin, db.Model):
+    hash_value = db.Column(db.String(40), index=True)
     title = db.Column(db.String(64))
     description = db.Column(db.String(140))
     filesize = db.Column(db.Integer)
     uri = db.Column(db.String(255), nullable=False)
+
+    def _hash_value(self, hash_value):
+        self.hash_value = hash_value
+        dbSession.commit()
 
     def _title(self, title):
         self.title = title
@@ -554,23 +622,52 @@ class Media(BaseMixin, db.Model):
         self.uri = uri
         dbSession.commit()
 
-    def __init__(self, title='', description='', filesize=0, uri=0):
+    def __init__(self, hash_value='', title='', description='', filesize=0,
+                 uri=0):
+        self.hash_value = hash_value
         self.title = title
         self.description = description
         self.filesize = filesize
         self.uri = uri
 
     __mapper_args__ = {
-        'extension': MapperExtension(),
         'polymorphic_identity': 'media'
     }
+
+
+UserImage = db.Table(
+    'user_image',
+    db.Column('user_id', db.Integer,
+              db.ForeignKey('account.id', ondelete='cascade'),
+              primary_key=True),
+    db.Column('image_id', db.Integer,
+              db.ForeignKey('image.id', ondelete='cascade'), primary_key=True)
+)
 
 
 class Image(Media):
     id = db.Column(db.Integer, db.ForeignKey(Media.id, ondelete='cascade'),
                    primary_key=True)
+    media = db.relationship('Media', foreign_keys=id)
+    original = db.Column(db.Boolean)
+
+    origin_id = db.Column(db.Integer, db.ForeignKey('image.id'))
+
+    sized_versions = db.relationship(
+        'Image', backref=db.backref('origin', remote_side=[id], uselist=False),
+        foreign_keys=origin_id)
+
+    def _sized_versions(self, sized):
+        self.sized_versions.append(sized)
+        dbSession.commit()
+
     width = db.Column(db.SmallInteger)
     height = db.Column(db.SmallInteger)
+
+    # http://stackoverflow.com/questions/11578070/sqlalchemy-instrumentedlist-object-has-no-attribute-filter
+    # In order to work with the relationship as with Query
+    toUser = db.relationship('Account', secondary=UserImage,
+                             back_populates='images', lazy='dynamic')
 
     def _width(self, width):
         self.width = width
@@ -580,109 +677,15 @@ class Image(Media):
         self.height = height
         dbSession.commit()
 
-    def __init__(self, width=0, height=0, *args, **kwargs):
+    def __init__(self, original=False, width=0, height=0, *args, **kwargs):
         super(Image, self).__init__(*args, **kwargs)
+        self.original = original
         self.width = width
         self.height = height
 
     __mapper_args__ = {
         'polymorphic_identity': 'image'
     }
-
-
-class Audio(Media):
-    id = db.Column(db.Integer, db.ForeignKey(Media.id, ondelete='cascade'),
-                   primary_key=True)
-    duration = db.Column(db.DECIMAL('9,2'))
-
-    def _duration(self, duration):
-        self.duration = duration
-        dbSession.commit()
-
-    def __init__(self, duration=0, *args, **kwargs):
-        super(Audio, self).__init__(*args, **kwargs)
-        self.duration = duration
-
-    __mapper_args__ = {
-        'polymorphic_identity': 'audio'
-    }
-
-
-class Video(Media):
-    id = db.Column(db.Integer, db.ForeignKey(Media.id, ondelete='cascade'),
-                   primary_key=True)
-    duration = db.Column(db.DECIMAL('9,2'))
-
-    def _duration(self, duration):
-        self.duration = duration
-        dbSession.commit()
-
-    def __init__(self, duration=0, *args, **kwargs):
-        super(Video, self).__init__(*args, **kwargs)
-        self.duration = duration
-
-    __mapper_args__ = {
-        'polymorphic_identity': 'video'
-    }
-
-
-class Province(BaseMixin, db.Model):
-    pinyin = db.Column(db.String(64))
-    hanzi = db.Column(db.String(64))
-
-    def __init__(self, pinyin, hanzi):
-        self.pinyin = pinyin
-        self.hanzi = hanzi
-
-
-@foreign_key('province')
-class City(BaseMixin, db.Model):
-    pinyin = db.Column(db.String(64))
-    hanzi = db.Column(db.String(64))
-
-    def get(self):
-        r = {}
-        r = self.to_dict()
-        r['province'] = self.province.to_dict()
-
-        return r
-
-
-class Language(BaseMixin, db.Model):
-    code = db.Column(db.String(3))
-    en_name = db.Column(db.String(256))
-    zh_name = db.Column(db.String(256))
-    native_name = db.Column(db.String(128))
-
-    # 建立一个到TraineeLanguage的父关系，以便对Trainee的语言情况进行统计
-    social_edu_records = db.relationship('SocialEdu',
-                                         secondary='trainee_language',
-                                         lazy='dynamic',
-                                         backref=db.backref('language',
-                                                            lazy='dynamic'))
-
-    def __init__(self, code='', en_name='', zh_name='', native_name=''):
-        self.code = code
-        self.en_name = en_name
-        self.zh_name = zh_name
-        self.native_name = native_name
-
-
-@foreign_key('audio')
-class Country(BaseMixin, db.Model):
-    '''
-    国家表（国歌都保存在Audio表中）。
-    '''
-    code = db.Column(db.String(3), unique=True)
-    en_simp = db.Column(db.String(256), unique=True)
-    en_full = db.Column(db.String(256), unique=True)
-    zh_simp = db.Column(db.String(256), unique=True)
-    zh_full = db.Column(db.String(256), unique=True)
-    native_name = db.Column(db.String(256), unique=True)
-    alpha_2 = db.Column(db.String(2), unique=True)
-    alpha_3 = db.Column(db.String(3), unique=True)
-    zoneprefix = db.Column(db.String(5))
-    nationalDay = db.Column(db.Date)
 
 
 class PersonMixin(BaseMixin):
@@ -702,30 +705,16 @@ class PersonMixin(BaseMixin):
         self.l_name = l_name
         dbSession.commit()
 
-
-ChinesePhoto = db.Table(
-    'chinese_photo',
-    db.Column('chinese_id', db.Integer,
-              db.ForeignKey('chinese.id', ondelete='cascade'),
-              primary_key=True),
-    db.Column('photo_id',
-              db.Integer, db.ForeignKey(Image.id, ondelete='cascade'),
-              primary_key=True),
-)
+    def _photo(self, image):
+        self.image = image
+        dbSession.commit()
 
 
 class Chinese(PersonMixin, db.Model):
     id_number = db.Column(db.String(18))
-    photo = db.relationship('Image', secondary=ChinesePhoto,
-                            lazy='dynamic',
-                            backref=db.backref('chinese', lazy='dynamic'))
 
     def _id_number(self, id_number):
         self.id_number = id_number
-        dbSession.commit()
-
-    def _photo(self, photo):
-        self.photo = photo
         dbSession.commit()
 
     def __init__(self, id_number='', mobile='', f_name='', l_name=''):
@@ -735,13 +724,13 @@ class Chinese(PersonMixin, db.Model):
         self.l_name = l_name
 
     __mapper_args__ = {
-        'extension': MapperExtension(),
         'polymorphic_identity': 'chinese'
     }
 
 
 @foreign_key_one_to_one('card')
 @foreign_key_one_to_one('account')
+@foreign_key_one_to_one('image')
 class Staff(Chinese):
     id = db.Column(db.Integer,
                    db.ForeignKey(Chinese.id, ondelete='cascade'),
@@ -794,6 +783,10 @@ class Staff(Chinese):
         r = self.to_dict()
         r['position'] = po.get_by_id(self.position, locale)
 
+        photo = self.image
+        if photo is not None:
+            r['photo'] = photo.to_dict()
+
         r['families'] = []
         families = self.families
         if families is not None:
@@ -806,7 +799,6 @@ class Staff(Chinese):
         self.position = position
 
     __mapper_args__ = {
-        'extension': MapperExtension(),
         'polymorphic_identity': 'staff'
     }
 
@@ -823,6 +815,7 @@ Staff_Sfamily = db.Table(
 
 @foreign_key_one_to_one('card')
 @foreign_key_one_to_one('account')
+@foreign_key_one_to_one('image')
 class Sfamily(Chinese):
     id = db.Column(db.Integer,
                    db.ForeignKey(Chinese.id, ondelete='cascade'),
@@ -872,6 +865,10 @@ class Sfamily(Chinese):
         r = {}
         r = self.to_dict()
 
+        photo = self.image
+        if photo is not None:
+            r['photo'] = photo.to_dict()
+
         staff = self.staff
         if staff is not None:
             r['staff'] = staff.to_dict()
@@ -882,12 +879,12 @@ class Sfamily(Chinese):
         super(Sfamily, self).__init__(*args, **kwargs)
 
     __mapper_args__ = {
-        'extension': MapperExtension(),
         'polymorphic_identity': 'staff_family',
     }
 
 
 # 在此表登记来访国内人员
+@foreign_key_one_to_one('card')
 class ExternalChinese(Chinese):
     id = db.Column(db.Integer, db.ForeignKey(Chinese.id, ondelete='cascade'),
                    primary_key=True)
@@ -902,27 +899,14 @@ class ExternalChinese(Chinese):
         self.work_place = work_place
 
     __mapper_args__ = {
-        'extension': MapperExtension(),
         'polymorphic_identity': 'external_chinese',
     }
-
-ForeignerPhoto = db.Table(
-    'foreigner_photo',
-    db.Column('foreigner_id', db.Integer,
-              db.ForeignKey('foreigner.id', ondelete='cascade'),
-              primary_key=True),
-    db.Column('photo_id', db.Integer,
-              db.ForeignKey(Image.id, ondelete='cascade'), primary_key=True),
-)
 
 
 @foreign_key('country')
 class Foreigner(PersonMixin, db.Model):
     gender = db.Column(db.String(1))
     passport_number = db.Column(db.String(12))
-    photo = db.relationship('Image', secondary=ForeignerPhoto,
-                            lazy='dynamic',
-                            backref=db.backref('foreigner', lazy='dynamic'))
 
     def _gender(self, gender):
         self.gender = gender
@@ -930,10 +914,6 @@ class Foreigner(PersonMixin, db.Model):
 
     def _passport_number(self, passport_number):
         self.passport_number = passport_number
-        dbSession.commit()
-
-    def _photo(self, photo):
-        self.photo = photo
         dbSession.commit()
 
     def __init__(self, country_id=138, gender=MALE, passport_number='',
@@ -946,11 +926,11 @@ class Foreigner(PersonMixin, db.Model):
         self.l_name = l_name
 
     __mapper_args__ = {
-        'extension': MapperExtension(),
         'polymorphic_identity': 'foreigner',
     }
 
 
+@foreign_key_one_to_one('image')
 @foreign_key_one_to_one('card')
 @foreign_key_one_to_one('account')
 class Trainee(Foreigner):
@@ -1081,6 +1061,10 @@ class Trainee(Foreigner):
 
         r['gender'] = ge.get_by_id(self.gender, locale)
 
+        photo = self.image
+        if photo is not None:
+            r['photo'] = photo.to_dict()
+
         r['families'] = []
         families = self.families
         if families is not None:
@@ -1136,7 +1120,6 @@ class Trainee(Foreigner):
         return r
 
     __mapper_args__ = {
-        'extension': MapperExtension(),
         'polymorphic_identity': 'trainee'
     }
 
@@ -1185,9 +1168,6 @@ class Career(BaseMixin, db.Model):
         self.future_position = future_position
         self.rank = rank
 
-    __mapper_args__ = {
-        'extension': MapperExtension(),
-    }
 
 TraineeLanguage = db.Table(
     'trainee_language',
@@ -1254,10 +1234,6 @@ class SocialEdu(BaseMixin, db.Model):
         self.major = major
         self.college = college
 
-    __mapper_args__ = {
-        'extension': MapperExtension(),
-    }
-
 
 @foreign_key_one_to_one('trainee')
 class Physical(BaseMixin, db.Model):
@@ -1294,10 +1270,6 @@ class Physical(BaseMixin, db.Model):
         self.weight = weight
         self.shoesize = shoesize
 
-    __mapper_args__ = {
-        'extension': MapperExtension(),
-    }
-
 
 @foreign_key('physical')
 class Speciality(BaseMixin, db.Model):
@@ -1309,10 +1281,6 @@ class Speciality(BaseMixin, db.Model):
 
     def __init__(self, speciality=''):
         self.speciality = speciality
-
-    __mapper_args__ = {
-        'extension': MapperExtension(),
-    }
 
 
 class PassportVISA(BaseMixin, db.Model):
@@ -1348,15 +1316,14 @@ class PassportVISA(BaseMixin, db.Model):
 
         return r
 
-    def __init__(self, passport_type=SFAMILY_CAT, visa_number='', visa_type='2',
-                 visa_valid_date=date(1900, 1, 1)):
+    def __init__(self, passport_type=SFAMILY_CAT, visa_number='',
+                 visa_type='2', visa_valid_date=date(1900, 1, 1)):
         self.passport_type = passport_type
         self.visa_number = visa_number
         self.visa_type = visa_type
         self.visa_valid_date = visa_valid_date
 
     __mapper_args__ = {
-        'extension': MapperExtension(),
         'polymorphic_identity': 'passport_visa'
     }
 
@@ -1410,7 +1377,6 @@ class Tpassport_visa(PassportVISA):
         self.exit_flight = exit_flight
 
     __mapper_args__ = {
-        'extension': MapperExtension(),
         'polymorphic_identity': 'trainee_passport_visa'
     }
 
@@ -1435,10 +1401,6 @@ class Relative(PersonMixin, db.Model):
         self.mobile = mobile
         self.f_name = f_name
         self.l_name = l_name
-
-    __mapper_args__ = {
-        'extension': MapperExtension(),
-    }
 
 
 class Experience(BaseMixin, db.Model):
@@ -1465,7 +1427,6 @@ class Experience(BaseMixin, db.Model):
         self.detail = detail
 
     __mapper_args__ = {
-        'extension': MapperExtension(),
         'polymorphic_identity': 'experience'
     }
 
@@ -1480,14 +1441,14 @@ class Training(Experience):
         super(Training, self).__init__(*args, **kwargs)
 
     __mapper_args__ = {
-        'extension': MapperExtension(),
         'polymorphic_identity': 'training'
     }
 
 
 @foreign_key('trainee')
 class Working(Experience):
-    id = db.Column(db.Integer, db.ForeignKey(Experience.id, ondelete='cascade'),
+    id = db.Column(db.Integer,
+                   db.ForeignKey(Experience.id, ondelete='cascade'),
                    primary_key=True)
     department = db.Column(db.String(255))
     job = db.Column(db.String(255))
@@ -1506,7 +1467,6 @@ class Working(Experience):
         self.job = job
 
     __mapper_args__ = {
-        'extension': MapperExtension(),
         'polymorphic_identity': 'working'
     }
 
@@ -1530,7 +1490,6 @@ class AbroadStudy(Experience):
         self.country_id = country_id
 
     __mapper_args__ = {
-        'extension': MapperExtension(),
         'polymorphic_identity': 'study_abroad'
     }
 
@@ -1559,9 +1518,6 @@ class Contact(PersonMixin, db.Model):
 
         return r
 
-    __mapper_args__ = {
-        'extension': MapperExtension(),
-    }
 
 # 这里的trainee.id及tfamily.id都是用的表名。而不是backref
 Trainee_Tfamily = db.Table(
@@ -1575,6 +1531,7 @@ Trainee_Tfamily = db.Table(
 )
 
 
+@foreign_key_one_to_one('image')
 @foreign_key_one_to_one('card')
 @foreign_key_one_to_one('account')
 class Tfamily(Foreigner):
@@ -1636,6 +1593,10 @@ class Tfamily(Foreigner):
         r['gender'] = ge.get_by_id(self.gender, locale)
         r['country'] = self.country.to_dict()
 
+        photo = self.image
+        if photo is not None:
+            r['photo'] = photo.to_dict()
+
         trainee = self.trainee
         if trainee is not None:
             r['trainee'] = trainee.to_dict()
@@ -1650,7 +1611,6 @@ class Tfamily(Foreigner):
         super(Tfamily, self).__init__(*args, **kwargs)
 
     __mapper_args__ = {
-        'extension': MapperExtension(),
         'polymorphic_identity': 'trainee_family'
     }
 
@@ -1672,12 +1632,12 @@ class TFpassport_visa(PassportVISA):
         super(TFpassport_visa, self).__init__(*args, **kwargs)
 
     __mapper_args__ = {
-        'extension': MapperExtension(),
         'polymorphic_identity': 'trainee_family_passport_visa'
     }
 
 
 # 此表是存储来访外国人的
+@foreign_key_one_to_one('card')
 class ExternalForeigner(Foreigner):
     id = db.Column(db.Integer,
                    db.ForeignKey(Foreigner.id, ondelete='cascade'),
@@ -1688,7 +1648,6 @@ class ExternalForeigner(Foreigner):
         self.country_id = country_id
 
     __mapper_args__ = {
-        'extension': MapperExtension(),
         'polymorphic_identity': 'external_foreigner'
     }
 
@@ -1705,10 +1664,6 @@ class Acategory(BaseMixin, db.Model):
 
     def __init__(self, name=''):
         self.name = name
-
-    __mapper_args__ = {
-        'extension': MapperExtension(),
-    }
 
 
 @foreign_key('account')
@@ -1729,7 +1684,3 @@ class Article(BaseMixin, db.Model):
         self.acategory_id = acategory_id
         self.abstract = abstract
         self.content = content
-
-    __mapper_args__ = {
-        'extension': MapperExtension(),
-    }

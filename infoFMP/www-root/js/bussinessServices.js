@@ -92,7 +92,8 @@ bServices.factory('accountProfilePostProcess', [function () {
 
                 //生日的判断
                 var minBirthYear = moment().subtract(65, "years");
-                scope.birthday = scope.user.profile.birthday = new moment(res.profile.birthday);
+                //http://stackoverflow.com/questions/23263380/deprecation-warning-moment-construction-falls-back-to-js-date
+                scope.birthday = scope.user.profile.birthday = new moment(new Date(res.profile.birthday));
                 scope.birthday_invalid = scope.birthday.isAfter(today);
                 scope.birthday_warning = scope.birthday.isBefore(minBirthYear);
             }
@@ -243,13 +244,10 @@ bServices.factory('beforeAuthorizedOps', ['checkCreds', 'getLocale', 'getToken',
                             deleteCreds();
                             var CredInvalidModalInstance = $uibModal.open({
                                 animation: true,
-                                templateUrl: '/partials/modals/credInvalid.html',
+                                templateUrl: '/partials/modals/CredInvalid.html',
                                 controller: 'CredInvalidModalInstanceCtrl',
                                 size: 'sm',
                                 resolve: {
-                                    lang: function () {
-                                        return JSON.parse(lang);
-                                    },
                                     message: function () {
                                         return res.message;
                                     }

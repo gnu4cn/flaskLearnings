@@ -1,0 +1,189 @@
+<div class="modal-header">
+    <h3 class="modal-title"><i class="glyphicon glyphicon-pencil"></i>{{lang.changeBasicProfile}}</h3>
+</div>
+<div class="modal-body">
+    <form role='form' name='update' novalidate
+          ng-submit="update.$valid && submitChanges()">
+        <div class="row">
+            <div class="col-md-4 col-sm-7 col-xs-7">
+                <div class="form-group has-feedback has-feedback-right" show-errors>
+                    <label class="control-label">{{lang.firstName}}</label>
+                    <input type="text" class="form-control" required 
+                           name="firstname"
+                           ng-model-options="{debounce: 500}"
+                           ng-model="profile.firstName" autocomplete="off" 
+                           uib-tooltip="{{lang.firstNameHelp}}"
+                           tooltip-placement="top"
+                           tooltip-class="customClass"
+                           tooltip-append-to-body="true"
+                           tooltip-trigger="focus"
+                           type-firstname />
+
+                    <span class="glyphicon glyphicon-ok form-control-feedback"
+                          ng-show='update.firstname.$valid'></span>
+                    <!--
+                    <i class="fa fa-check form-control-feedback" ng-show='register.username.$valid'></i>
+                    -->
+                </div>
+                <div role="alert" style="margin-bottom: 10px;">
+                    <span class="label label-warning" ng-show="update.firstname.$error.required">
+                        {{ lang.Required}}</span>
+                    <p class="label label-danger" ng-show="update.firstname.$error.format">
+                        {{ lang.BadNameFormat}}
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-6 col-sm-7 col-xs-9">
+                <div class="form-group has-feedback has-feedback-right" show-errors>
+                    <label class="control-label">{{lang.lastName}}</label>
+                    <input type="text" class="form-control" required 
+                           name="lastname"
+                           ng-model-options="{debounce: 500}"
+                           ng-model="profile.lastName" autocomplete="off" 
+                           uib-tooltip="{{lang.lastNameHelp}}"
+                           tooltip-placement="top"
+                           tooltip-class="customClass"
+                           tooltip-append-to-body="true"
+                           tooltip-trigger="focus"
+                           type-lastname />
+
+                    <span class="glyphicon glyphicon-ok form-control-feedback"
+                          ng-show='update.lastname.$valid'></span>
+                    <!--
+                    <i class="fa fa-check form-control-feedback" ng-show='register.username.$valid'></i>
+                    -->
+                </div>
+                <div role="alert" style="margin-bottom: 10px;">
+                    <span class="label label-warning" ng-show="update.lastname.$error.required">
+                        {{ lang.Required}}</span>
+                    <p class="label label-danger" ng-show="update.lastname.$error.format">
+                        {{ lang.BadNameFormat}}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-5 col-sm-6 col-xs-8">
+                <div class="form-group has-feedback has-feedback-right" show-errors>
+                    <label class="control-label">{{lang.IDNumber}}</label>
+                    <input type="text" class="form-control" required 
+                           name="id_number" 
+                           ng-minlength="18"
+                           ng-maxlength="18"
+                           ng-model-options="{debounce: 1000}"
+                           ng-model="profile.idNumber" 
+                           autocomplete="off" 
+                           uib-tooltip="{{lang.IDNumberHelp}}"
+                           tooltip-placement="top"
+                           tooltip-class="customClass"
+                           tooltip-append-to-body="true"
+                           tooltip-trigger="focus"
+                           type-id-number-update />
+
+                    <span class="glyphicon glyphicon-ok form-control-feedback"
+                          ng-show='update.id_number.$valid'></span>
+                    <!--
+                    <i class="fa fa-check form-control-feedback" ng-show='register.username.$valid'></i>
+                    -->
+                </div>
+            </div>
+            <div class="col-xs-12">
+                <div role="alert" style="margin-bottom: 10px;">
+                    <span class="label label-warning" ng-show="update.id_number.$error.required">
+                        {{ lang.Required}}</span>
+                    <span class="label label-danger" ng-show="update.id_number.$error.format">
+                        {{ lang.IdNumberNotQualified}}                                
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+
+            <!-- 部门 -->
+            <div class="col-sm-6 col-xs-10">
+                <div class="form-group">
+                    <label class="control-label">{{lang.Department}}</label>
+                    <select class="form-control" required id="category" 
+                            ng-model="department"
+                            ng-change="updatePostionList()"
+                            ng-options="d as d.data for d in departments| orderBy:'id' track by d.id">
+                        <option value="">-- {{lang.selectDepartment}} --</option>
+                        <!-- <option ng-repeat="p_c in pCategories| orderBy: 'id'" 
+                                value="{{p_c.id}}">{{p_c.data}}</option>-->
+                    </select>
+                </div>
+            </div>
+            <!-- 职位 -->
+            <div class="col-sm-5 col-xs-10">
+                <div class="form-group">
+                    <label class="control-label">{{lang.Position}}</label>
+                    <select class="form-control" required id="category" 
+                            ng-model="position"
+                            ng-options="p as p.position for p in positions| orderBy:'id' track by p.id">
+                        <option value="">-- {{lang.selectPosition}} --</option>
+                        <!-- <option ng-repeat="p_c in pCategories| orderBy: 'id'" 
+                                value="{{p_c.id}}">{{p_c.data}}</option>-->
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <!--在中国的手机号码-->
+            <div class="col-md-4 col-sm-5 col-xs-7">
+                <div class="form-group has-feedback has-feedback-right" show-errors>
+                    <label class="control-label">{{lang.ChineseMobileNumber}}</label>
+                    <input type="text" class="form-control" required 
+                           name="mobile_number" 
+                           ng-model-options="{debounce: 1000}"
+                           ng-model="profile.mobile" 
+                           autocomplete="off"
+                           uib-tooltip="{{lang.MobileHelp}}"
+                           tooltip-placement="top"
+                           tooltip-class="customClass"
+                           tooltip-append-to-body="true"
+                           tooltip-trigger="focus"
+                           type-mobile />
+
+                    <span class="glyphicon glyphicon-ok form-control-feedback"
+                          ng-show='update.mobile_number.$valid'></span>
+                    <!--
+                    <i class="fa fa-check form-control-feedback" ng-show='register.username.$valid'></i>
+                    -->
+                </div>   
+                <div role="alert" style="margin-bottom: 10px;">
+                    <span class="label label-warning" ng-show="update.mobile_number.$error.required">
+                        {{ lang.Required}}</span>
+                    <span class="label label-danger" ng-show="update.mobile_number.$error.format">
+                        {{ lang.MobileNotQualified}}
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-10 col-xs-9">
+                <button class="btn btn-default pull-right" 
+                        type="submit">
+                    <i class="glyphicon glyphicon-flash"></i>{{lang.updateProfileSubmit}}</button>
+            </div>
+            <div class="col-sm-2 col-xs-3">
+                <button class="btn btn-default pull-right" type="button" ng-click="cancel()">
+                    <i class="glyphicon glyphicon-remove"></i>{{lang.Cancel}}</button>
+            </div>
+        </div>
+    </form>
+</div>
+<div class="modal-footer">
+    <div class="row">
+        <div class="pull-left">
+            <span class="label label-warning" ng-init="updatedFailed = false" 
+                  ng-show="updatedFailed">
+                {{responseMsg}}</span>
+            <span class="label label-success" ng-init="updatedSuccess = false" 
+                  ng-show="updatedSuccess">
+                {{responseMsg}}</span>
+            <span class="label label-danger" ng-init="serverFault = false"
+                  ng-show="serverFault">
+                {{responseMsg}}</span>
+        </div>
+    </div>
+</div>

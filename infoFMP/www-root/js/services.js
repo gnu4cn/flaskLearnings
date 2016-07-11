@@ -44,6 +44,57 @@
 
 var services = angular.module('services', ['ngResource']);
 
+services.factory('MediaService', ['$http', 'languageService', 'getToken',
+    function ($http, languageService, getToken) {
+        var lang = JSON.parse(languageService());
+        var service = {};
+
+        service.GetThumbnails = GetThumbnails;
+        service.RetrieveOriginbyThumbnailId = RetrieveOriginbyThumbnailId;
+
+        return service;
+
+        function GetThumbnails(data) {
+            return $http({
+                method: 'POST',
+                url: '/api/image/thumbnails',
+                headers: {
+                    'Authorization': 'Basic ' + btoa(getToken()),
+                    'Content-Type': 'application/json'
+                },
+                data: data
+            }).then(
+                handleSuccess,
+                handleError(lang.serviceRequestFault)
+                );
+        }
+
+        function RetrieveOriginbyThumbnailId(thumbnailId) {
+            return $http({
+                method: 'GET',
+                url: '/api/image/by_thumbnail_id/' + thumbnailId,
+                headers: {
+                    'Authorization': 'Basic ' + btoa(getToken())
+                }
+            }).then(
+                handleSuccess,
+                handleError(lang.serviceRequestFault)
+                );
+        }
+
+        function handleSuccess(res) {
+            //在请求成功后，直接返回响应数据
+            return res.data;
+        }
+
+        function handleError(error) {
+            return function () {
+                //在请求失败后，构造出响应json
+                return {success: false, message: error};
+            };
+        }
+    }]);
+
 services.factory('ProfileService', ['$http', 'languageService', 'getToken',
     function ($http, languageService, getToken) {
         var lang = JSON.parse(languageService());
@@ -51,8 +102,24 @@ services.factory('ProfileService', ['$http', 'languageService', 'getToken',
 
         service.CheckProfile = CheckProfile;
         service.AppendFamily = AppendFamily;
+        service.SetProfilePhoto = SetProfilePhoto;
 
         return service;
+        
+        function SetProfilePhoto(data){
+            return $http({
+                method: 'POST',
+                url: '/api/profile/photo',
+                headers: {
+                    'Authorization': 'Basic ' + btoa(getToken()),
+                    'Content-Type': 'application/json'
+                },
+                data: data
+            }).then(
+                handleSuccess,
+                handleError(lang.serviceRequestFault)
+                );            
+        }
 
         function CheckProfile(data) {
             return $http({
@@ -67,7 +134,7 @@ services.factory('ProfileService', ['$http', 'languageService', 'getToken',
                 handleError(lang.serviceRequestFault)
                 );
         }
-        
+
         function AppendFamily(data) {
             // 
             // 这里有angularjs $http基础认证的用法。
@@ -128,8 +195,8 @@ services.factory('UserService', ['$http', 'languageService',
         service.PassportVISAOperation = PassportVISAOperation;
 
         return service;
-        
-        function PassportVISAOperation(data){
+
+        function PassportVISAOperation(data) {
             return $http({
                 method: 'POST',
                 url: '/api/user/profile/passportvisa',
@@ -142,8 +209,8 @@ services.factory('UserService', ['$http', 'languageService',
                 handleError(lang.serviceRequestFault)
                 );
         }
-        
-        function UpdateBasicProfile(data){
+
+        function UpdateBasicProfile(data) {
             return $http({
                 method: 'POST',
                 url: '/api/user/profile/basic',

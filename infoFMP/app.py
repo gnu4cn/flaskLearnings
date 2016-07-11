@@ -1,23 +1,33 @@
 # -*-coding: utf-8 -*-
 from flask import Flask, jsonify
 import types
+import os
 
 from flask_restful import Api, Resource, reqparse
 from model import db, City, Province, Language, Country
 from model import Account as User
-from model import Staff, Sfamily, Trainee, Tfamily
+from model import Staff, Sfamily, Trainee, Tfamily, Image
 from constant import PRSN_CAT as p_c, POSITION as po, DEPARTMENT as de, \
     SERVICE as se, TRNEE_RANK as t_r, RELATION as re, RELIGION as rel, \
     GENDER as ge, MARRIAGE as ma, PPRT_TYPE as p_t, CERT_TYPE as c_t, \
     EDU as edu
-
+from sqlalchemy import or_, and_
+from werkzeug.datastructures import FileStorage
+from PIL import Image as IMG
+from cStringIO import StringIO
+import hashlib
 # ----------使用 HTTPBasicAuth-----------------
 from flask_httpauth import HTTPBasicAuth
 auth = HTTPBasicAuth()
 # ---------------------------------------------
 
 STAFF_CAT = '0'
+SFAMILY_CAT = '1'
 TRAINEE_CAT = '5'
+TFAMILY_CAT = '6'
+ALLOWED_FORMATS_IMG = set(['jpeg', 'png', 'gif', 'bmp'])
+
+THUMBNAIL_SIZE = 120, 120
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -36,6 +46,7 @@ api.route = types.MethodType(api_route, api)
 # --------------------------------------------------
 
 db.init_app(app)
+dbSession = db.session
 
 
 # -------------- 使用 HTTPBasicAuth ----------------------------
@@ -53,6 +64,203 @@ def verify_token(username_or_token, password):
             return True
     else:
         return True
+
+
+def save_uploaded_image(f, user_id):
+    # 这里专注于上传文件的保存了
+    content = StringIO(f.read())
+
+    try:
+        im = IMG.open(content)
+
+        if im.format.lower() not in ALLOWED_FORMATS_IMG:
+            raise IOError()
+
+        else:
+            user = User.query.get(user_id)
+            # 这里先查看是否已有此图
+            try:
+                hash_sha1 = hashlib.sha1(content.getvalue()).hexdigest()
+
+                ex_im = Image.query.filter_by(hash_value=hash_sha1).first()
+
+                if ex_im is not None:
+                    raise IOError()
+
+                else:
+                    # 保存原图片文件
+                    _origin = os.path.join(
+                        app.config['UPLOAD_FOLDER_IMG'],
+                        hash_sha1+'.png')
+
+                    ratio = float(im.size[0])/float(im.size[1])
+                    origin = im.resize((1024, int(1024/ratio)), IMG.ANTIALIAS)
+
+                    origin.save(_origin, 'PNG', optimized=True)
+
+                    # 存入数据库
+                    width, height = im.size
+                    filesize = os.path.getsize(_origin)
+
+                    original_instance = Image(original=True, width=width,
+                                              height=height,
+                                              hash_value=hash_sha1,
+                                              filesize=filesize, uri=_origin)
+
+                    dbSession.add(original_instance)
+                    dbSession.commit()
+
+                    user._images(original_instance)
+
+                    # 保存缩略图
+                    im.thumbnail(THUMBNAIL_SIZE, IMG.ANTIALIAS)
+
+                    tmp_output = StringIO()
+                    im.save(tmp_output, 'PNG')
+
+                    hash_sha1 = hashlib.sha1(tmp_output.getvalue()).hexdigest()
+
+                    _thumbnail = os.path.join(app.config['UPLOAD_FOLDER_IMG'],
+                                              hash_sha1+'.png')
+
+                    im.save(_thumbnail, 'PNG')
+
+                    # 存入数据库
+                    width, height = im.size
+                    filesize = os.path.getsize(_thumbnail)
+
+                    thumbnail_instance = Image(width=width, height=height,
+                                               hash_value=hash_sha1,
+                                               filesize=filesize,
+                                               uri=_thumbnail)
+
+                    dbSession.add(thumbnail_instance)
+                    dbSession.commit()
+
+                    user._images(thumbnail_instance)
+                    original_instance._sized_versions(thumbnail_instance)
+
+                    return True
+
+            except IOError:
+                notAppended = True
+
+                for image in user.images:
+
+                    if image.hash_value == hash_sha1:
+                        notAppended = False
+                        break
+
+                if notAppended:
+                    user._images(ex_im)
+
+                return True
+
+    except IOError:
+        return False
+
+
+@api.route('/api/image/by_thumbnail_id/<int:thumbnailId>')
+class ServeImagebyThumbnailId(Resource):
+    @auth.login_required
+    def get(self, thumbnailId):
+        return jsonify(Image.query.get(thumbnailId).origin.to_dict())
+
+
+@api.route('/api/profile/photo')
+class ProfilePhoto(Resource):
+    @auth.login_required
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('user_id', type=int, location='json',
+                            required=True)
+        parser.add_argument('thumbnail_id', type=int, location='json',
+                            required=True)
+        args = parser.parse_args()
+
+        r = {}
+        r['success'] = True
+        r['set'] = False
+
+        user = User.query.get(args['user_id'])
+        photo = Image.query.get(args['thumbnail_id']).origin
+
+        try:
+            {
+                STAFF_CAT: lambda: user.staff._photo(photo),
+                SFAMILY_CAT: lambda: user.sfamily._photo(photo),
+                TRAINEE_CAT: lambda: user.trainee._photo(photo),
+                TFAMILY_CAT: lambda: user.tfamily._photo(photo)
+            }[user.person_type]()
+
+            r['set'] = True
+
+        except:
+            r['set'] = False
+
+        return jsonify(r)
+
+
+@api.route('/api/image/thumbnails')
+class Thumbnails(Resource):
+    @auth.login_required
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('user_id', type=int, location='json',
+                            required=True)
+        args = parser.parse_args()
+        r = {}
+        r['success'] = True
+        r['months'] = []
+
+        user = User.query.get(args['user_id'])
+
+        thumbnails = user.images.filter(
+            and_(
+                or_(Image.width == 120, Image.height == 120),
+                Image.original == False)
+        ).order_by(Image.last_updated.desc())
+
+        month = 0
+        tmp = {}
+        tmp['monthly_thumbnails'] = []
+
+        for thumbnail in thumbnails:
+            if month != thumbnail.last_updated.month:
+                tmp = {}
+                tmp['monthly_thumbnails'] = []
+
+                month = thumbnail.last_updated.month
+                tmp['year'] = thumbnail.last_updated.year
+                tmp['month'] = month
+                tmp['monthly_thumbnails'].append(thumbnail.to_dict())
+            else:
+                tmp['monthly_thumbnails'].append(thumbnail.to_dict())
+
+            if thumbnail == thumbnails[-1]:
+                r['months'].append(tmp)
+
+        return jsonify(r)
+
+
+@api.route('/api/upload/image/<string:user_id>')
+class ImageUpload(Resource):
+    @auth.login_required
+    def post(self, user_id):
+        parser = reqparse.RequestParser()
+        # From file uploads
+        parser.add_argument('file', type=FileStorage, location='files')
+
+        args = parser.parse_args()
+
+        r = {}
+        r['success'] = True
+        r['uploaded'] = False
+
+        if args['file'] is not None:
+            r['uploaded'] = save_uploaded_image(args['file'], user_id)
+
+        return jsonify(r)
 
 
 # ---------------------User APIs--------------------
@@ -507,12 +715,6 @@ class GetLanguage(Resource):
 class Languages(Resource):
     def get(self):
         return Language.get_list()
-
-
-@api.route('/api/country/<int:country_id>')
-class GetCountry(Resource):
-    def get(self, country_id):
-        return Country.get_by_id(country_id)
 
 
 @api.route('/api/countries')

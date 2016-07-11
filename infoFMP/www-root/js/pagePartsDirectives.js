@@ -1,5 +1,6 @@
 var pagePartsDirectives = angular.module('pagePartsDirectives', []);
 
+
 pagePartsDirectives.directive('profileFields', ['languageService',
     'beforeAuthorizedOps', 'checkCreds', 'UserService', 'getLocale', 'getToken',
     'accountProfilePostProcess', '$uibModal', 'setActiveTab', 'getActiveTab',
@@ -17,18 +18,39 @@ pagePartsDirectives.directive('profileFields', ['languageService',
                     setActiveTab(index);
                 };
                 //这里明明返回的是整数，却还要一个parseInt!! 搞了半天
-                scope.active = parseInt(getActiveTab(), 10);
+                scope.active = parseInt(getActiveTab(), 10);                              
+
+                scope.addPhoto = function () {
+                    var uibModalInstance = $uibModal.open({
+                        animation: true,
+                        templateUrl: 'partials/modals/SingleImageProfileModal.html',
+                        controller: 'SingleImageProfileModalInstanceCtrl',
+                        size: 'md',
+                        resolve: {
+                            user: function () {
+                                return scope.user;
+                            }
+                        }
+                    });
+
+                    uibModalInstance.result.then(
+                        function () {
+                            $route.reload();
+                        },
+                        function () {
+                            //nothing to do
+                        });
+                };
+                
+                scope.changePhoto = scope.addPhoto;
 
                 scope.updateBasicProfileStaff = function () {
                     var uibModalInstance = $uibModal.open({
                         animation: true,
-                        templateUrl: 'partials/modals/basicProfileStaffModal.html',
+                        templateUrl: 'partials/modals/BasicProfileStaffModal.html',
                         controller: 'BasicProfileStaffModalInstanceCtrl',
                         size: 'md',
                         resolve: {
-                            lang: function () {
-                                return scope.lang;
-                            },
                             user: function () {
                                 return scope.user;
                             }
@@ -47,7 +69,7 @@ pagePartsDirectives.directive('profileFields', ['languageService',
                 scope.updateBasicProfileStaffFamily = function () {
                     var uibModalInstance = $uibModal.open({
                         animation: true,
-                        templateUrl: 'partials/modals/basicProfileStaffFamilyModal.html',
+                        templateUrl: 'partials/modals/BasicProfileStaffFamilyModal.html',
                         controller: 'BasicProfileStaffFamilyModalInstanceCtrl',
                         size: 'md',
                         resolve: {
@@ -72,7 +94,7 @@ pagePartsDirectives.directive('profileFields', ['languageService',
                 scope.updateBasicProfileTrainee = function () {
                     var uibModalInstance = $uibModal.open({
                         animation: true,
-                        templateUrl: 'partials/modals/basicProfileTraineeModal.html',
+                        templateUrl: 'partials/modals/BasicProfileTraineeModal.html',
                         controller: 'BasicProfileTraineeModalInstanceCtrl',
                         size: 'md',
                         resolve: {
@@ -97,7 +119,7 @@ pagePartsDirectives.directive('profileFields', ['languageService',
                 scope.updateBasicProfileTraineeFamily = function () {
                     var uibModalInstance = $uibModal.open({
                         animation: true,
-                        templateUrl: 'partials/modals/basicProfileTraineeFamilyModal.html',
+                        templateUrl: 'partials/modals/BasicProfileTraineeFamilyModal.html',
                         controller: 'BasicProfileTraineeFamilyModalInstanceCtrl',
                         size: 'md',
                         resolve: {
@@ -168,15 +190,15 @@ pagePartsDirectives.directive('profileFields', ['languageService',
                             //nothing to do
                         });
                 };
-                
-                scope.addStaffFamily = function(){
+
+                scope.addStaffFamily = function () {
                     var uibModalInstance = $uibModal.open({
                         animation: true,
                         templateUrl: 'partials/modals/StaffFamilyModal.html',
                         controller: 'StaffFamilyModalInstanceCtrl',
                         size: 'md',
                         resolve: {
-                            user: function(){
+                            user: function () {
                                 return scope.user;
                             }
                         }
@@ -190,15 +212,15 @@ pagePartsDirectives.directive('profileFields', ['languageService',
                             //nothing to do
                         });
                 };
-                
-                scope.addTraineeFamily = function(){
+
+                scope.addTraineeFamily = function () {
                     var uibModalInstance = $uibModal.open({
                         animation: true,
                         templateUrl: 'partials/modals/TraineeFamilyModal.html',
                         controller: 'TraineeFamilyModalInstanceCtrl',
                         size: 'md',
                         resolve: {
-                            user: function(){
+                            user: function () {
                                 return scope.user;
                             }
                         }
@@ -218,12 +240,7 @@ pagePartsDirectives.directive('profileFields', ['languageService',
                         animation: true,
                         templateUrl: 'partials/modals/PasswordModal.html',
                         controller: 'PasswordModalInstanceCtrl',
-                        size: 'sm',
-                        resolve: {
-                            lang: function () {
-                                return scope.lang;
-                            }
-                        }
+                        size: 'sm'
                     });
 
                     uibModalInstance.result.then(
@@ -245,6 +262,7 @@ pagePartsDirectives.directive('profileFields', ['languageService',
 
                     UserService.GetByCred(locale, cred).then(
                         function (res) {
+                            //console.log(JSON.stringify(res));
                             if (res.success) {
                                 scope.user = res.user;
                                 scope.user.profile = res.profile;
@@ -271,11 +289,11 @@ pagePartsDirectives.directive('registerFormCommonParts', ['languageService',
     }]);
 
 pagePartsDirectives.directive('addFamilyFormCommonParts', ['languageService',
-    function(languageService){
+    function (languageService) {
         return {
             restrict: 'A',
             templateUrl: 'partials/directives/addFamilyFormCommonParts.html',
-            link: function (scope, el, attrs){
+            link: function (scope, el, attrs) {
                 scope.lang = JSON.parse(languageService());
             }
         };
@@ -376,3 +394,52 @@ pagePartsDirectives.directive('uploadComponent', function () {
         }
     };
 });
+
+// 这是用于显示上传图片预览的。
+pagePartsDirectives.directive('ngThumb', ['$window', function ($window) {
+        var helper = {
+            support: !!($window.FileReader && $window.CanvasRenderingContext2D),
+            isFile: function (item) {
+                return angular.isObject(item) && item instanceof $window.File;
+            },
+            isImage: function (file) {
+                var type = '|' + file.type.slice(file.type.lastIndexOf('/') + 1) + '|';
+                return '|jpg|png|jpeg|bmp|gif|'.indexOf(type) !== -1;
+            }
+        };
+
+        return {
+            restrict: 'A',
+            template: '<canvas/>',
+            link: function (scope, element, attributes) {
+                if (!helper.support)
+                    return;
+
+                var params = scope.$eval(attributes.ngThumb);
+
+                if (!helper.isFile(params.file))
+                    return;
+                if (!helper.isImage(params.file))
+                    return;
+
+                var canvas = element.find('canvas');
+                var reader = new FileReader();
+
+                reader.onload = onLoadFile;
+                reader.readAsDataURL(params.file);
+
+                function onLoadFile(event) {
+                    var img = new Image();
+                    img.onload = onLoadImage;
+                    img.src = event.target.result;
+                }
+
+                function onLoadImage() {
+                    var width = params.width || this.width / this.height * params.height;
+                    var height = params.height || this.height / this.width * params.width;
+                    canvas.attr({width: width, height: height});
+                    canvas[0].getContext('2d').drawImage(this, 0, 0, width, height);
+                }
+            }
+        };
+    }]);
