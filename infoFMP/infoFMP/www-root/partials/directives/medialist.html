@@ -1,0 +1,21 @@
+<div class="row submedialist">
+    <div ng-repeat="item in items" class="col-sm-6 col-md-3">
+        <div class="thumbmail" ng-show={{ item.type == "image" }}>
+            <img src="{{ item.uri }}" alt="item.description" />
+        </div>
+        <div class="thumbmail" ng-show={{ item.type == "audio" }}>
+            <img src="images/audio.png" alt="item.description" />
+        </div>
+        <div class="thumbmail" ng-show={{ item.type == "video" }}>
+            <img src="images/video.png" alt="item.description" />
+        </div>
+        <div class="caption">
+            <h3>{{ item.title }}</h3>
+            <p>{{ item.description }}</p>
+            <p>
+                <button>{{ ui.Select }}</button>
+                <a ng-click="deletemedia(item.id)" type="button">{{ ui.Delete }}</a>
+            </p>
+        </div>
+    </div>
+</div>

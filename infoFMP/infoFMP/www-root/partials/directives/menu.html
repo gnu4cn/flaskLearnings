@@ -1,0 +1,76 @@
+
+<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+
+    <!-- Brand and toggle get grouped for better mobile display -->
+
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" ng-init="isCollapsed = true"
+                ng-click="isCollapsed = !isCollapsed">
+            <span class="sr-only">{{ lang.ToggleMenu}}</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" 
+           style="{{ lang.brandColor}}" href="#!/">{{ lang.label}}</a>
+    </div>
+
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div uib-collapse="isCollapsed"
+         class="navbar-collapse collapse">
+        <ul class="nav navbar-nav">
+            <li class="{{activeClass.about}}">
+                <a href="/">
+                    <i class="glyphicon glyphicon-question-sign"></i>
+                    {{ lang.menuAbout}}</a>
+            </li>
+            <li class="{{activeClass.news}}"><a href="#!news">
+                    <i class="fa fa-newspaper-o"></i>
+                    {{ lang.menuNews}}</a>
+            </li>
+            <li class="{{activeClass.notices}}"><a href="#!notices">
+                    <i class="glyphicon glyphicon-blackboard"></i>
+                    {{ lang.menuNotices}}</a>
+            </li>
+            <li class="{{activeClass.profile}}" ng-show="isLogin">
+                <a href="#!/user/profile">
+                    <i class="glyphicon glyphicon-user"></i>
+                    {{lang.profile}}</a>
+            </li>
+
+            <li class="{{activeClass.login}}" ng-show="!isLogin">
+                <a href="#!/user/login">
+                    <i class="glyphicon glyphicon-log-in"></i>
+                    {{ lang.menuLogin}}</a></li>
+
+            <script type="text/ng-template" id="confirmModal.html">
+                <div class="modal-header">
+                <h3 class="modal-title">{{lang.yestoLogout}}</h3>
+                </div>
+                <div class="modal-body">{{logoutTips}}</div>
+                <div class="modal-footer">
+                <button class="btn btn-danger" type="button" ng-click="ok()">{{lang.Ok}}</button>
+                <button class="btn btn-success" type="button" ng-click="cancel()">{{lang.Cancel}}</button>
+                </div>
+            </script>
+            <li class="{{activeClass.logout}}" ng-show="isLogin">
+                <a href ng-click="toConfirm()">
+                    <i class="glyphicon glyphicon-log-out"></i>
+                    {{ lang.menuLogout}}</a></li>
+
+            <li class="{{activeClass.register}}" ng-show="!isLogin">
+                <a href="#!/user/register-step-1">
+                    <i class="fa fa-user-plus"></i>
+                    {{ lang.menuRegister}}</a></li>
+        </ul>
+
+        <form role="form" class="navbar-form navbar-right form-inline">
+            <div class="form-group">
+                <select id="language-select" class="form-control"
+                        ng-change="changeLocale(model.selectedLocale)"
+                        ng-model="model.selectedLocale" ng-options="key as value for (key, value) in availableLocales">
+                </select>
+            </div>
+        </form>
+    </div><!-- /.navbar-collapse -->
+</nav>

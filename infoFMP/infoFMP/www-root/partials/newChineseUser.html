@@ -1,0 +1,87 @@
+<div class="container">
+    <div public-menu active-menu="{{ currentMenu}}"></div>
+
+    <div class="row under-menu">
+        <div class="col-sm-7 left-column">
+            <form role="form" name="register" novalidate
+                  ng-submit="register.$valid && submitRegistration()">
+                <!-- 用户名部分 -->
+                <div class="row">
+                    <div class="col-sm-6 col-xs-8">
+                        <div class="form-group has-feedback has-feedback-right" show-errors>
+                            <label class="control-label">{{lang.IDNumber}}</label>
+                            <input type="text" class="form-control" required 
+                                   name="id_number"
+                                   ng-blur="getProfile()"
+                                   ng-minlength="18"
+                                   ng-maxlength="18"
+                                   ng-model-options="{debounce: 1000}"
+                                   placeholder="{{lang.YourIDNumber}}" 
+                                   ng-model="user.idNumber" 
+                                   autocomplete="off" 
+                                   uib-tooltip="{{lang.IDNumberHelp}}"
+                                   tooltip-placement="top"
+                                   tooltip-class="customClass"
+                                   tooltip-append-to-body="true"
+                                   tooltip-trigger="focus"
+                                   type-id-number-register />
+
+                            <span class="glyphicon glyphicon-ok form-control-feedback"
+                                  ng-show='register.id_number.$valid'></span>
+                            <!--
+                            <i class="fa fa-check form-control-feedback" ng-show='register.username.$valid'></i>
+                            -->
+                        </div>
+
+                    </div>
+                    <div class="col-xs-12">
+                        <div role="alert" style="margin-bottom: 10px;">
+                            <span class="label label-warning" ng-show="register.id_number.$error.required">
+                                {{ lang.Required}}</span>
+                            <span class="label label-danger" ng-show="register.id_number.$error.format">
+                                {{ lang.IdNumberNotQualified}}                                
+                            </span>
+                            <span class="label label-danger" ng-show="register.id_number.$pending.isExisted">
+                                {{ lang.CheckingifThisIDNumberisAvailable}}
+                            </span>
+                            <span class="label label-danger" ng-show="register.id_number.$error.isExisted">
+                                {{ lang.ThisIDNumberAlreadyTaken}}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div register-form-common-parts></div>
+                <div class="row">
+                    <div class="col-xs-9">
+                        <button class="btn btn-success pull-right" 
+                                type="submit">{{ lang.newuserSubmit}}</button>
+                    </div>
+                    <div class="col-xs-3">
+                        <button class="btn btn-danger pull-left" 
+                                ng-click="reset(register)">{{ lang.Reset}}</button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12">
+                        <span  class="label label-success" ng-init="registeredSuccess = false" 
+                               ng-show="registeredSuccess">
+                            {{ responseMsg}}</span>
+                        <span class="label label-warning" ng-init="serverFault = false"
+                              ng-show="serverFault">
+                            {{ responseMsg}}</span>                        
+                        <span class="label label-info" ng-init="checkingIfProfileExists = false"
+                              ng-show="checkingIfProfileExists">
+                            {{ lang.checkingIfProfileExists}}</span>
+                        <span class="label label-info" ng-init="profileFound = false"
+                              ng-show="profileFound">
+                            {{ lang.profileFoundTips}}</span>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-md-4 right-column">
+            <p>{{ lang.Agreement}}</p>
+        </div>
+    </div>
+</div>

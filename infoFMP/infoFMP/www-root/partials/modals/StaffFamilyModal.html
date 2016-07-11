@@ -1,0 +1,71 @@
+<div class="modal-header">
+    <h3 class="modal-title"><i class="glyphicon glyphicon-pencil"></i>{{lang.appendFamilyinCampus}}</h3>
+</div>
+<div class="modal-body">
+    <form role='form' name='append' novalidate
+          ng-submit="append.$valid && submitFamily()">
+        <div class="row">
+            <div class="col-md-5 col-sm-6 col-xs-8">
+                <div class="form-group has-feedback has-feedback-right" show-errors>
+                    <label class="control-label">{{lang.IDNumber}}</label>
+                    <!--ng-change中也是可以加上条件的。-->
+                    <input type="text" class="form-control" required 
+                           name="id_number"
+                           ng-blur="getFamilyProfile()"
+                           ng-minlength="18"
+                           ng-maxlength="18"
+                           ng-model-options="{debounce: 1000}"
+                           ng-model="data.idNumber" 
+                           autocomplete="off" 
+                           uib-tooltip="{{lang.IDNumberHelp}}"
+                           tooltip-placement="top"
+                           tooltip-class="customClass"
+                           tooltip-append-to-body="true"
+                           tooltip-trigger="focus"
+                           type-id-number-family />
+
+                    <span class="glyphicon glyphicon-ok form-control-feedback"
+                          ng-show='append.id_number.$valid'></span>
+                </div>
+            </div>
+            <div class="col-xs-12">
+                <div role="alert" style="margin-bottom: 10px;">
+                    <span class="label label-warning" ng-show="append.id_number.$error.required">
+                        {{ lang.Required}}</span>
+                    <span class="label label-danger" ng-show="append.id_number.$error.format">
+                        {{ lang.IdNumberNotQualified}}                                
+                    </span>
+                    <span class="label label-danger" ng-show="append.id_number.$pending.isExisted">
+                        {{ lang.CheckingifThisIDNumberisAvailable}}
+                    </span>
+                    <span class="label label-danger" ng-show="append.id_number.$error.isExisted">
+                        {{ lang.ThisIDNumberAlreadyAppended}}
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div add-family-form-common-parts></div>
+    </form>
+    <div class="modal-footer">
+        <div class="row">
+            <div class="pull-left">
+                <span class="label label-warning" ng-init="appendFailed = false" 
+                      ng-show="appendFailed">
+                    {{responseMsg}}</span>
+                <span class="label label-success" ng-init="appendSuccess = false" 
+                      ng-show="appendSuccess">
+                    {{responseMsg}}</span>
+                <span class="label label-danger" ng-init="serverFault = false"
+                      ng-show="serverFault">
+                    {{responseMsg}}</span>
+                <span class="label label-info" ng-init="familyFound = false"
+                      ng-show="familyFound">
+                    {{ lang.profileFoundTips}}                                
+                </span>
+                <span class="label label-info" ng-init="checkingIfExists = false"
+                      ng-show="checkingIfExists">
+                    {{ lang.checkingIfAppended}}                                
+                </span>
+            </div>
+        </div>
+    </div>

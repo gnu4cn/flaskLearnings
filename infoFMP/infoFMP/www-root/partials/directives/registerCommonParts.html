@@ -1,0 +1,150 @@
+<div class="row">
+    <div class="col-sm-5 col-xs-8">
+        <div class="form-group has-feedback has-feedback-right" show-errors>
+            <label class="control-label">{{lang.firstName}}</label>
+            <input type="text" class="form-control" required 
+                   name="firstname"
+                   placeholder="{{ lang.PleaseInputaFirstname}}" 
+                   ng-model="user.firstName" autocomplete="off" 
+                   uib-tooltip="{{lang.firstNameHelp}}"
+                   tooltip-placement="top"
+                   tooltip-class="customClass"
+                   tooltip-trigger="focus"
+                                   tooltip-append-to-body="true"
+                   type-firstname />
+
+            <span class="glyphicon glyphicon-ok form-control-feedback"
+                  ng-show='register.firstname.$valid'></span>
+            <!--
+            <i class="fa fa-check form-control-feedback" ng-show='register.username.$valid'></i>
+            -->
+        </div>
+        <div role="alert" style="margin-bottom: 10px;">
+            <span class="label label-warning" ng-show="register.firstname.$error.required">
+                {{ lang.Required}}</span>
+            <p class="label label-danger" ng-show="register.firstname.$error.format">
+                {{ lang.BadNameFormat}}
+            </p>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xs-10">
+        <div class="form-group has-feedback has-feedback-right" show-errors>
+            <label class="control-label">{{lang.lastName}}</label>
+            <input type="text" class="form-control" required 
+                   name="lastname"
+                   placeholder="{{ lang.PleaseInputaLastname}}" 
+                   ng-model="user.lastName" autocomplete="off" 
+                   uib-tooltip="{{lang.lastNameHelp}}"
+                   tooltip-placement="top"
+                   tooltip-class="customClass"
+                   tooltip-trigger="focus"
+                                   tooltip-append-to-body="true"
+                   type-lastname />
+
+            <span class="glyphicon glyphicon-ok form-control-feedback"
+                  ng-show='register.lastname.$valid'></span>
+            <!--
+            <i class="fa fa-check form-control-feedback" ng-show='register.username.$valid'></i>
+            -->
+        </div>
+        <div role="alert" style="margin-bottom: 10px;">
+            <span class="label label-warning" ng-show="register.lastname.$error.required">
+                {{ lang.Required}}</span>
+            <p class="label label-danger" ng-show="register.lastname.$error.format">
+                {{ lang.BadNameFormat}}
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm-5 col-xs-8">
+        <div class="form-group has-feedback has-feedback-right" show-errors>
+            <label class="control-label">{{ lang.Username}}</label>
+            <input type="text" class="form-control" required 
+                   name="username" ng-minlength="5"
+                   id="username" ng-model-options="{debounce: 500}"
+                   placeholder="{{ lang.PleaseInputaUsername}}" 
+                   ng-model="user.username" autocomplete="off" 
+                   uib-tooltip="{{lang.UsernameHelp}}"
+                   tooltip-placement="top"
+                   tooltip-class="customClass"
+                   tooltip-trigger="focus"
+                                   tooltip-append-to-body="true"
+                   type-username />
+
+            <span class="glyphicon glyphicon-user form-control-feedback"
+                  ng-show="!register.username.$valid"></span>
+            <span class="glyphicon glyphicon-ok form-control-feedback"
+                  ng-show='register.username.$valid'></span>
+            <!--
+            <i class="fa fa-check form-control-feedback" ng-show='register.username.$valid'></i>
+            -->
+        </div>
+        <div role="alert" style="margin-bottom: 10px;">
+            <span class="label label-danger" ng-show="register.username.$error.minlength">
+                {{ lang.usernameMinlengthError}}</span>
+            <span class="label label-warning" ng-show="register.username.$error.required">
+                {{ lang.Required}}</span>
+            <span class="label label-danger" ng-show="register.username.$error.format">
+                {{ lang.UsernameContainSpecialCharactors}}
+            </span>
+            <span class="label label-danger" ng-show="register.username.$pending.isExisted">
+                {{ lang.CheckingifThisUsernameisAvailable}}
+            </span>
+            <span class="label label-danger" ng-show="register.username.$error.isExisted">
+                {{ lang.ThisUsernameisAlreadyTaken}}
+            </span>
+        </div>
+    </div>
+    <div class="col-sm-5 col-xs-8">
+        <div class="form-group has-feedback has-feedback-right" show-errors>
+            <label class="control-label">{{ lang.Password}}</label>
+            <input ng-init="showPassord = false"
+                   type="{{ showPassword ? 'text': 'password'}}" 
+                   class="form-control" name="password" required
+                   id="password"
+                   placeholder="{{lang.PleaseSetAPassword}}" ng-minlength='8'
+                   ng-model="user.password"
+                   uib-tooltip="{{lang.PasswordHelp}}"
+                   tooltip-placement="top"
+                   tooltip-class="customClass"
+                   tooltip-trigger="focus"
+                                   tooltip-append-to-body="true"
+                   type-password />
+            <span class="glyphicon glyphicon-lock form-control-feedback"
+                  ng-show="!register.password.$valid"></span>
+            <span class="glyphicon glyphicon-ok form-control-feedback"
+                  ng-show='register.password.$valid'></span>
+            <!--
+            <i class="fa fa-check form-control-feedback" ng-show='register.password.$valid'></i>
+            -->
+        </div>
+        <div role='alert' style="margin-bottom: 10px;">
+            <span class="label label-warning" ng-show="register.password.$error.required">
+                {{ lang.Required}}</span>
+            <span class="label label-danger" ng-show="register.password.$error.minlength">
+                {{ lang.passwordMinlengthError}}</span>
+            <span class="label label-danger" ng-show="register.password.$error.typePassword">
+                {{ lang.PasswordisNotQualified}}
+            </span>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-xs-11">
+        <div class="checkbox form-group">
+            <input class="form-control" type="checkbox" 
+                   id="show-hide-password"
+                   ng-model="showPassword" ng-init="showPassword = False"/>
+            <label for="show-hide-password">
+                {{showPassword ? lang.hidePassword: lang.showPassword }}
+                <i 
+                    class="{{ showPassword ? 'glyphicon glyphicon-eye-close': 'glyphicon glyphicon-eye-open' }}">
+                </i>
+            </label>
+        </div>
+    </div>
+</div>
+
+

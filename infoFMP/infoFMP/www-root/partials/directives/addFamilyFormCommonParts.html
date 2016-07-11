@@ -1,0 +1,103 @@
+<div class="row">
+    <div class="col-md-5 col-sm-7 col-xs-7">
+        <div class="form-group has-feedback has-feedback-right" show-errors>
+            <label class="control-label">{{lang.firstName}}</label>
+            <input type="text" class="form-control" required 
+                   name="firstname"
+                   ng-model-options="{debounce: 500}"
+                   ng-model="data.firstName" autocomplete="off" 
+                   uib-tooltip="{{lang.firstNameHelp}}"
+                   tooltip-placement="top"
+                   tooltip-class="customClass"
+                   tooltip-append-to-body="true"
+                   tooltip-trigger="focus"
+                   type-firstname />
+
+            <span class="glyphicon glyphicon-ok form-control-feedback"
+                  ng-show='append.firstname.$valid'></span>
+            <!--
+            <i class="fa fa-check form-control-feedback" ng-show='register.username.$valid'></i>
+            -->
+        </div>
+        <div role="alert" style="margin-bottom: 10px;">
+            <span class="label label-warning" ng-show="append.firstname.$error.required">
+                {{ lang.Required}}</span>
+            <p class="label label-danger" ng-show="append.firstname.$error.format">
+                {{ lang.BadNameFormat}}
+            </p>
+        </div>
+    </div>
+    <div class="col-md-6 col-sm-7 col-xs-9">
+        <div class="form-group has-feedback has-feedback-right" show-errors>
+            <label class="control-label">{{lang.lastName}}</label>
+            <input type="text" class="form-control" required 
+                   name="lastname"
+                   ng-model-options="{debounce: 500}"
+                   ng-model="data.lastName" autocomplete="off" 
+                   uib-tooltip="{{lang.lastNameHelp}}"
+                   tooltip-placement="top"
+                   tooltip-class="customClass"
+                   tooltip-append-to-body="true"
+                   tooltip-trigger="focus"
+                   type-lastname />
+
+            <span class="glyphicon glyphicon-ok form-control-feedback"
+                  ng-show='append.lastname.$valid'></span>
+            <!--
+            <i class="fa fa-check form-control-feedback" ng-show='register.username.$valid'></i>
+            -->
+        </div>
+        <div role="alert" style="margin-bottom: 10px;">
+            <span class="label label-warning" ng-show="append.lastname.$error.required">
+                {{ lang.Required}}</span>
+            <p class="label label-warning" ng-show="append.lastname.$error.format">
+                {{ lang.BadNameFormat}}
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!--在中国的手机号码-->
+    <div class="col-md-4 col-sm-5 col-xs-7">
+        <div class="form-group has-feedback has-feedback-right" show-errors>
+            <label class="control-label">{{lang.ChineseMobileNumber}}</label>
+            <input type="text" class="form-control" required 
+                   name="mobile_number" 
+                   ng-model-options="{debounce: 1000}"
+                   ng-model="data.mobile" 
+                   autocomplete="off"
+                   uib-tooltip="{{lang.MobileHelp}}"
+                   tooltip-placement="top"
+                   tooltip-class="customClass"
+                   tooltip-append-to-body="true"
+                   tooltip-trigger="focus"
+                   type-mobile />
+
+            <span class="glyphicon glyphicon-ok form-control-feedback"
+                  ng-show='append.mobile_number.$valid'></span>
+            <!--
+            <i class="fa fa-check form-control-feedback" ng-show='register.username.$valid'></i>
+            -->
+        </div>   
+        <div role="alert" style="margin-bottom: 10px;">
+            <span class="label label-warning" ng-show="append.mobile_number.$error.required">
+                {{ lang.Required}}</span>
+            <span class="label label-danger" ng-show="append.mobile_number.$error.format">
+                {{ lang.MobileNotQualified}}
+            </span>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm-10 col-xs-9">
+        <button class="btn btn-default pull-right" 
+                type="submit">
+            <i class="glyphicon glyphicon-flash"></i>{{lang.appendFamilyinCampus}}</button>
+    </div>
+    <div class="col-sm-2 col-xs-3">
+        <button class="btn btn-default pull-right" type="button" ng-click="cancel()">
+            <i class="glyphicon glyphicon-remove"></i>{{lang.Cancel}}</button>
+    </div>
+</div>

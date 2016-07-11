@@ -1,0 +1,132 @@
+<div class="modal-header">
+    <h3 class="modal-title">{{lang.photoSelection}}</h3>
+</div>
+<div class="modal-body">
+    <uib-tabset active="active" type="tabs">
+        <!--按月列出用户已上传的照片, 为每张照片加上单选框-->
+        <uib-tab index="0" select="thumbnailsRefresh()">
+            <uib-tab-heading>
+                {{lang.FromUploaded}} <i class="glyphicon glyphicon-cloud"></i>
+            </uib-tab-heading>
+
+            <div class="row"  ng-show="months.length === 0"
+                 style="overflow-x: hidden; overflow-y: auto; height: 380px; padding-top: 10px;">
+                <div class="row"
+                     style="border-radius: 2px; border: #c3c3c3 solid 1px; margin: 0 10px 0 10px; padding: 5px;">
+
+                    <img src="images/No-image-found.jpg" class="img-thumbnail"
+                         alt="{{thumbnail.title}}" />
+                </div>
+            </div>
+            <div class="row" ng-show="months.length > 0"
+                 style="overflow-x: hidden; overflow-y: auto; height: 380px; padding-top: 10px;">
+                <div ng-repeat="month in months" class="row"
+                     style="border-radius: 2px; border: #c3c3c3 solid 1px; margin: 0 10px 0 10px; padding: 5px;">
+                    <h3 style="margin: -20px auto auto 40px; font-family: montserrat;">
+                        <span style="background-color: white;">
+                            <i class="glyphicon glyphicon-calendar"></i>&nbsp;{{month.year}}-{{month.month}}&nbsp;
+                        </span>
+                    </h3>
+                    <div ng-repeat="thumbnail in month.monthly_thumbnails"
+                         class="thumbnail-box col-md-3 col-xs-4"
+                         ng-mouseover="Buttons[thumbnail.id] = true"
+                         ng-mouseleave="Buttons[thumbnail.id] = false">
+                        <img ng-src="{{thumbnail.uri}}" class="img-thumbnail"
+                             alt="{{thumbnail.title}}" />
+                        <span class="buttons" ng-show="Buttons[thumbnail.id]" ng-init="Buttons[thumbnail.id] = False">
+                            <button ng-click="selectImage(thumbnail.id)" class="btn btn-xs btn-default"><i class="glyphicon glyphicon-check"></i></button>
+                            <button ng-click="imagePreview(thumbnail.id)" class="btn btn-xs btn-default"><i class="glyphicon glyphicon-play-circle"></i></button>
+                            <button ng-click="deleteImage(thumbnail.id)" class="btn btn-xs btn-default"><i class="glyphicon glyphicon-remove"></i></button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </uib-tab>
+        <!--上传一张新照片-->
+        <uib-tab index="1" select="setProfilePhotoSuccess=false; setProfilePhotoFailed=false;">
+            <uib-tab-heading>
+                {{lang.UploadaNew}} <i class="glyphicon glyphicon-upload"></i>
+            </uib-tab-heading>
+            <div class="row" style="padding: 0 35px 0 35px;">
+                <div class="row">
+                    <h3>{{lang.selectFile}}</h3>
+                    <div ng-show="uploader.isHTML5">
+                        <!-- 3. nv-file-over uploader="link" over-class="className" -->
+                        <!-- 要添加 nv-file-drop 及 nv-file-over 属性 -->
+                        <div class="well my-drop-zone"  nv-file-drop="" 
+                             nv-file-over="" uploader="uploader">
+                            {{lang.DropSlectionHere}}
+                        </div>
+                    </div>
+                    <input class="btn btn-default"
+                           label="{{lang.selectFile}}" type="file" nv-file-select
+                           uploader="uploader"  />
+                </div>
+                <div class="row">
+                    <div ng-repeat="item in uploader.queue" class="row">
+                        <div class="col-md-4">
+                            <strong>{{ item.file.name}}</strong>
+                            <!-- Image preview -->
+                            <!--auto height-->
+                            <!--<div ng-thumb="{ file: item.file, width: 100 }"></div>-->
+                            <!--auto width-->
+                            <div ng-show="uploader.isHTML5" ng-thumb="{ file: item._file, height: 100 }"></div>
+                            <!--fixed width and height -->
+                            <!--<div ng-thumb="{ file: item.file, width: 100, height: 100 }"></div>-->
+                        </div>
+                        <div class="col-md-8">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th width="25%" ng-show="uploader.isHTML5">{{lang.Size}}</th>
+                                        <th width="25%" ng-show="uploader.isHTML5">{{lang.Progress}}</th>
+                                        <th width="15%">{{lang.Status}}</th>
+                                        <th width="35%" >{{lang.Actions}}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            {{ item.file.size / 1024 |number:2 }} KB</td>
+                                        <td>
+                                            <div class="progress" style="margin-bottom: 0;">
+                                                <div class="progress-bar" role="progressbar" ng-style="{ 'width': item.progress + '%' }"></div>
+                                            </div></td>
+                                        <td>
+                                            <span ng-show="item.isSuccess"><i class="glyphicon glyphicon-ok"></i></span>
+                                            <span ng-show="item.isCancel"><i class="glyphicon glyphicon-ban-circle"></i></span>
+                                            <span ng-show="item.isError"><i class="glyphicon glyphicon-remove"></i></span></td>
+                                        <td>
+                                            <button type="button" class="btn btn-success btn-xs" ng-click="item.upload()" ng-disabled="item.isReady || item.isUploading || item.isSuccess">
+                                                <span class="glyphicon glyphicon-upload"></span>
+                                            </button>
+                                            <button type="button" class="btn btn-warning btn-xs" ng-click="item.cancel()" ng-disabled="!item.isUploading">
+                                                <span class="glyphicon glyphicon-ban-circle"></span>
+                                            </button>
+                                            <button type="button" class="btn btn-danger btn-xs" ng-click="item.remove()">
+                                                <span class="glyphicon glyphicon-trash"></span>
+                                            </button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </uib-tab>
+    </uib-tabset>
+</div>
+<div class="modal-footer">
+    <span class="label label-success" ng-show="uploadSuccess" ng-init="uploadSuccess = false">
+        {{lang.uploadSuccessMsg}}
+    </span>
+    <span class="label label-warning" ng-show="uploadFailed" ng-init="uploadFailed = false">
+        {{lang.uploadFailedMsg}}: {{FileUploading}}
+    </span>
+    <span class="label label-success" ng-show="setProfilePhotoSuccess" ng-init="setProfilePhotoSuccess = false">
+        {{lang.setProfilePhotoSuccessMsg}}
+    </span>
+    <span class="label label-warning" ng-show="setProfilePhotoFailed" ng-init="setProfilePhotoFailed = false">
+        {{lang.setProfilePhotoFailedMsg}}
+    </span>
+</div>
