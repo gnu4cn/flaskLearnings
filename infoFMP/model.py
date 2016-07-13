@@ -600,7 +600,6 @@ class Media(BaseMixin, db.Model):
     title = db.Column(db.String(64))
     description = db.Column(db.String(140))
     filesize = db.Column(db.Integer)
-    uri = db.Column(db.String(255), nullable=False)
 
     def _hash_value(self, hash_value):
         self.hash_value = hash_value
@@ -618,17 +617,11 @@ class Media(BaseMixin, db.Model):
         self.filesize = filesize
         dbSession.commit()
 
-    def _uri(self, uri):
-        self.uri = uri
-        dbSession.commit()
-
-    def __init__(self, hash_value='', title='', description='', filesize=0,
-                 uri=0):
+    def __init__(self, hash_value='', title='', description='', filesize=0):
         self.hash_value = hash_value
         self.title = title
         self.description = description
         self.filesize = filesize
-        self.uri = uri
 
     __mapper_args__ = {
         'polymorphic_identity': 'media'
@@ -653,12 +646,12 @@ class Image(Media):
 
     origin_id = db.Column(db.Integer, db.ForeignKey('image.id'))
 
-    sized_versions = db.relationship(
+    thumbnail = db.relationship(
         'Image', backref=db.backref('origin', remote_side=[id], uselist=False),
-        foreign_keys=origin_id)
+        foreign_keys=origin_id, uselist=False)
 
-    def _sized_versions(self, sized):
-        self.sized_versions.append(sized)
+    def _thumbnail(self, thumb):
+        self.thumbnail = thumb
         dbSession.commit()
 
     width = db.Column(db.SmallInteger)
@@ -668,6 +661,29 @@ class Image(Media):
     # In order to work with the relationship as with Query
     toUser = db.relationship('Account', secondary=UserImage,
                              back_populates='images', lazy='dynamic')
+
+    def get_by_thumbnail(self):
+        r = {}
+
+        origin = self.origin
+        r['originId'] = origin.id
+        r['thumbUrl'] = 'images/'+self.hash_value+'.png'
+        r['title'] = origin.title
+        r['url'] = 'images/'+origin.hash_value+'.png'
+
+        return r
+
+    def get_by_origin(self):
+        r = {}
+
+        thumb = self.thumbnail
+        r['thumbUrl'] = 'images/'+thumb.hash_value+'.png'
+        r['title'] = self.title
+        r['caption'] = self.description
+        r['url'] = 'images/'+self.hash_value+'.png'
+        r['originId'] = self.id
+
+        return r
 
     def _width(self, width):
         self.width = width
@@ -785,7 +801,7 @@ class Staff(Chinese):
 
         photo = self.image
         if photo is not None:
-            r['photo'] = photo.to_dict()
+            r['photo'] = photo.get_by_origin()
 
         r['families'] = []
         families = self.families
@@ -867,7 +883,7 @@ class Sfamily(Chinese):
 
         photo = self.image
         if photo is not None:
-            r['photo'] = photo.to_dict()
+            r['photo'] = photo.get_by_origin()
 
         staff = self.staff
         if staff is not None:
@@ -1063,7 +1079,7 @@ class Trainee(Foreigner):
 
         photo = self.image
         if photo is not None:
-            r['photo'] = photo.to_dict()
+            r['photo'] = photo.get_by_origin()
 
         r['families'] = []
         families = self.families
@@ -1595,7 +1611,7 @@ class Tfamily(Foreigner):
 
         photo = self.image
         if photo is not None:
-            r['photo'] = photo.to_dict()
+            r['photo'] = photo.get_by_origin()
 
         trainee = self.trainee
         if trainee is not None:

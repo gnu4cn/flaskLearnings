@@ -27,6 +27,7 @@ TRAINEE_CAT = '5'
 TFAMILY_CAT = '6'
 ALLOWED_FORMATS_IMG = set(['jpeg', 'png', 'gif', 'bmp'])
 
+IMG_ORIGINAL_WIDTH = 1600
 THUMBNAIL_SIZE = 120, 120
 
 app = Flask(__name__)
@@ -94,7 +95,9 @@ def save_uploaded_image(f, user_id):
                         hash_sha1+'.png')
 
                     ratio = float(im.size[0])/float(im.size[1])
-                    origin = im.resize((1024, int(1024/ratio)), IMG.ANTIALIAS)
+                    origin = im.resize(
+                        (IMG_ORIGINAL_WIDTH, int(IMG_ORIGINAL_WIDTH/ratio)),
+                        IMG.ANTIALIAS)
 
                     origin.save(_origin, 'PNG', optimized=True)
 
@@ -105,7 +108,7 @@ def save_uploaded_image(f, user_id):
                     original_instance = Image(original=True, width=width,
                                               height=height,
                                               hash_value=hash_sha1,
-                                              filesize=filesize, uri=_origin)
+                                              filesize=filesize)
 
                     dbSession.add(original_instance)
                     dbSession.commit()
@@ -131,14 +134,13 @@ def save_uploaded_image(f, user_id):
 
                     thumbnail_instance = Image(width=width, height=height,
                                                hash_value=hash_sha1,
-                                               filesize=filesize,
-                                               uri=_thumbnail)
+                                               filesize=filesize)
 
                     dbSession.add(thumbnail_instance)
                     dbSession.commit()
 
                     user._images(thumbnail_instance)
-                    original_instance._sized_versions(thumbnail_instance)
+                    original_instance._thumbnail(thumbnail_instance)
 
                     return True
 
@@ -160,13 +162,6 @@ def save_uploaded_image(f, user_id):
         return False
 
 
-@api.route('/api/image/by_thumbnail_id/<int:thumbnailId>')
-class ServeImagebyThumbnailId(Resource):
-    @auth.login_required
-    def get(self, thumbnailId):
-        return jsonify(Image.query.get(thumbnailId).origin.to_dict())
-
-
 @api.route('/api/profile/photo')
 class ProfilePhoto(Resource):
     @auth.login_required
@@ -174,7 +169,7 @@ class ProfilePhoto(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('user_id', type=int, location='json',
                             required=True)
-        parser.add_argument('thumbnail_id', type=int, location='json',
+        parser.add_argument('image_id', type=int, location='json',
                             required=True)
         args = parser.parse_args()
 
@@ -183,7 +178,7 @@ class ProfilePhoto(Resource):
         r['set'] = False
 
         user = User.query.get(args['user_id'])
-        photo = Image.query.get(args['thumbnail_id']).origin
+        photo = Image.query.get(args['image_id'])
 
         try:
             {
@@ -201,8 +196,8 @@ class ProfilePhoto(Resource):
         return jsonify(r)
 
 
-@api.route('/api/image/thumbnails')
-class Thumbnails(Resource):
+@api.route('/api/user/images')
+class UserImages(Resource):
     @auth.login_required
     def post(self):
         parser = reqparse.RequestParser()
@@ -216,26 +211,23 @@ class Thumbnails(Resource):
         user = User.query.get(args['user_id'])
 
         thumbnails = user.images.filter(
-            and_(
-                or_(Image.width == 120, Image.height == 120),
-                Image.original == False)
-        ).order_by(Image.last_updated.desc())
+            Image.original == False).order_by(Image.last_updated.desc())
 
         month = 0
         tmp = {}
-        tmp['monthly_thumbnails'] = []
+        tmp['monthly_images'] = []
 
         for thumbnail in thumbnails:
             if month != thumbnail.last_updated.month:
                 tmp = {}
-                tmp['monthly_thumbnails'] = []
+                tmp['monthly_images'] = []
 
                 month = thumbnail.last_updated.month
                 tmp['year'] = thumbnail.last_updated.year
                 tmp['month'] = month
-                tmp['monthly_thumbnails'].append(thumbnail.to_dict())
+                tmp['monthly_images'].append(thumbnail.get_by_thumbnail())
             else:
-                tmp['monthly_thumbnails'].append(thumbnail.to_dict())
+                tmp['monthly_images'].append(thumbnail.get_by_thumbnail())
 
             if thumbnail == thumbnails[-1]:
                 r['months'].append(tmp)

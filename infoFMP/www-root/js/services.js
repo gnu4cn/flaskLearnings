@@ -49,33 +49,19 @@ services.factory('MediaService', ['$http', 'languageService', 'getToken',
         var lang = JSON.parse(languageService());
         var service = {};
 
-        service.GetThumbnails = GetThumbnails;
-        service.RetrieveOriginbyThumbnailId = RetrieveOriginbyThumbnailId;
+        service.GetImages = GetImages;
 
         return service;
 
-        function GetThumbnails(data) {
+        function GetImages(data) {
             return $http({
                 method: 'POST',
-                url: '/api/image/thumbnails',
+                url: '/api/user/images',
                 headers: {
                     'Authorization': 'Basic ' + btoa(getToken()),
                     'Content-Type': 'application/json'
                 },
                 data: data
-            }).then(
-                handleSuccess,
-                handleError(lang.serviceRequestFault)
-                );
-        }
-
-        function RetrieveOriginbyThumbnailId(thumbnailId) {
-            return $http({
-                method: 'GET',
-                url: '/api/image/by_thumbnail_id/' + thumbnailId,
-                headers: {
-                    'Authorization': 'Basic ' + btoa(getToken())
-                }
             }).then(
                 handleSuccess,
                 handleError(lang.serviceRequestFault)

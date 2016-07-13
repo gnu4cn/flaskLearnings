@@ -14,13 +14,16 @@ var infoFMP = angular.module('infoFMP', [
     'angularMoment',
     'languageService',
     'ngMaterial',
-    'tmh.dynamicLocale'
+    'tmh.dynamicLocale',
+    'bootstrapLightbox'
 ]);
 
 infoFMP.config(['$routeProvider', '$locationProvider', '$provide', 'showErrorsConfigProvider', 
-    'tmhDynamicLocaleProvider',
+    'tmhDynamicLocaleProvider', 'LightboxProvider',
     function ($routeProvider, $locationProvider, $provide, showErrorsConfigProvider, 
-    tmhDynamicLocaleProvider) {
+    tmhDynamicLocaleProvider, LightboxProvider) {
+        //angular-bootstrap-lightbox config
+        LightboxProvider.templateUrl = 'partials/modals/lightbox.html';
         //angular-dynamic-locale
         tmhDynamicLocaleProvider.localeLocationPattern('js/libs/angular-locale_{{locale}}.js');
         //angular-showerrors

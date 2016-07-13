@@ -212,13 +212,19 @@ languageService.factory('languageService', ['getLocale',
                 Upload: '上传',
                 Remove: '移除',
                 uploadFailedMsg: '*文件上传失败，超过大小限制（'+CLIMENT_MAX_BODY_SIZE+'MB）',
-                uploadSuccessMsg: '*文件上传成功，现在可已上传文件中选择并使用该文件。',
+                uploadSuccessMsg: '*文件上传成功，已可在“从已上传的”中选择并使用该文件。',
                 setProfilePhoto: '设置个人资料照片',
                 setThisImageasProfilePhoto: '要将此图片设置为个人资料照片吗？',
                 setProfilePhotoFailedMsg: '*设置个人资料图片失败。',
-                setProfilePhotoSuccessMsg: '*设置个人资料图片成功。'
+                setProfilePhotoSuccessMsg: '*设置个人资料图片成功。',
+                Previous: '上一',
+                OpenImageinNewTab: '在新的 Tab 页中打开',
+                Next: '下一'
             };
             languagesData['en-us'] = {
+                Next: 'Next',
+                Previous: 'Previous',
+                OpenImageinNewTab: 'Open image in new tab',
                 setProfilePhotoSuccessMsg: '*Successfully set the profile photo.',
                 setProfilePhotoFailedMsg: '*Set profile photo failed.',
                 setThisImageasProfilePhoto: 'Do you want to set this picture as your profile photo?',

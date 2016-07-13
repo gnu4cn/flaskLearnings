@@ -268,6 +268,7 @@ pagePartsDirectives.directive('profileFields', ['languageService',
                                 scope.user.profile = res.profile;
                                 //console.log(JSON.stringify(scope.user));
                                 accountProfilePostProcess(scope, res);
+                                //console.log(JSON.stringify(scope.user));
                             } else {
                             }
                         });

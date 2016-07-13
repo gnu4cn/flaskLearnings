@@ -19,9 +19,10 @@ Controllers.controller('ProfileCtrl', ['$scope',
 
 Controllers.controller('SingleImageProfileModalInstanceCtrl', ['$scope', 'user',
     'languageService', 'FileUploader', 'getToken', 'MediaService', '$uibModal',
-    'ProfileService', '$route', '$uibModalInstance',
+    'ProfileService', '$route', '$uibModalInstance', 'Lightbox',
     function ($scope, user, languageService, FileUploader, getToken,
-        MediaService, $uibModal, ProfileService, $route, $uibModalInstance) {
+        MediaService, $uibModal, ProfileService, $route, $uibModalInstance,
+        Lightbox) {
         $scope.lang = JSON.parse(languageService());
         $scope.Buttons = [];
 
@@ -59,8 +60,12 @@ Controllers.controller('SingleImageProfileModalInstanceCtrl', ['$scope', 'user',
             $scope.uploadFailed = true;
             $scope.FileUploading = fileItem._file.name;
         };
+        
+        $scope.openLightboxModal = function (images, index) {
+            Lightbox.openModal(images, index);
+        };
 
-        $scope.selectImage = function (imageId) {
+        $scope.selectImage = function (originId, originUrl) {
             var uibModalInstance = $uibModal.open({
                 animation: true,
                 templateUrl: 'partials/modals/SetProfilePhotoModal.html',
@@ -68,7 +73,10 @@ Controllers.controller('SingleImageProfileModalInstanceCtrl', ['$scope', 'user',
                 size: 'md',
                 resolve: {
                     imageId: function () {
-                        return imageId;
+                        return originId;
+                    },
+                    imageUrl: function () {
+                        return originUrl;
                     }
                 }
             });
@@ -78,7 +86,7 @@ Controllers.controller('SingleImageProfileModalInstanceCtrl', ['$scope', 'user',
                     //set the picture as profile photo
                     var data = {};
                     data.user_id = user.id;
-                    data.thumbnail_id = imageId;
+                    data.image_id = originId;
                     ProfileService.SetProfilePhoto(data).then(
                         function (res) {
                             if (res.set) {
@@ -109,7 +117,7 @@ Controllers.controller('SingleImageProfileModalInstanceCtrl', ['$scope', 'user',
             $scope.setProfilePhotoFailed = false;
             $scope.setProfilePhotoSuccess = false;
             $scope.uploadSuccess = false;
-            MediaService.GetThumbnails({'user_id': user.id}).then(
+            MediaService.GetImages({'user_id': user.id}).then(
                 function (res) {
                     if (res.success) {
                         $scope.months = res.months;
@@ -120,15 +128,12 @@ Controllers.controller('SingleImageProfileModalInstanceCtrl', ['$scope', 'user',
         };
     }]);
 
-Controllers.controller('SetProfilePhotoModalInstanceCtrl', ['$scope', 'imageId',
-    'languageService', 'MediaService', '$uibModalInstance',
-    function ($scope, imageId, languageService, MediaService, $uibModalInstance) {
+Controllers.controller('SetProfilePhotoModalInstanceCtrl', ['$scope', 'imageUrl',
+    'languageService', '$uibModalInstance',
+    function ($scope, imageUrl, languageService, $uibModalInstance) {
         $scope.lang = JSON.parse(languageService());
-
-        MediaService.RetrieveOriginbyThumbnailId(imageId).then(
-            function (res) {
-                $scope.originSrc = res.uri;
-            });
+        
+        $scope.originSrc = imageUrl;
 
         $scope.ok = function () {
             $uibModalInstance.close(true);

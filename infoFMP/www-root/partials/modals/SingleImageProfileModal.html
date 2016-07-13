@@ -15,7 +15,7 @@
                      style="border-radius: 2px; border: #c3c3c3 solid 1px; margin: 0 10px 0 10px; padding: 5px;">
 
                     <img src="images/No-image-found.jpg" class="img-thumbnail"
-                         alt="{{thumbnail.title}}" />
+                         alt="Not found" />
                 </div>
             </div>
             <div class="row" ng-show="months.length > 0"
@@ -27,16 +27,17 @@
                             <i class="glyphicon glyphicon-calendar"></i>&nbsp;{{month.year}}-{{month.month}}&nbsp;
                         </span>
                     </h3>
-                    <div ng-repeat="thumbnail in month.monthly_thumbnails"
+                    <div ng-repeat="image in month.monthly_images"
                          class="thumbnail-box col-md-3 col-xs-4"
-                         ng-mouseover="Buttons[thumbnail.id] = true"
-                         ng-mouseleave="Buttons[thumbnail.id] = false">
-                        <img ng-src="{{thumbnail.uri}}" class="img-thumbnail"
-                             alt="{{thumbnail.title}}" />
-                        <span class="buttons" ng-show="Buttons[thumbnail.id]" ng-init="Buttons[thumbnail.id] = False">
-                            <button ng-click="selectImage(thumbnail.id)" class="btn btn-xs btn-default"><i class="glyphicon glyphicon-check"></i></button>
-                            <button ng-click="imagePreview(thumbnail.id)" class="btn btn-xs btn-default"><i class="glyphicon glyphicon-play-circle"></i></button>
-                            <button ng-click="deleteImage(thumbnail.id)" class="btn btn-xs btn-default"><i class="glyphicon glyphicon-remove"></i></button>
+                         ng-mouseover="Buttons[$index] = true"
+                         ng-mouseleave="Buttons[$index] = false">
+                        <img ng-src="{{image.thumbUrl}}" class="img-thumbnail"
+                             alt="{{image.title}}" />
+                        <span class="buttons" ng-show="Buttons[$index]" ng-init="Buttons[thumbnail.id] = False">
+                            <button ng-click="selectImage(image.originId, image.url)" class="btn btn-xs btn-default"><i class="glyphicon glyphicon-check"></i></button>
+                            <button ng-click="openLightboxModal(month.monthly_images, $index)" class="btn btn-xs btn-default"><i class="glyphicon glyphicon-play-circle"></i></button>
+                            <button ng-click="imageCrop($index)" class="btn btn-xs btn-default"><i class="glyphicon glyphicon-scissors"></i></button>
+                            <button ng-click="deleteImage($index)" class="btn btn-xs btn-default"><i class="glyphicon glyphicon-remove"></i></button>
                         </span>
                     </div>
                 </div>
