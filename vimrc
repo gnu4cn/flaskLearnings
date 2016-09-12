@@ -30,6 +30,9 @@ Bundle 'gmarik/vundle'
 
 " Plugins from github repos:
 
+Bundle 'godlygeek/tabular'
+Bundle 'plasticboy/vim-markdown'
+
 " Python and PHP Debugger
 Bundle 'fisadev/vim-debug.vim'
 " Better file browser
